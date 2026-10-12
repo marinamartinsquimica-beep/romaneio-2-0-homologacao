@@ -78,7 +78,7 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 </head>
 <body>
 <div class="app">
-<header class="topbar"><div class="brand"><img src="icon-512.png" class="brand-icon" alt="Logo"><div><h1>Romaneio de Paletes 2.0</h1><p>Sistema local para controle de paletes · <strong>v2.0.33</strong></p></div></div><div class="status-pill" id="estadoConexaoOffline" aria-live="polite">Dados locais</div></header>
+<header class="topbar"><div class="brand"><img src="icon-512.png" class="brand-icon" alt="Logo"><div><h1>Romaneio de Paletes 2.0</h1><p>Sistema local para controle de paletes · <strong>v2.0.34</strong></p></div></div><div class="status-pill" id="estadoConexaoOffline" aria-live="polite">Dados locais</div></header>
 
 <div style="max-width:1220px;margin:0 auto 12px;text-align:right"><span id="indicadorFilaMovimentos" style="font-weight:700;color:#254D69;margin-right:10px">Movimentações pendentes: 0</span><button type="button" onclick="consultarFilaMovimentos()" style="width:auto;background:#FFD043;color:#254D69;font-size:12px;padding:8px 12px;margin-right:6px">Conferir pendências</button><button type="button" onclick="verificarBackupOffline()" style="width:auto;background:#254D69;color:#fff;font-size:12px;padding:8px 12px">Verificar cópia local</button></div>
 <section class="dashboard"><div class="metric"><div class="ico">📋</div><div><b id="dashRegistros">0</b><span id="dashRegistrosLabel">Registros totais</span></div></div><div class="metric"><div class="ico">📦</div><div><b id="dashCaixas">0</b><span id="dashCaixasLabel">Caixas totais</span></div></div><div class="metric"><div class="ico">🧱</div><div><b id="dashPaletes">0</b><span id="dashPaletesLabel">Paletes totais</span></div></div><div class="metric"><div class="ico">📍</div><div><b id="dashDestinos">0</b><span id="dashDestinosLabel">Destinos totais</span></div></div><div class="metric"><div class="ico">🕒</div><div><b id="dashUltimo">--</b><span>Último registro</span></div></div></section>
@@ -90,7 +90,7 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
  <div class="operator-metrics"><div class="operator-metric"><span>Caixas no estoque</span><strong id="opEstoqueCaixas">—</strong></div><div class="operator-metric"><span>SKUs distintos no estoque</span><strong id="opEstoqueSkus">—</strong></div></div>
  <div class="operator-workspace"><div class="operator-box"><h3>Paletes registrados</h3><div style="overflow-x:auto"><table class="operator-table"><thead><tr><th>Palete</th><th>Destino</th><th>Caixas</th><th>Ação</th></tr></thead><tbody id="opTabelaDestinos"></tbody></table></div><p class="operator-status">As correções serão feitas pelas funções atuais do romaneio até a etapa de edição e histórico ser concluída.</p></div><div class="operator-box"><h3>Controle de estoque</h3><p id="opResumoEstoque" class="operator-status">Consulta local disponível após importação de uma cópia do estoque.</p><div class="operator-note">Baixa e ajuste físico integrados serão habilitados somente após testes das regras existentes. Nenhuma substituição de inventário ocorre nesta etapa.</div><p id="opUltimaConsulta" class="operator-status"></p></div></div>
 </div><div id="opAbaEstoque" role="tabpanel" class="hidden"><section class="card" id="painelEstoqueTeste" style="margin:14px 0;padding:20px">
-  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.33</small></h2><span class="badge">Reserva local de teste</span></div>
+  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.34</small></h2><span class="badge">Reserva local de teste</span></div>
   <p style="margin:8px 0;color:#475569">Importe uma CÓPIA do Excel. A importação é opcional. Sem Excel, o Romaneio funciona normalmente. Com Excel, novas entradas passam por reserva local. O arquivo não é modificado.</p>
   <label for="arquivoEstoqueTeste" style="display:block;margin:10px 0">Selecionar planilha de estoque (.xlsx)</label>
   <input id="arquivoEstoqueTeste" type="file" accept=".xlsx,.xls" onchange="importarEstoqueTeste(event)" style="max-width:100%;margin-bottom:10px">
@@ -144,7 +144,7 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 </div>
 
 <script>
-const APP_VERSION = "2.0.33";
+const APP_VERSION = "2.0.34";
 const VERSION_URL = "version.json";
 const ESTADO_OPERACIONAL_KEY = "romaneio_estado_operacional";
 const RASCUNHO_KEY = "romaneio_rascunho";
@@ -1751,6 +1751,7 @@ function salvarEntrada() {
     let postura = campoLote10.value;
     let caixas = campoCaixas.value;
     let observacoes = campoObservacoes.value.trim();
+    if (!Number.isSafeInteger(Number(caixas)) || Number(caixas) <= 0 || !Number.isSafeInteger(Number(palete)) || Number(palete) <= 0) {alert("Caixas e número do palete devem ser números inteiros positivos.");return false;}
 
     if (!dataISO || !sku || !destino || !palete || !loteCompleto || !caixas || Number(caixas) <= 0) {
         alert("Preencha todos os campos obrigatórios.");
@@ -1767,6 +1768,7 @@ function salvarEntrada() {
 
     if (indiceEditando !== null) {
         let linha = tbody.rows[indiceEditando];
+        const registroAnterior=dadosDaLinhaRomaneio(linha);
         linha.cells[0].textContent = dataBR;
         linha.cells[1].textContent = sku;
         linha.cells[2].textContent = destino;
@@ -1793,6 +1795,7 @@ function salvarEntrada() {
         const linhaNormal = novoRegistro ? tbody.rows[tbody.rows.length - 1] : tbody.rows[indiceEditando];
         delete linhaNormal.dataset.divergenciaTeste;
     }
+    if(!novoRegistro){const registroAtual=dadosDaLinhaRomaneio(tbody.rows[indiceEditando]);if(JSON.stringify(registroAnterior)!==JSON.stringify(registroAtual))registrarCorrecaoRomaneio("EDIÇÃO",registroAnterior,registroAtual);}
     destinoPreselecionado = destino;
     salvarLocalStorage();
     // A notificação com OK é emitida uma vez por divergência no resumo de estoque.
@@ -1829,6 +1832,15 @@ function salvarComposicao(finalizarPalete) {
     return true;
 }
 
+/* Histórico local de correções, independente da exportação do romaneio. */
+const HISTORICO_CORRECOES_KEY="romaneio2_historico_correcoes";
+function registrarCorrecaoRomaneio(acao,antes,depois){
+ try{const historico=JSON.parse(localStorage.getItem(HISTORICO_CORRECOES_KEY)||"[]");
+ historico.push({acao,quando:new Date().toISOString(),antes,depois});
+ localStorage.setItem(HISTORICO_CORRECOES_KEY,JSON.stringify(historico.slice(-1000)));
+ }catch(e){console.warn("Histórico de correções indisponível",e);}
+}
+function dadosDaLinhaRomaneio(linha){return {data:linha.cells[0].textContent,sku:linha.cells[1].textContent,destino:linha.cells[2].textContent,palete:linha.cells[3].textContent,loteCompleto:linha.cells[4].textContent,lote:linha.cells[5].textContent,postura:linha.cells[6].textContent,caixas:linha.cells[7].textContent,observacoes:linha.cells[8].textContent};}
 function editarLinha(botao) {
     let linha = botao.parentNode.parentNode;
     indiceEditando = linha.rowIndex - 1;
@@ -1852,7 +1864,12 @@ function editarLinha(botao) {
 }
 
 function excluirLinha(botao) {
-    botao.parentNode.parentNode.remove();
+    const linha=botao.closest("tr");
+    if(!linha)return;
+    const anterior=dadosDaLinhaRomaneio(linha);
+    if(!confirm(`Excluir ${anterior.caixas} caixa(s) do SKU ${anterior.sku}, palete ${anterior.palete}, destino ${anterior.destino}?\nEsta ação atualiza o romaneio e as reservas locais.`))return;
+    registrarCorrecaoRomaneio("EXCLUSÃO",anterior,null);
+    linha.remove();
     salvarLocalStorage();
     atualizarResumoPaleteAtual();
     indiceEditando = null;
