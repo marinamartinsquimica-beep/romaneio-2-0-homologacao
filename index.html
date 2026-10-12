@@ -71,11 +71,11 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 </head>
 <body>
 <div class="app">
-<header class="topbar"><div class="brand"><img src="icon-512.png" class="brand-icon" alt="Logo"><div><h1>Romaneio de Paletes 2.0</h1><p>Sistema local para controle de paletes · <strong>v2.0.28</strong></p></div></div><div class="status-pill" id="estadoConexaoOffline" aria-live="polite">Dados locais</div></header>
+<header class="topbar"><div class="brand"><img src="icon-512.png" class="brand-icon" alt="Logo"><div><h1>Romaneio de Paletes 2.0</h1><p>Sistema local para controle de paletes · <strong>v2.0.29</strong></p></div></div><div class="status-pill" id="estadoConexaoOffline" aria-live="polite">Dados locais</div></header>
 
 <div style="max-width:1220px;margin:0 auto 12px;text-align:right"><span id="indicadorFilaMovimentos" style="font-weight:700;color:#254D69;margin-right:10px">Movimentações pendentes: 0</span><button type="button" onclick="consultarFilaMovimentos()" style="width:auto;background:#FFD043;color:#254D69;font-size:12px;padding:8px 12px;margin-right:6px">Conferir pendências</button><button type="button" onclick="verificarBackupOffline()" style="width:auto;background:#254D69;color:#fff;font-size:12px;padding:8px 12px">Verificar cópia local</button></div>
 <section class="card" id="painelEstoqueTeste" style="margin:14px 0;padding:20px">
-  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.28</small></h2><span class="badge">Reserva local de teste</span></div>
+  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.29</small></h2><span class="badge">Reserva local de teste</span></div>
   <p style="margin:8px 0;color:#475569">Importe uma CÓPIA do Excel. A importação é opcional. Sem Excel, o Romaneio funciona normalmente. Com Excel, novas entradas passam por reserva local. O arquivo não é modificado.</p>
   <label for="arquivoEstoqueTeste" style="display:block;margin:10px 0">Selecionar planilha de estoque (.xlsx)</label>
   <input id="arquivoEstoqueTeste" type="file" accept=".xlsx,.xls" onchange="importarEstoqueTeste(event)" style="max-width:100%;margin-bottom:10px">
@@ -92,7 +92,7 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 <section id="painelOperadorDesktop" class="operator-panel" aria-label="Painel do operador de estoque">
  <div class="operator-hero"><h2>Operação de estoque</h2><p>Conferência de romaneios e acompanhamento do estoque • ambiente local de testes</p><div class="operator-toolbar"><button type="button" onclick="operadorVoltarRomaneios()">ABRIR ROMANEIOS</button><button type="button" onclick="operadorVerPendencias()">CONFERIR PENDÊNCIAS</button><button type="button" class="operator-yellow" onclick="operadorSincronizarAgora()">SINCRONIZAR AGORA</button><button type="button" class="operator-outline" onclick="operadorAbrirEstoque()">VER ESTOQUE DE TESTES</button></div><div class="operator-note" id="operadorAvisoSync" role="status">Integração com SharePoint ainda não habilitada. O botão de sincronização verifica somente o estado local; nenhuma baixa ou ajuste é enviado.</div></div>
  <div class="operator-metrics"><div class="operator-metric"><span>Destinos com romaneios</span><strong id="opDestinos">0</strong></div><div class="operator-metric"><span>Paletes registrados</span><strong id="opPaletes">0</strong></div><div class="operator-metric"><span>Caixas registradas</span><strong id="opCaixas">0</strong></div><div class="operator-metric"><span>Movimentações pendentes</span><strong id="opPendentes">0</strong></div></div>
- <div class="operator-workspace"><div class="operator-box"><h3>Romaneios por destino</h3><div style="overflow-x:auto"><table class="operator-table"><thead><tr><th>Destino</th><th>Paletes</th><th>Caixas</th><th>Ação</th></tr></thead><tbody id="opTabelaDestinos"></tbody></table></div><p class="operator-status">As correções serão feitas pelas funções atuais do romaneio até a etapa de edição e histórico ser concluída.</p></div><div class="operator-box"><h3>Controle de estoque</h3><p id="opResumoEstoque" class="operator-status">Consulta local disponível após importação de uma cópia do estoque.</p><div class="operator-note">Baixa e ajuste físico integrados serão habilitados somente após testes das regras existentes. Nenhuma substituição de inventário ocorre nesta etapa.</div><p id="opUltimaConsulta" class="operator-status"></p></div></div>
+ <div class="operator-workspace"><div class="operator-box"><h3>Paletes registrados</h3><div style="overflow-x:auto"><table class="operator-table"><thead><tr><th>Palete</th><th>Destino</th><th>Caixas</th><th>Ação</th></tr></thead><tbody id="opTabelaDestinos"></tbody></table></div><p class="operator-status">As correções serão feitas pelas funções atuais do romaneio até a etapa de edição e histórico ser concluída.</p></div><div class="operator-box"><h3>Controle de estoque</h3><p id="opResumoEstoque" class="operator-status">Consulta local disponível após importação de uma cópia do estoque.</p><div class="operator-note">Baixa e ajuste físico integrados serão habilitados somente após testes das regras existentes. Nenhuma substituição de inventário ocorre nesta etapa.</div><p id="opUltimaConsulta" class="operator-status"></p></div></div>
 </section>
 <main class="layout" id="abaTotal">
 <section class="card flow-card" id="escolhaFluxo"><div class="card-header"><h2>Adicionar palete</h2><span class="badge">Nova entrada</span></div><p>Leia a etiqueta do palete ou utilize o preenchimento manual.</p><div class="initial-pallet-setting"><label for="campoPaleteInicial">PALETE INICIAL</label><input id="campoPaleteInicial" type="number" min="1" step="1" inputmode="numeric" placeholder="Vazio = próximo palete ou palete 1" onchange="salvarPaleteInicial()"><small>Informe qualquer número para iniciar por ele; depois o app segue pelos próximos números livres.</small></div><div class="flow-actions"><button class="btn-primary" type="button" onclick="abrirLeitorQr()">📷 LER CÓDIGO</button><button class="btn-secondary" type="button" onclick="usarInsercaoManual()">INSERÇÃO MANUAL</button><button id="btnExcelInicial" type="button" onclick="gerarExcel()">GERAR E SALVAR EXCEL TOTAL</button><button id="btnReiniciarInicial" class="btn-danger" type="button" onclick="reiniciarEntradas()">APAGAR TODO O ROMANEIO</button></div></section>
@@ -136,7 +136,7 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 </div>
 
 <script>
-const APP_VERSION = "2.0.28";
+const APP_VERSION = "2.0.29";
 const VERSION_URL = "version.json";
 const ESTADO_OPERACIONAL_KEY = "romaneio_estado_operacional";
 const RASCUNHO_KEY = "romaneio_rascunho";
@@ -2362,16 +2362,31 @@ async function importarEstoqueTeste(event) {
 function operadorAtualizarPainel(){
  const destinos=typeof obterRomaneiosDestino==='function'?obterRomaneiosDestino():[];
  const linhas=[...document.querySelectorAll('#tabela tbody tr')];
- const paletes=new Set(linhas.map(l=>String(l.cells[3]?.textContent||'').trim()).filter(Boolean));
- const caixas=linhas.reduce((n,l)=>n+(Number(String(l.cells[7]?.textContent||'0').replace(',','.'))||0),0);
+ const paletes=new Map();
+ let caixas=0;
+ linhas.forEach(l=>{
+   const palete=String(l.cells[3]?.textContent||'').trim();
+   const destino=String(l.cells[2]?.textContent||'').trim();
+   const cx=Number(String(l.cells[7]?.textContent||'0').replace(',','.'))||0;
+   caixas+=cx;
+   if(!palete)return;
+   const chave=destino.toLocaleLowerCase('pt-BR')+'|'+palete;
+   const atual=paletes.get(chave)||{palete,destino,caixas:0};
+   atual.caixas+=cx;paletes.set(chave,atual);
+ });
  const pendentes=typeof lerFilaMovimentos==='function'?lerFilaMovimentos().length:0;
  document.getElementById('opDestinos').textContent=destinos.length;
  document.getElementById('opPaletes').textContent=paletes.size;
  document.getElementById('opCaixas').textContent=caixas.toLocaleString('pt-BR');
  document.getElementById('opPendentes').textContent=pendentes;
  const tbody=document.getElementById('opTabelaDestinos');tbody.replaceChildren();
- if(!destinos.length){const tr=tbody.insertRow();const td=tr.insertCell();td.colSpan=4;td.textContent='Nenhum romaneio registrado neste dispositivo.';}
- destinos.forEach(d=>{const tr=tbody.insertRow();[d.nome,String(d.paletes.size),String(d.caixas)].forEach(v=>{const td=tr.insertCell();td.textContent=v});const td=tr.insertCell();const btn=document.createElement('button');btn.type='button';btn.textContent='Abrir';btn.addEventListener('click',()=>operadorVoltarRomaneios());td.appendChild(btn)});
+ if(!paletes.size){const tr=tbody.insertRow();const td=tr.insertCell();td.colSpan=4;td.textContent='Nenhum palete registrado neste dispositivo.';}
+ [...paletes.values()].sort((a,b)=>a.palete.localeCompare(b.palete,'pt-BR',{numeric:true})).forEach(d=>{
+   const tr=tbody.insertRow();
+   [d.palete,d.destino||'Sem destino',d.caixas.toLocaleString('pt-BR')].forEach(v=>{const td=tr.insertCell();td.textContent=v});
+   const td=tr.insertCell();const btn=document.createElement('button');btn.type='button';btn.textContent='Conferir';
+   btn.addEventListener('click',()=>operadorVoltarRomaneios());td.appendChild(btn);
+ });
  const resumo=document.getElementById('resumoReservaTeste');document.getElementById('opResumoEstoque').textContent=resumo?.textContent||'Estoque de testes ainda não carregado.';
  document.getElementById('opUltimaConsulta').textContent='Painel atualizado localmente às '+new Date().toLocaleTimeString('pt-BR');
 }
