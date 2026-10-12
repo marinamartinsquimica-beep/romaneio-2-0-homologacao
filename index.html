@@ -84,12 +84,12 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 .operator-pending{background:#eafaff;border:1px solid #b6e8f4;border-radius:16px;padding:16px;margin:14px 0;color:#254D69}.operator-pending h3,.operator-pending h4{margin:0 0 10px;color:#254D69}.operator-pending p{line-height:1.5;font-size:14px}.operator-pending-item{padding:13px 15px;border-radius:12px;border-left:5px solid #FFA385;background:white;margin:10px 0;overflow-wrap:anywhere}.operator-pending-item p{margin:7px 0;font-size:13px}.operator-pending button{width:auto;background:#5CDCF2;color:#254D69;border-radius:10px;padding:9px 14px;font-weight:700}
 .raiar-linha-pendente{background:#fff2d2!important;outline:3px solid #f3b622;outline-offset:-3px;box-shadow:inset 6px 0 #FFA385}.raiar-linha-pendente td{background:transparent!important;color:#254D69!important;font-weight:700}.raiar-linha-pendente td:first-child:before{content:"CONFERIR";display:inline-block;background:#FFD043;color:#254D69;font-size:10px;padding:4px 7px;border-radius:6px;margin-right:7px;font-weight:900}@media(prefers-reduced-motion:no-preference){.raiar-linha-pendente{animation:raiar-pendente-pulso 1.4s ease-in-out 2}}@keyframes raiar-pendente-pulso{50%{box-shadow:inset 6px 0 #FFA385,0 0 0 5px rgba(255,208,67,.35)}}
 
-.stock-adjust-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.stock-adjust-grid label{font-size:13px;font-weight:700;color:#254D69}.stock-adjust-grid input{display:block;width:100%;margin-top:5px;padding:11px;border:1px solid #b7d8e6;border-radius:10px;color:#254D69;background:white}.stock-adjust-actions{display:flex;flex-wrap:wrap;gap:9px}.stock-adjust-actions button{background:#5CDCF2;color:#254D69;border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}.stock-adjust-actions button:last-child{background:white;border:1px solid #FFA385}.stock-adjust-item{background:white;border-left:4px solid #FFD043;padding:10px;margin:9px 0;border-radius:9px;color:#254D69}@media(max-width:650px){.stock-adjust-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
 <div class="app">
-<header class="topbar"><div class="brand"><img src="icon-512.png" class="brand-icon" alt="Logo"><div><h1>Romaneio de Paletes 2.0</h1><p>Sistema local para controle de paletes · <strong>v2.0.48</strong></p></div></div><div class="status-pill" id="estadoConexaoOffline" aria-live="polite">Dados locais</div></header>
+<header class="topbar"><div class="brand"><img src="icon-512.png" class="brand-icon" alt="Logo"><div><h1>Romaneio de Paletes 2.0</h1><p>Sistema local para controle de paletes · <strong>v2.0.49</strong></p></div></div><div class="status-pill" id="estadoConexaoOffline" aria-live="polite">Dados locais</div></header>
 
 <div class="romaneio-backup-actions" style="max-width:1220px;margin:0 auto 12px;text-align:right"><span id="indicadorFilaMovimentos" style="font-weight:700;color:#254D69;margin-right:10px">Movimentações pendentes: 0</span><button class="desktop-backup-action" type="button" onclick="consultarFilaMovimentos()" style="width:auto;background:#FFD043;color:#254D69;font-size:12px;padding:8px 12px;margin-right:6px">Conferir pendências</button><button class="desktop-backup-action" type="button" onclick="verificarBackupOffline()" style="width:auto;background:#254D69;color:#fff;font-size:12px;padding:8px 12px">Verificar cópia local</button><button class="mobile-sync-action" type="button" onclick="sincronizarRomaneioCelular()" style="width:auto;background:#5CDCF2;color:#254D69;font-weight:800;font-size:13px;padding:10px 18px;border-radius:12px;border:2px solid #254D69">SINCRONIZAR</button></div>
 <section class="dashboard"><div class="metric"><div class="ico">📋</div><div><b id="dashRegistros">0</b><span id="dashRegistrosLabel">Registros totais</span></div></div><div class="metric"><div class="ico">📦</div><div><b id="dashCaixas">0</b><span id="dashCaixasLabel">Caixas totais</span></div></div><div class="metric"><div class="ico">🧱</div><div><b id="dashPaletes">0</b><span id="dashPaletesLabel">Paletes totais</span></div></div><div class="metric"><div class="ico">📍</div><div><b id="dashDestinos">0</b><span id="dashDestinosLabel">Destinos totais</span></div></div><div class="metric"><div class="ico">🕒</div><div><b id="dashUltimo">--</b><span>Último registro</span></div></div></section>
@@ -101,13 +101,12 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
  <div class="operator-metrics"><div class="operator-metric"><span>Caixas no estoque</span><strong id="opEstoqueCaixas">—</strong></div><div class="operator-metric"><span>SKUs distintos no estoque</span><strong id="opEstoqueSkus">—</strong></div></div>
  <div class="operator-workspace"><div class="operator-box"><h3>Paletes registrados</h3><div style="overflow-x:auto"><table class="operator-table"><thead><tr><th>Palete</th><th>Destino</th><th>Caixas</th><th>Ação</th></tr></thead><tbody id="opTabelaDestinos"></tbody></table></div><p class="operator-status">As correções serão feitas pelas funções atuais do romaneio até a etapa de edição e histórico ser concluída.</p></div><div class="operator-box"><h3>Controle de estoque</h3><p id="opResumoEstoque" class="operator-status">Consulta local disponível após importação de uma cópia do estoque.</p><div class="operator-pending"><h4>Pendências de conferência</h4><p id="opPendenciasEstoqueResumo">Importe o estoque de testes para verificar as entradas.</p><button type="button" onclick="operadorSelecionarAba('estoque');document.getElementById('pendenciasConferenciaEstoque')?.scrollIntoView({behavior:'smooth',block:'start'})">VER PENDÊNCIAS</button></div><div class="operator-note">Baixa e ajuste físico integrados serão habilitados somente após testes das regras existentes. Nenhuma substituição de inventário ocorre nesta etapa.</div><p id="opUltimaConsulta" class="operator-status"></p></div></div>
 </div><div id="opAbaEstoque" role="tabpanel" class="hidden"><section class="card" id="painelEstoqueTeste" style="margin:14px 0;padding:20px">
-  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.48</small></h2><span class="badge">Reserva local de teste</span></div>
-  <p style="margin:8px 0;color:#475569">Importe uma CÓPIA do Excel. A importação é opcional. Sem Excel, o Romaneio funciona normalmente. Com Excel, novas entradas passam por reserva local. O arquivo não é modificado.</p>
+  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.49</small></h2><span class="badge">Reserva local de teste</span></div>
+  <p style="margin:8px 0;color:#475569">Importe uma cópia atualizada do estoque para conferir as pendências. Correções do estoque são feitas diretamente no SharePoint. Esta importação é somente leitura e não altera o arquivo.</p>
   <label for="arquivoEstoqueTeste" style="display:block;margin:10px 0">Selecionar planilha de estoque (.xlsx)</label>
   <input id="arquivoEstoqueTeste" type="file" accept=".xlsx,.xls" onchange="importarEstoqueTeste(event)" style="max-width:100%;margin-bottom:10px">
   <button type="button" onclick="conferirEntradasExistentesTeste()" style="padding:9px 12px;margin:8px 0;cursor:pointer">Conferir entradas anteriores (teste)</button>
-  <section class="operator-pending" id="ajusteEstoqueTeste" aria-label="Ajuste de estoque de testes"><h3>AJUSTE DO ESTOQUE DE TESTES</h3><p>Prepare uma cópia corrigida do Excel. Nenhuma alteração é enviada ao SharePoint. Informe o saldo TOTAL correto do lote, antes de descontar reservas locais.</p><div class="stock-adjust-grid"><label>SKU<input id="ajusteSkuTeste" type="text" placeholder="Ex.: 5002"></label><label>Lote completo<input id="ajusteLoteTeste" type="text" placeholder="Ex.: L24.02.05.10.26"></label><label>Saldo total (CX)<input id="ajusteSaldoTeste" type="number" min="0" step="1" placeholder="Ex.: 80"></label><label>Justificativa<input id="ajusteMotivoTeste" type="text" maxlength="250" placeholder="Motivo obrigatório"></label></div><div class="stock-adjust-actions"><button type="button" onclick="prepararAjusteEstoqueTeste()">PREPARAR AJUSTE</button><button type="button" onclick="exportarAjustesEstoqueTeste()">BAIXAR EXCEL CORRIGIDO</button><button type="button" onclick="descartarAjustesEstoqueTeste()">DESCARTAR AJUSTES</button></div><p id="ajusteEstoqueTesteStatus" role="status" aria-live="polite">Importe primeiro a planilha de estoque de testes.</p><div id="ajusteEstoqueTesteLista"></div></section>
-<section id="pendenciasConferenciaEstoque" class="operator-pending" aria-label="Pendências de conferência do estoque"><h3>PENDÊNCIAS DE CONFERÊNCIA <span id="contadorPendenciasEstoque">0</span></h3><p>Registros do romaneio que precisam de conferência. O aviso não elimina a pendência. Corrija o romaneio ou importe uma planilha de estoque de testes atualizada.</p><div id="listaPendenciasEstoque" aria-live="polite">Importe uma cópia do estoque para conferir.</div></section>
+  <section id="pendenciasConferenciaEstoque" class="operator-pending" aria-label="Pendências de conferência do estoque"><h3>PENDÊNCIAS DE CONFERÊNCIA <span id="contadorPendenciasEstoque">0</span></h3><p>Registros do romaneio que precisam de conferência. O aviso não elimina a pendência. Confira o romaneio ou corrija o estoque diretamente na planilha do SharePoint e atualize a consulta.</p><div id="listaPendenciasEstoque" aria-live="polite">Importe uma cópia do estoque para conferir.</div></section>
 <div id="divergenciasEstoqueTeste" role="alert" aria-live="assertive" style="display:none;margin:12px 0;padding:14px 16px;border:2px solid #c2410c;border-radius:10px;background:#fff1e6;color:#7c2d12;font-weight:600"></div>
   <p id="resumoReservaTeste" role="status">Reservas: aguardando importação do estoque.</p>
   <p id="resultadoEstoqueTeste" role="status" aria-live="polite">Nenhuma planilha importada nesta sessão.</p>
@@ -188,7 +187,7 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
  };
 
 })();
-const APP_VERSION = "2.0.48";
+const APP_VERSION = "2.0.49";
 const VERSION_URL = "version.json";
 const ESTADO_OPERACIONAL_KEY = "romaneio_estado_operacional";
 const RASCUNHO_KEY = "romaneio_rascunho";
@@ -2417,14 +2416,6 @@ function destacarLinhasPendenciaRomaneio(chave){
  if(correspondentes.length){correspondentes[0].scrollIntoView({behavior:"smooth",block:"center"});const editar=correspondentes[0].querySelector("button.btn-blue");if(editar)editar.focus({preventScroll:true});}
  else alert("Esta pendência não possui mais uma linha correspondente no romaneio.");
 }
-function abrirAjusteEstoqueDaPendencia(sku,lote,caixas){
- operadorSelecionarAba("estoque");
- const campos=[["ajusteSkuTeste",sku],["ajusteLoteTeste",lote],["ajusteSaldoTeste",String(caixas)]];
- for(const [id,valor] of campos){const campo=document.getElementById(id);if(campo)campo.value=valor;}
- const secao=document.getElementById("ajusteEstoqueTeste");
- if(secao)secao.scrollIntoView({behavior:"smooth",block:"start"});
- document.getElementById("ajusteMotivoTeste")?.focus({preventScroll:true});
-}
 function renderizarPendenciasConferenciaEstoque(){
  const lista=document.getElementById("listaPendenciasEstoque"),contador=document.getElementById("contadorPendenciasEstoque"),resumo=document.getElementById("opPendenciasEstoqueResumo");
  if(!lista)return;
@@ -2448,9 +2439,7 @@ function renderizarPendenciasConferenciaEstoque(){
   const detalhe=document.createElement("p");detalhe.textContent="Postura: "+([...p.posturas].join(", ")||"não informada")+" | Romaneio: "+p.caixas+" CX | Estoque: "+(saldos.has(p.chave)?saldos.get(p.chave)+" CX":"NÃO ENCONTRADO")+" | "+(!saldos.has(p.chave)?"SKU/lote ausente":"Quantidade superior ao saldo");
   const referencia=document.createElement("p");referencia.textContent="Palete(s): "+[...new Set(p.linhas.map(l=>l.cells[3]?.textContent))].join(", ")+" | Destino(s): "+[...new Set(p.linhas.map(l=>l.cells[2]?.textContent))].join(", ");
   const botao=document.createElement("button");botao.type="button";botao.textContent="CONFERIR ROMANEIO";botao.addEventListener("click",()=>destacarLinhasPendenciaRomaneio(p.chave));
-  const ajustar=document.createElement("button");ajustar.type="button";ajustar.textContent="AJUSTE ESTOQUE";ajustar.addEventListener("click",()=>abrirAjusteEstoqueDaPendencia(p.sku,p.lote,p.caixas));
- const acoes=document.createElement("div");acoes.className="stock-adjust-actions";acoes.append(botao,ajustar);
- card.append(titulo,detalhe,referencia,acoes);lista.appendChild(card);
+  card.append(titulo,detalhe,referencia,botao);lista.appendChild(card);
  }
 }
 function atualizarResumoReservaTeste() {
@@ -2533,67 +2522,6 @@ function renderizarEstoqueCompletoTeste() {
   }
 }
 // Etapa 2A: leitura isolada do estoque. Não modifica registros, reservas ou arquivos.
-const AJUSTES_ESTOQUE_TESTE_KEY="romaneio2_ajustes_estoque_teste";
-let ajustesEstoqueTeste=[];
-let workbookEstoqueTesteOriginal=null;
-let nomeAbaEstoqueTesteOriginal="";
-function normalizarCabecalhoEstoqueTeste(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toUpperCase();}
-function renderizarAjustesEstoqueTeste(){
- const area=document.getElementById("ajusteEstoqueTesteLista"),status=document.getElementById("ajusteEstoqueTesteStatus");
- if(!area||!status)return;
- area.replaceChildren();
- if(!workbookEstoqueTesteOriginal){status.textContent="Importe uma planilha de estoque de testes para preparar ajustes.";return;}
- status.textContent=ajustesEstoqueTeste.length+" ajuste(s) preparado(s), ainda não aplicados à planilha importada. Baixe o Excel e importe-o novamente para conferir.";
- for(const a of ajustesEstoqueTeste){
-  const item=document.createElement("div");item.className="stock-adjust-item";
-  item.textContent="SKU "+a.sku+" | Lote "+a.lote+" | Saldo anterior: "+(a.anterior===null?"não encontrado":a.anterior)+" CX | Novo saldo: "+a.saldo+" CX | Motivo: "+a.motivo;
-  area.appendChild(item);
- }
-}
-function prepararAjusteEstoqueTeste(){
- if(!workbookEstoqueTesteOriginal||!window.estoqueTesteConsulta){alert("Importe primeiro uma planilha de estoque de testes.");return;}
- const sku=document.getElementById("ajusteSkuTeste").value.trim(),lote=document.getElementById("ajusteLoteTeste").value.trim(),motivo=document.getElementById("ajusteMotivoTeste").value.trim();
- const bruto=document.getElementById("ajusteSaldoTeste").value.trim(),saldo=Number(bruto);
- if(!sku||!lote||!motivo||bruto===""||!Number.isSafeInteger(saldo)||saldo<0){alert("Preencha SKU, lote completo, saldo inteiro não negativo e justificativa.");return;}
- const chave=chaveReservaTeste(sku,lote);
- const anterior=window.estoqueTesteConsulta.get(chave)?.saldo??null;
- const atual={sku,lote,saldo,motivo,anterior,quando:new Date().toISOString()};
- const i=ajustesEstoqueTeste.findIndex(a=>chaveReservaTeste(a.sku,a.lote)===chave);
- if(i>=0)ajustesEstoqueTeste[i]=atual;else ajustesEstoqueTeste.push(atual);
- renderizarAjustesEstoqueTeste();
-}
-async function descartarAjustesEstoqueTeste(){
- if(!ajustesEstoqueTeste.length)return;
- if(!await confirmarRaiar("Descartar todos os ajustes preparados nesta sessão? Nenhum arquivo será alterado."))return;
- ajustesEstoqueTeste=[];renderizarAjustesEstoqueTeste();
-}
-function exportarAjustesEstoqueTeste(){
- if(!workbookEstoqueTesteOriginal||!ajustesEstoqueTeste.length){alert("Não há ajustes preparados para exportar.");return;}
- if(typeof XLSX==="undefined"){alert("Biblioteca Excel indisponível.");return;}
- try{
-  const copia=XLSX.read(XLSX.write(workbookEstoqueTesteOriginal,{type:"array",bookType:"xlsx"}),{type:"array"});
-  const aba=copia.Sheets[nomeAbaEstoqueTesteOriginal];
-  const linhas=XLSX.utils.sheet_to_json(aba,{header:1,defval:"",raw:true});
-  const cab=linhas.findIndex(l=>l.some(v=>normalizarCabecalhoEstoqueTeste(v)==="SKU")&&l.some(v=>normalizarCabecalhoEstoqueTeste(v)==="LOTE COMPLETO")&&l.some(v=>normalizarCabecalhoEstoqueTeste(v)==="SALDO"));
-  if(cab<0)throw Error("Cabeçalhos não encontrados na cópia.");
-  const h=linhas[cab].map(normalizarCabecalhoEstoqueTeste),iSku=h.indexOf("SKU"),iLote=h.indexOf("LOTE COMPLETO"),iSaldo=h.indexOf("SALDO");
-  for(const a of ajustesEstoqueTeste){
-   const indices=[];
-   for(let i=cab+1;i<linhas.length;i++)if(chaveReservaTeste(linhas[i][iSku],linhas[i][iLote])===chaveReservaTeste(a.sku,a.lote))indices.push(i);
-   // Duplicidades no Excel exigem revisão manual; não redistribuir saldos arbitrariamente.
-   if(indices.length>1)throw Error("O lote "+a.sku+" / "+a.lote+" possui "+indices.length+" linhas na planilha. Ajuste bloqueado para evitar distribuição incorreta.");
-   if(indices.length===1)linhas[indices[0]][iSaldo]=a.saldo;
-   else{const nova=Array(h.length).fill("");nova[iSku]=a.sku;nova[iLote]=a.lote;nova[iSaldo]=a.saldo;linhas.push(nova);}
-  }
-  copia.Sheets[nomeAbaEstoqueTesteOriginal]=XLSX.utils.aoa_to_sheet(linhas);
-  const auditoria=[["DATA/HORA","SKU","LOTE COMPLETO","SALDO ANTERIOR (CX)","SALDO NOVO (CX)","JUSTIFICATIVA"],...ajustesEstoqueTeste.map(a=>[a.quando,a.sku,a.lote,a.anterior??"NÃO ENCONTRADO",a.saldo,a.motivo])];
-  const nomeAuditoria="Auditoria Ajustes Teste";
-  if(copia.SheetNames.includes(nomeAuditoria))throw Error("Já existe uma aba de auditoria com esse nome. Utilize uma cópia limpa da planilha.");
-  copia.SheetNames.push(nomeAuditoria);copia.Sheets[nomeAuditoria]=XLSX.utils.aoa_to_sheet(auditoria);
-  XLSX.writeFile(copia,"ESTOQUE_TESTE_CORRIGIDO_"+new Date().toISOString().slice(0,10)+".xlsx");
-  document.getElementById("ajusteEstoqueTesteStatus").textContent="Excel de testes gerado. Confira e importe a nova cópia para revalidar pendências. Nenhuma sincronização com SharePoint foi realizada.";
- }catch(erro){console.error(erro);alert("Não foi possível gerar a planilha corrigida: "+erro.message);}
-}
 async function importarEstoqueTeste(event) {
   const arquivo = event.target.files && event.target.files[0];
   if (!arquivo) return;
@@ -2628,10 +2556,6 @@ async function importarEstoqueTeste(event) {
     }
     if (!mapa.size) throw new Error("Nenhum saldo válido encontrado.");
     window.estoqueTesteConsulta = mapa; // Apenas sessão atual, não sincroniza entre aparelhos.
-    workbookEstoqueTesteOriginal=wb;
-    nomeAbaEstoqueTesteOriginal=nomeAba;
-    ajustesEstoqueTeste=[];
-    renderizarAjustesEstoqueTeste();
     window.reservaTesteAtiva = true;
     atualizarResumoReservaTeste();
     renderizarEstoqueCompletoTeste();
@@ -2639,7 +2563,7 @@ async function importarEstoqueTeste(event) {
     const total=[...mapa.values()].reduce((acc,x)=>acc+x.saldo,0);
     aviso.textContent="Arquivo: "+arquivo.name+" | "+mapa.size+" lotes | "+total.toLocaleString("pt-BR")+" caixas em saldo. Exibindo todos os lotes. Reservas locais de novas entradas ativadas. Nenhuma baixa foi feita.";
     resumo.classList.remove("hidden");
-  } catch(e) {window.estoqueTesteConsulta=null; window.reservaTesteAtiva=false; workbookEstoqueTesteOriginal=null; ajustesEstoqueTeste=[]; renderizarAjustesEstoqueTeste(); aviso.textContent="Erro ao importar: "+e.message;}
+  } catch(e) {window.estoqueTesteConsulta=null; window.reservaTesteAtiva=false; aviso.textContent="Erro ao importar: "+e.message;}
 }
 </script>
 
@@ -2703,7 +2627,13 @@ async function sincronizarRomaneioCelular(){
  await filaBackupOffline;
  alert("Os "+registros.length+" registros estão preservados neste aparelho. A sincronização com o painel de estoque de outro dispositivo ainda não está habilitada. Nenhum dado foi enviado.");
 }
-function operadorSincronizarAgora(){operadorAtualizarPainel();document.getElementById('operadorAvisoSync').textContent='Consulta local concluída. Sincronização com SharePoint indisponível nesta etapa; nenhum arquivo ou saldo foi modificado.';}
+function operadorSincronizarAgora(){
+ operadorAtualizarPainel();
+ document.getElementById('operadorAvisoSync').textContent='Sem conexão automática com SharePoint: selecione uma cópia ATUALIZADA do estoque para revalidar. Nenhuma sincronização remota foi realizada.';
+ const arquivo=document.getElementById('arquivoEstoqueTeste');
+ operadorSelecionarAba('estoque');
+ if(arquivo){arquivo.value='';arquivo.scrollIntoView({behavior:'smooth',block:'center'});arquivo.click();}
+}
 document.getElementById('tabTotal')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
 document.getElementById('tabCaminhao')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
 window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(event.matches&&document.getElementById('painelOperadorDesktop').classList.contains('active'))abrirAba('total');});
