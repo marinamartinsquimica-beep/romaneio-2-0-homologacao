@@ -82,11 +82,12 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 .raiar-confirm-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:22px}.raiar-confirm-actions button{margin:0;min-width:118px}.raiar-confirm-actions .raiar-cancel{background:#fff;border:2px solid #5CDCF2;color:#254D69}.raiar-confirm-actions .raiar-confirm{background:#FFD043;color:#254D69}.operator-box:has(#opResumoEstoque){border:1px solid #bdeef7;background:linear-gradient(180deg,#f4fcff 0%,#fff 100%);border-radius:20px;padding:22px;box-shadow:0 8px 24px rgba(37,77,105,.07)}.operator-box:has(#opResumoEstoque) h3{font-size:23px;margin-bottom:16px}.operator-box #opResumoEstoque{font-size:16px;line-height:1.7;padding:15px 17px;border-radius:14px;background:#e7faff;color:#254D69;font-weight:700;border:1px solid #bdeef7}.operator-box:has(#opResumoEstoque) .operator-note{border:0;border-left:5px solid #FFA385;border-radius:14px;padding:16px 18px;background:#fff3ed;font-size:15px;line-height:1.55}.operator-box #opUltimaConsulta{margin-top:16px;font-size:13px;color:#48647a}
 
 .operator-pending{background:#eafaff;border:1px solid #b6e8f4;border-radius:16px;padding:16px;margin:14px 0;color:#254D69}.operator-pending h3,.operator-pending h4{margin:0 0 10px;color:#254D69}.operator-pending p{line-height:1.5;font-size:14px}.operator-pending-item{padding:13px 15px;border-radius:12px;border-left:5px solid #FFA385;background:white;margin:10px 0;overflow-wrap:anywhere}.operator-pending-item p{margin:7px 0;font-size:13px}.operator-pending button{width:auto;background:#5CDCF2;color:#254D69;border-radius:10px;padding:9px 14px;font-weight:700}
+.raiar-linha-pendente{background:#fff2d2!important;outline:3px solid #f3b622;outline-offset:-3px;box-shadow:inset 6px 0 #FFA385}.raiar-linha-pendente td{background:transparent!important;color:#254D69!important;font-weight:700}.raiar-linha-pendente td:first-child:before{content:"CONFERIR";display:inline-block;background:#FFD043;color:#254D69;font-size:10px;padding:4px 7px;border-radius:6px;margin-right:7px;font-weight:900}@media(prefers-reduced-motion:no-preference){.raiar-linha-pendente{animation:raiar-pendente-pulso 1.4s ease-in-out 2}}@keyframes raiar-pendente-pulso{50%{box-shadow:inset 6px 0 #FFA385,0 0 0 5px rgba(255,208,67,.35)}}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="topbar"><div class="brand"><img src="icon-512.png" class="brand-icon" alt="Logo"><div><h1>Romaneio de Paletes 2.0</h1><p>Sistema local para controle de paletes · <strong>v2.0.39</strong></p></div></div><div class="status-pill" id="estadoConexaoOffline" aria-live="polite">Dados locais</div></header>
+<header class="topbar"><div class="brand"><img src="icon-512.png" class="brand-icon" alt="Logo"><div><h1>Romaneio de Paletes 2.0</h1><p>Sistema local para controle de paletes · <strong>v2.0.40</strong></p></div></div><div class="status-pill" id="estadoConexaoOffline" aria-live="polite">Dados locais</div></header>
 
 <div class="romaneio-backup-actions" style="max-width:1220px;margin:0 auto 12px;text-align:right"><span id="indicadorFilaMovimentos" style="font-weight:700;color:#254D69;margin-right:10px">Movimentações pendentes: 0</span><button class="desktop-backup-action" type="button" onclick="consultarFilaMovimentos()" style="width:auto;background:#FFD043;color:#254D69;font-size:12px;padding:8px 12px;margin-right:6px">Conferir pendências</button><button class="desktop-backup-action" type="button" onclick="verificarBackupOffline()" style="width:auto;background:#254D69;color:#fff;font-size:12px;padding:8px 12px">Verificar cópia local</button><button class="mobile-sync-action" type="button" onclick="sincronizarRomaneioCelular()" style="width:auto;background:#5CDCF2;color:#254D69;font-weight:800;font-size:13px;padding:10px 18px;border-radius:12px;border:2px solid #254D69">SINCRONIZAR</button></div>
 <section class="dashboard"><div class="metric"><div class="ico">📋</div><div><b id="dashRegistros">0</b><span id="dashRegistrosLabel">Registros totais</span></div></div><div class="metric"><div class="ico">📦</div><div><b id="dashCaixas">0</b><span id="dashCaixasLabel">Caixas totais</span></div></div><div class="metric"><div class="ico">🧱</div><div><b id="dashPaletes">0</b><span id="dashPaletesLabel">Paletes totais</span></div></div><div class="metric"><div class="ico">📍</div><div><b id="dashDestinos">0</b><span id="dashDestinosLabel">Destinos totais</span></div></div><div class="metric"><div class="ico">🕒</div><div><b id="dashUltimo">--</b><span>Último registro</span></div></div></section>
@@ -98,7 +99,7 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
  <div class="operator-metrics"><div class="operator-metric"><span>Caixas no estoque</span><strong id="opEstoqueCaixas">—</strong></div><div class="operator-metric"><span>SKUs distintos no estoque</span><strong id="opEstoqueSkus">—</strong></div></div>
  <div class="operator-workspace"><div class="operator-box"><h3>Paletes registrados</h3><div style="overflow-x:auto"><table class="operator-table"><thead><tr><th>Palete</th><th>Destino</th><th>Caixas</th><th>Ação</th></tr></thead><tbody id="opTabelaDestinos"></tbody></table></div><p class="operator-status">As correções serão feitas pelas funções atuais do romaneio até a etapa de edição e histórico ser concluída.</p></div><div class="operator-box"><h3>Controle de estoque</h3><p id="opResumoEstoque" class="operator-status">Consulta local disponível após importação de uma cópia do estoque.</p><div class="operator-pending"><h4>Pendências de conferência</h4><p id="opPendenciasEstoqueResumo">Importe o estoque de testes para verificar as entradas.</p><button type="button" onclick="operadorSelecionarAba('estoque');document.getElementById('pendenciasConferenciaEstoque')?.scrollIntoView({behavior:'smooth',block:'start'})">VER PENDÊNCIAS</button></div><div class="operator-note">Baixa e ajuste físico integrados serão habilitados somente após testes das regras existentes. Nenhuma substituição de inventário ocorre nesta etapa.</div><p id="opUltimaConsulta" class="operator-status"></p></div></div>
 </div><div id="opAbaEstoque" role="tabpanel" class="hidden"><section class="card" id="painelEstoqueTeste" style="margin:14px 0;padding:20px">
-  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.39</small></h2><span class="badge">Reserva local de teste</span></div>
+  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.40</small></h2><span class="badge">Reserva local de teste</span></div>
   <p style="margin:8px 0;color:#475569">Importe uma CÓPIA do Excel. A importação é opcional. Sem Excel, o Romaneio funciona normalmente. Com Excel, novas entradas passam por reserva local. O arquivo não é modificado.</p>
   <label for="arquivoEstoqueTeste" style="display:block;margin:10px 0">Selecionar planilha de estoque (.xlsx)</label>
   <input id="arquivoEstoqueTeste" type="file" accept=".xlsx,.xls" onchange="importarEstoqueTeste(event)" style="max-width:100%;margin-bottom:10px">
@@ -184,7 +185,7 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
  };
 
 })();
-const APP_VERSION = "2.0.39";
+const APP_VERSION = "2.0.40";
 const VERSION_URL = "version.json";
 const ESTADO_OPERACIONAL_KEY = "romaneio_estado_operacional";
 const RASCUNHO_KEY = "romaneio_rascunho";
@@ -2349,6 +2350,16 @@ function mostrarNotificacaoDivergenciaTeste({chave,posturas,qtd,saldo}) {
   document.body.appendChild(overlay);
   ok.focus();
 }
+function destacarLinhasPendenciaRomaneio(chave){
+ operadorVoltarRomaneios();
+ const busca=document.getElementById("buscaRomaneio");
+ if(busca){busca.value="";if(typeof filtrarRomaneio==="function")filtrarRomaneio();}
+ document.querySelectorAll("#tabela tbody tr").forEach(l=>{l.classList.remove("raiar-linha-pendente");l.removeAttribute("aria-current");});
+ const correspondentes=[...document.querySelectorAll("#tabela tbody tr")].filter(l=>chaveReservaTeste(l.cells[1]?.textContent||"",l.cells[4]?.textContent||"")===chave);
+ for(const linha of correspondentes){linha.classList.remove("hidden");linha.classList.add("raiar-linha-pendente");linha.setAttribute("aria-current","true");}
+ if(correspondentes.length){correspondentes[0].scrollIntoView({behavior:"smooth",block:"center"});const editar=correspondentes[0].querySelector("button.btn-blue");if(editar)editar.focus({preventScroll:true});}
+ else alert("Esta pendência não possui mais uma linha correspondente no romaneio.");
+}
 function renderizarPendenciasConferenciaEstoque(){
  const lista=document.getElementById("listaPendenciasEstoque"),contador=document.getElementById("contadorPendenciasEstoque"),resumo=document.getElementById("opPendenciasEstoqueResumo");
  if(!lista)return;
@@ -2371,7 +2382,7 @@ function renderizarPendenciasConferenciaEstoque(){
   const titulo=document.createElement("strong");titulo.textContent="SKU "+p.sku+" · Lote "+p.lote;
   const detalhe=document.createElement("p");detalhe.textContent="Postura: "+([...p.posturas].join(", ")||"não informada")+" | Romaneio: "+p.caixas+" CX | Estoque: "+(saldos.has(p.chave)?saldos.get(p.chave)+" CX":"NÃO ENCONTRADO")+" | "+(!saldos.has(p.chave)?"SKU/lote ausente":"Quantidade superior ao saldo");
   const referencia=document.createElement("p");referencia.textContent="Palete(s): "+[...new Set(p.linhas.map(l=>l.cells[3]?.textContent))].join(", ")+" | Destino(s): "+[...new Set(p.linhas.map(l=>l.cells[2]?.textContent))].join(", ");
-  const botao=document.createElement("button");botao.type="button";botao.textContent="CONFERIR ROMANEIO";botao.addEventListener("click",()=>operadorVoltarRomaneios());
+  const botao=document.createElement("button");botao.type="button";botao.textContent="CONFERIR ROMANEIO";botao.addEventListener("click",()=>destacarLinhasPendenciaRomaneio(p.chave));
   card.append(titulo,detalhe,referencia,botao);lista.appendChild(card);
  }
 }
