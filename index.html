@@ -67,15 +67,27 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 
 /* Painel desktop do operador — Raiar Orgânicos / etapa 1 */
 .operator-panel{display:none;max-width:1320px;margin:0 auto 24px}.operator-panel.active{display:block}.operator-hero{background:#fff;border:1px solid #dce7eb;border-top:6px solid #5CDCF2;border-radius:18px;padding:24px;margin:16px 0;color:#254D69}.operator-hero h2{margin:0 0 7px;font-size:25px;color:#254D69}.operator-hero p{margin:0;color:#48647a}.operator-toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.operator-toolbar button{width:auto;min-width:150px;background:#5CDCF2;color:#254D69;border-radius:12px;font-weight:750}.operator-toolbar .operator-yellow{background:#FFD043}.operator-toolbar .operator-outline{background:white;border:2px solid #254D69;color:#254D69}.operator-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}.operator-metric{background:#fff;border:1px solid #dce7eb;border-radius:16px;padding:18px;color:#254D69}.operator-metric span{display:block;font-size:13px}.operator-metric strong{display:block;font-size:30px;margin-top:8px}.operator-workspace{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:14px}.operator-box{background:#fff;border:1px solid #dce7eb;border-radius:16px;padding:20px;color:#254D69}.operator-box h3{margin:0 0 12px;color:#254D69}.operator-table{width:100%;border-collapse:collapse}.operator-table th,.operator-table td{padding:11px 9px;text-align:left;border-bottom:1px solid #e3ebef;color:#254D69}.operator-table th{background:#eafaff;font-size:12px}.operator-table button{width:auto;padding:8px 12px;background:#5CDCF2;color:#254D69;font-size:12px}.operator-note{padding:12px;border-left:4px solid #FFA385;background:#fff5f1;border-radius:8px;color:#254D69;margin-top:12px}.operator-status{font-size:13px;color:#48647a}.operator-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px auto;max-width:1320px}.operator-tabs button{width:auto}@media(max-width:900px){.operator-workspace{grid-template-columns:1fr}.operator-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.operator-metrics{grid-template-columns:1fr 1fr}.operator-hero{padding:15px}.operator-box{padding:12px}.operator-table th,.operator-table td{padding:7px 4px;font-size:12px}}
+
+/* Abas do operador - guia de marca Raiar */
+.operator-section-tabs{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap}.operator-section-tabs button{width:auto;background:#fff;color:#254D69;border:2px solid #5CDCF2;border-radius:12px;padding:12px 20px;font-weight:700}.operator-section-tabs button.active{background:#5CDCF2;color:#254D69}.operator-panel #opAbaEstoque.hidden,.operator-panel #opVisaoGeral.hidden{display:none!important}.operator-panel #resumoEstoqueTeste table{min-width:740px}.operator-panel #resumoEstoqueTeste thead th{position:sticky;top:0;background:#eafaff;color:#254D69;z-index:1;padding:9px}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="topbar"><div class="brand"><img src="icon-512.png" class="brand-icon" alt="Logo"><div><h1>Romaneio de Paletes 2.0</h1><p>Sistema local para controle de paletes · <strong>v2.0.30</strong></p></div></div><div class="status-pill" id="estadoConexaoOffline" aria-live="polite">Dados locais</div></header>
+<header class="topbar"><div class="brand"><img src="icon-512.png" class="brand-icon" alt="Logo"><div><h1>Romaneio de Paletes 2.0</h1><p>Sistema local para controle de paletes · <strong>v2.0.31</strong></p></div></div><div class="status-pill" id="estadoConexaoOffline" aria-live="polite">Dados locais</div></header>
 
 <div style="max-width:1220px;margin:0 auto 12px;text-align:right"><span id="indicadorFilaMovimentos" style="font-weight:700;color:#254D69;margin-right:10px">Movimentações pendentes: 0</span><button type="button" onclick="consultarFilaMovimentos()" style="width:auto;background:#FFD043;color:#254D69;font-size:12px;padding:8px 12px;margin-right:6px">Conferir pendências</button><button type="button" onclick="verificarBackupOffline()" style="width:auto;background:#254D69;color:#fff;font-size:12px;padding:8px 12px">Verificar cópia local</button></div>
-<section class="card" id="painelEstoqueTeste" style="margin:14px 0;padding:20px">
-  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.30</small></h2><span class="badge">Reserva local de teste</span></div>
+<section class="dashboard"><div class="metric"><div class="ico">📋</div><div><b id="dashRegistros">0</b><span id="dashRegistrosLabel">Registros totais</span></div></div><div class="metric"><div class="ico">📦</div><div><b id="dashCaixas">0</b><span id="dashCaixasLabel">Caixas totais</span></div></div><div class="metric"><div class="ico">🧱</div><div><b id="dashPaletes">0</b><span id="dashPaletesLabel">Paletes totais</span></div></div><div class="metric"><div class="ico">📍</div><div><b id="dashDestinos">0</b><span id="dashDestinosLabel">Destinos totais</span></div></div><div class="metric"><div class="ico">🕒</div><div><b id="dashUltimo">--</b><span>Último registro</span></div></div></section>
+<div class="operator-tabs"><button type="button" class="btn-secondary" id="abrirPainelOperador" onclick="abrirPainelOperador()">PAINEL DO OPERADOR DE ESTOQUE</button></div>
+<nav class="tabs" aria-label="Abas do romaneio"><button id="tabTotal" class="tab-button active" type="button" onclick="abrirAba('total')">ROMANEIO TOTAL</button><button id="tabCaminhao" class="tab-button" type="button" onclick="abrirAba('caminhao')">ROMANEIO POR CAMINHÃO</button></nav>
+
+<section id="painelOperadorDesktop" class="operator-panel" aria-label="Painel do operador de estoque">
+ <div class="operator-hero"><h2>Operação de estoque</h2><p>Conferência de romaneios e acompanhamento do estoque • ambiente local de testes</p><div class="operator-toolbar"><button type="button" onclick="operadorVoltarRomaneios()">ABRIR ROMANEIOS</button><button type="button" onclick="operadorVerPendencias()">CONFERIR PENDÊNCIAS</button><button type="button" class="operator-yellow" onclick="operadorSincronizarAgora()">SINCRONIZAR AGORA</button><button type="button" class="operator-outline" onclick="operadorAbrirEstoque()">VER ESTOQUE DE TESTES</button></div><div class="operator-note" id="operadorAvisoSync" role="status">Integração com SharePoint ainda não habilitada. O botão de sincronização verifica somente o estado local; nenhuma baixa ou ajuste é enviado.</div></div>
+ <div class="operator-section-tabs" role="tablist" aria-label="Áreas do operador"><button id="opTabVisao" type="button" class="active" role="tab" aria-selected="true" onclick="operadorSelecionarAba('visao')">VISÃO GERAL</button><button id="opTabEstoque" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('estoque')">ESTOQUE COMPLETO</button></div><div id="opVisaoGeral" role="tabpanel"><div class="operator-metrics"><div class="operator-metric"><span>Destinos com romaneios</span><strong id="opDestinos">0</strong></div><div class="operator-metric"><span>Paletes registrados</span><strong id="opPaletes">0</strong></div><div class="operator-metric"><span>Caixas registradas</span><strong id="opCaixas">0</strong></div><div class="operator-metric"><span>Movimentações pendentes</span><strong id="opPendentes">0</strong></div></div>
+ <div class="operator-metrics"><div class="operator-metric"><span>Caixas no estoque</span><strong id="opEstoqueCaixas">—</strong></div><div class="operator-metric"><span>SKUs distintos no estoque</span><strong id="opEstoqueSkus">—</strong></div></div>
+ <div class="operator-workspace"><div class="operator-box"><h3>Paletes registrados</h3><div style="overflow-x:auto"><table class="operator-table"><thead><tr><th>Palete</th><th>Destino</th><th>Caixas</th><th>Ação</th></tr></thead><tbody id="opTabelaDestinos"></tbody></table></div><p class="operator-status">As correções serão feitas pelas funções atuais do romaneio até a etapa de edição e histórico ser concluída.</p></div><div class="operator-box"><h3>Controle de estoque</h3><p id="opResumoEstoque" class="operator-status">Consulta local disponível após importação de uma cópia do estoque.</p><div class="operator-note">Baixa e ajuste físico integrados serão habilitados somente após testes das regras existentes. Nenhuma substituição de inventário ocorre nesta etapa.</div><p id="opUltimaConsulta" class="operator-status"></p></div></div>
+</div><div id="opAbaEstoque" role="tabpanel" class="hidden"><section class="card" id="painelEstoqueTeste" style="margin:14px 0;padding:20px">
+  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.31</small></h2><span class="badge">Reserva local de teste</span></div>
   <p style="margin:8px 0;color:#475569">Importe uma CÓPIA do Excel. A importação é opcional. Sem Excel, o Romaneio funciona normalmente. Com Excel, novas entradas passam por reserva local. O arquivo não é modificado.</p>
   <label for="arquivoEstoqueTeste" style="display:block;margin:10px 0">Selecionar planilha de estoque (.xlsx)</label>
   <input id="arquivoEstoqueTeste" type="file" accept=".xlsx,.xls" onchange="importarEstoqueTeste(event)" style="max-width:100%;margin-bottom:10px">
@@ -83,17 +95,9 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
   <div id="divergenciasEstoqueTeste" role="alert" aria-live="assertive" style="display:none;margin:12px 0;padding:14px 16px;border:2px solid #c2410c;border-radius:10px;background:#fff1e6;color:#7c2d12;font-weight:600"></div>
   <p id="resumoReservaTeste" role="status">Reservas: aguardando importação do estoque.</p>
   <p id="resultadoEstoqueTeste" role="status" aria-live="polite">Nenhuma planilha importada nesta sessão.</p>
-  <div id="resumoEstoqueTeste" class="hidden" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>SKU</th><th>Lote completo</th><th>Saldo (CX)</th><th>Reservado (CX)</th><th>Disponível (CX)</th><th>Situação</th></tr></thead><tbody id="linhasEstoqueTeste"></tbody></table></div>
+  <div id="resumoEstoqueTeste" class="hidden" style="overflow:auto;max-height:60vh"><table style="width:100%;border-collapse:collapse"><thead><tr><th>SKU</th><th>Lote completo</th><th>Saldo (CX)</th><th>Reservado (CX)</th><th>Disponível (CX)</th><th>Situação</th></tr></thead><tbody id="linhasEstoqueTeste"></tbody></table></div>
 </section>
-<section class="dashboard"><div class="metric"><div class="ico">📋</div><div><b id="dashRegistros">0</b><span id="dashRegistrosLabel">Registros totais</span></div></div><div class="metric"><div class="ico">📦</div><div><b id="dashCaixas">0</b><span id="dashCaixasLabel">Caixas totais</span></div></div><div class="metric"><div class="ico">🧱</div><div><b id="dashPaletes">0</b><span id="dashPaletesLabel">Paletes totais</span></div></div><div class="metric"><div class="ico">📍</div><div><b id="dashDestinos">0</b><span id="dashDestinosLabel">Destinos totais</span></div></div><div class="metric"><div class="ico">🕒</div><div><b id="dashUltimo">--</b><span>Último registro</span></div></div></section>
-<div class="operator-tabs"><button type="button" class="btn-secondary" id="abrirPainelOperador" onclick="abrirPainelOperador()">PAINEL DO OPERADOR DE ESTOQUE</button></div>
-<nav class="tabs" aria-label="Abas do romaneio"><button id="tabTotal" class="tab-button active" type="button" onclick="abrirAba('total')">ROMANEIO TOTAL</button><button id="tabCaminhao" class="tab-button" type="button" onclick="abrirAba('caminhao')">ROMANEIO POR CAMINHÃO</button></nav>
-
-<section id="painelOperadorDesktop" class="operator-panel" aria-label="Painel do operador de estoque">
- <div class="operator-hero"><h2>Operação de estoque</h2><p>Conferência de romaneios e acompanhamento do estoque • ambiente local de testes</p><div class="operator-toolbar"><button type="button" onclick="operadorVoltarRomaneios()">ABRIR ROMANEIOS</button><button type="button" onclick="operadorVerPendencias()">CONFERIR PENDÊNCIAS</button><button type="button" class="operator-yellow" onclick="operadorSincronizarAgora()">SINCRONIZAR AGORA</button><button type="button" class="operator-outline" onclick="operadorAbrirEstoque()">VER ESTOQUE DE TESTES</button></div><div class="operator-note" id="operadorAvisoSync" role="status">Integração com SharePoint ainda não habilitada. O botão de sincronização verifica somente o estado local; nenhuma baixa ou ajuste é enviado.</div></div>
- <div class="operator-metrics"><div class="operator-metric"><span>Destinos com romaneios</span><strong id="opDestinos">0</strong></div><div class="operator-metric"><span>Paletes registrados</span><strong id="opPaletes">0</strong></div><div class="operator-metric"><span>Caixas registradas</span><strong id="opCaixas">0</strong></div><div class="operator-metric"><span>Movimentações pendentes</span><strong id="opPendentes">0</strong></div></div>
- <div class="operator-workspace"><div class="operator-box"><h3>Paletes registrados</h3><div style="overflow-x:auto"><table class="operator-table"><thead><tr><th>Palete</th><th>Destino</th><th>Caixas</th><th>Ação</th></tr></thead><tbody id="opTabelaDestinos"></tbody></table></div><p class="operator-status">As correções serão feitas pelas funções atuais do romaneio até a etapa de edição e histórico ser concluída.</p></div><div class="operator-box"><h3>Controle de estoque</h3><p id="opResumoEstoque" class="operator-status">Consulta local disponível após importação de uma cópia do estoque.</p><div class="operator-note">Baixa e ajuste físico integrados serão habilitados somente após testes das regras existentes. Nenhuma substituição de inventário ocorre nesta etapa.</div><p id="opUltimaConsulta" class="operator-status"></p></div></div>
-</section>
+</div></section>
 <main class="layout" id="abaTotal">
 <section class="card flow-card" id="escolhaFluxo"><div class="card-header"><h2>Adicionar palete</h2><span class="badge">Nova entrada</span></div><p>Leia a etiqueta do palete ou utilize o preenchimento manual.</p><div class="initial-pallet-setting"><label for="campoPaleteInicial">PALETE INICIAL</label><input id="campoPaleteInicial" type="number" min="1" step="1" inputmode="numeric" placeholder="Vazio = próximo palete ou palete 1" onchange="salvarPaleteInicial()"><small>Informe qualquer número para iniciar por ele; depois o app segue pelos próximos números livres.</small></div><div class="flow-actions"><button class="btn-primary" type="button" onclick="abrirLeitorQr()">📷 LER CÓDIGO</button><button class="btn-secondary" type="button" onclick="usarInsercaoManual()">INSERÇÃO MANUAL</button><button id="btnExcelInicial" type="button" onclick="gerarExcel()">GERAR E SALVAR EXCEL TOTAL</button><button id="btnReiniciarInicial" class="btn-danger" type="button" onclick="reiniciarEntradas()">APAGAR TODO O ROMANEIO</button></div></section>
 <section class="card form-card hidden" id="formEntrada"><div class="card-header"><h2 id="tituloEntrada">Romaneio de Paletes 2.0</h2><span class="badge" id="badgeEntrada">Entrada</span></div>
@@ -136,7 +140,7 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 </div>
 
 <script>
-const APP_VERSION = "2.0.30";
+const APP_VERSION = "2.0.31";
 const VERSION_URL = "version.json";
 const ESTADO_OPERACIONAL_KEY = "romaneio_estado_operacional";
 const RASCUNHO_KEY = "romaneio_rascunho";
@@ -2364,6 +2368,7 @@ async function importarEstoqueTeste(event) {
     window.reservaTesteAtiva = true;
     atualizarResumoReservaTeste();
     renderizarEstoqueCompletoTeste();
+    operadorAtualizarCardsEstoque();
     const total=[...mapa.values()].reduce((acc,x)=>acc+x.saldo,0);
     aviso.textContent="Arquivo: "+arquivo.name+" | "+mapa.size+" lotes | "+total.toLocaleString("pt-BR")+" caixas em saldo. Exibindo todos os lotes. Reservas locais de novas entradas ativadas. Nenhuma baixa foi feita.";
     resumo.classList.remove("hidden");
@@ -2401,12 +2406,28 @@ function operadorAtualizarPainel(){
    const td=tr.insertCell();const btn=document.createElement('button');btn.type='button';btn.textContent='Conferir';
    btn.addEventListener('click',()=>operadorVoltarRomaneios());td.appendChild(btn);
  });
+ operadorAtualizarCardsEstoque();
  const resumo=document.getElementById('resumoReservaTeste');document.getElementById('opResumoEstoque').textContent=resumo?.textContent||'Estoque de testes ainda não carregado.';
  document.getElementById('opUltimaConsulta').textContent='Painel atualizado localmente às '+new Date().toLocaleTimeString('pt-BR');
 }
-function abrirPainelOperador(){document.getElementById('abaTotal').classList.add('hidden');document.getElementById('abaCaminhao').classList.add('hidden');document.getElementById('painelOperadorDesktop').classList.add('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','true');operadorAtualizarPainel();}
+function operadorSelecionarAba(aba){
+ const estoque=aba==='estoque';
+ document.getElementById('opVisaoGeral').classList.toggle('hidden',estoque);
+ document.getElementById('opAbaEstoque').classList.toggle('hidden',!estoque);
+ for(const [id,active] of [['opTabVisao',!estoque],['opTabEstoque',estoque]]){
+   const btn=document.getElementById(id);btn.classList.toggle('active',active);btn.setAttribute('aria-selected',String(active));
+ }
+ if(estoque)renderizarEstoqueCompletoTeste();
+ operadorAtualizarCardsEstoque();
+}
+function operadorAtualizarCardsEstoque(){
+ const itens=window.estoqueTesteConsulta?[...window.estoqueTesteConsulta.values()]:null;
+ document.getElementById('opEstoqueCaixas').textContent=itens?itens.reduce((n,i)=>n+i.saldo,0).toLocaleString('pt-BR'):'—';
+ document.getElementById('opEstoqueSkus').textContent=itens?new Set(itens.map(i=>String(i.sku).trim().toLocaleUpperCase('pt-BR'))).size.toLocaleString('pt-BR'):'—';
+}
+function abrirPainelOperador(){document.getElementById('abaTotal').classList.add('hidden');document.getElementById('abaCaminhao').classList.add('hidden');document.getElementById('painelOperadorDesktop').classList.add('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','true');operadorSelecionarAba('visao');operadorAtualizarPainel();}
 function operadorVoltarRomaneios(){document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false');abrirAba('total');document.querySelector('#tabela')?.scrollIntoView({behavior:'smooth',block:'start'});}
-function operadorAbrirEstoque(){document.getElementById('painelEstoqueTeste')?.scrollIntoView({behavior:'smooth',block:'start'});}
+function operadorAbrirEstoque(){operadorSelecionarAba('estoque');document.getElementById('opTabEstoque')?.scrollIntoView({behavior:'smooth',block:'start'});}
 function operadorVerPendencias(){if(typeof consultarFilaMovimentos==='function')consultarFilaMovimentos();operadorAtualizarPainel();}
 function operadorSincronizarAgora(){operadorAtualizarPainel();document.getElementById('operadorAvisoSync').textContent='Consulta local concluída. Sincronização com SharePoint indisponível nesta etapa; nenhum arquivo ou saldo foi modificado.';}
 document.getElementById('tabTotal')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
