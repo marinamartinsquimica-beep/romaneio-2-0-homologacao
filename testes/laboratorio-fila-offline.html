@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Romaneio 2.0 | Laboratório de fila offline</title>
+<style>
+:root{font-family:system-ui,Arial,sans-serif;color:#254D69;background:#eff9fb}*{box-sizing:border-box}body{margin:0;padding:20px}main{max-width:850px;margin:auto}h1{font-size:1.5rem}.box{background:#fff;border:1px solid #c6e3e8;border-radius:14px;padding:18px;margin:14px 0}label{display:block;font-weight:700;margin:10px 0 4px}input,select{width:100%;padding:11px;border:1px solid #9bb7c2;border-radius:7px;font:inherit}button{background:#254D69;color:#fff;border:0;border-radius:8px;padding:11px 15px;margin:8px 6px 0 0;font-weight:700;cursor:pointer}button.secondary{background:#28788d}button.danger{background:#a34336}button:disabled{opacity:.5}table{border-collapse:collapse;width:100%;font-size:.88rem}th,td{text-align:left;border-bottom:1px solid #ddd;padding:8px;overflow-wrap:anywhere}#log{white-space:pre-wrap;background:#edf7fa;padding:12px;border-radius:8px}.warning{border-left:4px solid #FFA385;padding:10px;background:#fff7f2}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.scroll{overflow-x:auto}small{line-height:1.6}strong{font-weight:750}
+</style></head><body><main>
+<h1>Romaneio de Paletes 2.0 — Laboratório offline</h1>
+<p class="warning"><strong>Ambiente isolado de testes.</strong> Não conecta ao Supabase, não acessa o SharePoint e não altera o Romaneio oficial. A sincronização é apenas <strong>simulada neste navegador</strong>.</p>
+<section class="box"><h2>1. Criar operação local</h2><div class="grid">
+<div><label for="destino">Destino</label><input id="destino" maxlength="80" value="DESTINO TESTE"></div>
+<div><label for="palete">Palete</label><input id="palete" maxlength="40" value="1"></div>
+<div><label for="sku">SKU</label><input id="sku" maxlength="80" value="G10"></div>
+<div><label for="caixas">Caixas</label><input id="caixas" type="number" min="1" max="23000" step="1" value="7"></div>
+</div><button id="adicionar">Adicionar à fila offline</button></section>
+<section class="box"><h2>2. Simular envio e conflitos</h2>
+<label for="modo">Resultado simulado do servidor</label><select id="modo"><option value="ok">Confirmar operações pendentes</option><option value="conflito">Simular conflito em operações pendentes</option></select>
+<button id="enviar" class="secondary">Simular sincronização</button>
+<button id="repetir" class="secondary">Testar reenvio idempotente</button>
+<p><small>Confirmação simulada significa somente que o registro foi gravado no armazenamento local do laboratório; não representa uma confirmação real do Supabase.</small></p></section>
+<section class="box"><h2>3. Operações</h2><p id="resumo" role="status">Carregando...</p><div class="scroll"><table><thead><tr><th>ID</th><th>Destino / Palete</th><th>SKU</th><th>Caixas</th><th>Situação</th></tr></thead><tbody id="linhas"></tbody></table></div>
+<button id="recolocar" class="secondary">Recolocar conflitos na fila</button>
+<button id="limpar" class="danger">Limpar apenas dados deste laboratório</button>
+<p id="log" role="status">Aguardando.</p></section>
+</main><script>
+(()=>{'use strict';
+const DB='romaneio2-lab-fila-v1',STORE='operacoes',ACK='confirmacoes';
+const $=id=>document.getElementById(id);
+let db;
+function txStore(name,mode='readonly'){return db.transaction(name,mode).objectStore(name);}
+function request(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
+function complete(tx){return new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
+function open(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB,1);req.onupgradeneeded=()=>{const d=req.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:'id'});if(!d.objectStoreNames.contains(ACK))d.createObjectStore(ACK,{keyPath:'id'});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
+async function all(name){return request(txStore(name).getAll());}
+async function save(name,item){const tx=db.transaction(name,'readwrite');tx.objectStore(name).put(item);await complete(tx);}
+function log(msg){$('log').textContent=msg;}
+async function render(){const items=(await all(STORE)).sort((a,b)=>a.criadoEm.localeCompare(b.criadoEm));const counts={pendente:0,conflito:0,confirmado_simulado:0};for(const x of items)counts[x.status]=(counts[x.status]||0)+1;$('resumo').textContent='Pendentes: '+counts.pendente+' | Conflitos: '+counts.conflito+' | Confirmadas apenas na simulação: '+counts.confirmado_simulado;const tbody=$('linhas');tbody.replaceChildren();for(const x of items){const tr=document.createElement('tr');for(const value of [x.id.slice(0,8),x.destino+' / '+x.palete,x.sku,String(x.caixas),x.status.replaceAll('_',' ')]){const td=document.createElement('td');td.textContent=value;tr.append(td);}tbody.append(tr);}}
+async function add(){const destino=$('destino').value.trim(),palete=$('palete').value.trim(),sku=$('sku').value.trim(),caixas=Number($('caixas').value);if(!destino||!palete||!sku||!Number.isSafeInteger(caixas)||caixas<=0||caixas>23000){log('Preencha destino, palete, SKU e quantidade inteira positiva (até 23.000).');return;}const id=crypto.randomUUID();await save(STORE,{id,destino,palete,sku,caixas,status:'pendente',criadoEm:new Date().toISOString()});await render();log('Operação '+id.slice(0,8)+' salva localmente como PENDENTE.');}
+async function simulate(){const pending=(await all(STORE)).filter(x=>x.status==='pendente');const conflict=$('modo').value==='conflito';for(const x of pending){if(conflict){x.status='conflito';await save(STORE,x);}else{const existing=await request(txStore(ACK).get(x.id));if(!existing)await save(ACK,{id:x.id,caixas:x.caixas});x.status='confirmado_simulado';await save(STORE,x);}}await render();log(conflict?'Conflitos simulados: '+pending.length+'. Nenhuma operação foi confirmada.':'Confirmadas apenas no laboratório: '+pending.length+'. Nenhuma comunicação com servidor ocorreu.');}
+async function replay(){const items=(await all(STORE)).filter(x=>x.status==='confirmado_simulado');let repeated=0;for(const x of items){const existing=await request(txStore(ACK).get(x.id));if(existing)repeated++;else await save(ACK,{id:x.id,caixas:x.caixas});}const acks=await all(ACK);log('Reenvios testados: '+repeated+'. Registros únicos no simulador: '+acks.length+'. Nenhuma caixa foi duplicada por reenvio.');}
+async function retry(){const conflicts=(await all(STORE)).filter(x=>x.status==='conflito');for(const x of conflicts){x.status='pendente';await save(STORE,x);}await render();log('Conflitos recolocados na fila: '+conflicts.length+'. Exige validação real antes de produção.');}
+async function clear(){if(!confirm('Excluir SOMENTE os registros de teste deste laboratório neste navegador?'))return;const tx=db.transaction([STORE,ACK],'readwrite');tx.objectStore(STORE).clear();tx.objectStore(ACK).clear();await complete(tx);await render();log('Somente os dados locais deste laboratório foram apagados.');}
+function bind(id,fn){$(id).addEventListener('click',()=>fn().catch(e=>log('Erro: '+e.message)));}
+(async()=>{try{if(!window.indexedDB||!crypto.randomUUID)throw Error('Navegador incompatível com IndexedDB/UUID.');db=await open();bind('adicionar',add);bind('enviar',simulate);bind('repetir',replay);bind('recolocar',retry);bind('limpar',clear);await render();log('Laboratório pronto. Operações permanecem neste navegador após recarregar a página.');}catch(e){log('Não foi possível iniciar: '+e.message);}})();
+})();
+</script></body></html>
