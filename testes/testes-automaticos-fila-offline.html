@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Romaneio 2.0 — Testes da fila offline</title>
+<style>:root{font-family:system-ui,Arial,sans-serif;color:#254D69;background:#f0f9fb}body{margin:0;padding:20px}main{max-width:760px;margin:auto}.panel{background:white;border:1px solid #b9dbe4;border-radius:14px;padding:20px;margin:16px 0}button{background:#254D69;color:white;border:0;border-radius:8px;padding:12px 18px;font-weight:700;cursor:pointer}li{padding:8px 0;border-bottom:1px solid #e1e8ec}.pass{color:#126a46}.fail{color:#aa332a}.note{background:#fff7f1;border-left:4px solid #FFA385;padding:12px}code{overflow-wrap:anywhere}small{line-height:1.5}</style></head><body><main><h1>Romaneio 2.0 — Testes automáticos offline</h1><p class="note">Laboratório isolado: não acessa Supabase, SharePoint, nem dados do Romaneio oficial. Os testes utilizam exclusivamente um banco IndexedDB próprio <code>romaneio2-testes-automaticos-v1</code>.</p>
+<section class="panel"><button id="run">Executar testes</button><p id="summary" role="status">Nenhum teste executado.</p><ol id="results"></ol></section>
+<section class="panel"><h2>O que será verificado</h2><p>Persistência após fechar e reabrir o banco, reenvio idempotente, conflito sem confirmação, recuperação da fila e isolamento de dados. A confirmação é <strong>simulada</strong>, não representa reserva nem sincronização real.</p><small>Ao executar, somente os dados criados por esta página de testes são apagados e recriados.</small></section></main>
+<script>
+(()=>{'use strict';
+const DB='romaneio2-testes-automaticos-v1';
+const $=id=>document.getElementById(id);
+function open(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('queue'))d.createObjectStore('queue',{keyPath:'id'});if(!d.objectStoreNames.contains('ack'))d.createObjectStore('ack',{keyPath:'id'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+function request(r){return new Promise((resolve,reject)=>{r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+function done(t){return new Promise((resolve,reject)=>{t.oncomplete=resolve;t.onerror=()=>reject(t.error);t.onabort=()=>reject(t.error);});}
+async function put(db,store,item){const t=db.transaction(store,'readwrite');t.objectStore(store).put(item);await done(t);}
+async function get(db,store,id){return request(db.transaction(store).objectStore(store).get(id));}
+async function all(db,store){return request(db.transaction(store).objectStore(store).getAll());}
+async function reset(db){const t=db.transaction(['queue','ack'],'readwrite');t.objectStore('queue').clear();t.objectStore('ack').clear();await done(t);}
+async function send(db,id,conflict=false){const item=await get(db,'queue',id);if(!item)throw Error('Operação ausente');if(item.status==='confirmado_simulado')return 'ja_confirmado';if(conflict){item.status='conflito';await put(db,'queue',item);return 'conflito';}const prev=await get(db,'ack',id);if(!prev)await put(db,'ack',{id,caixas:item.caixas});item.status='confirmado_simulado';await put(db,'queue',item);return prev?'reenvio':'confirmado';}
+function assert(cond,message){if(!cond)throw Error(message);}
+function result(name,success,detail){const li=document.createElement('li');li.className=success?'pass':'fail';li.textContent=(success?'PASSOU — ':'FALHOU — ')+name+(detail?' | '+detail:'');$('results').append(li);}
+async function run(){const button=$('run');button.disabled=true;$('results').replaceChildren();$('summary').textContent='Executando...';let db,ok=0,bad=0;
+async function test(name,fn){try{await fn();ok++;result(name,true);}catch(e){bad++;result(name,false,e.message);}}
+try{db=await open();await reset(db);
+const a={id:'op-a',destino:'TESTE',palete:'1',sku:'G10',caixas:7,status:'pendente'};
+await test('Gravação de operação pendente',async()=>{await put(db,'queue',a);assert((await get(db,'queue','op-a')).status==='pendente','Status incorreto');});
+await test('Persistência após reabrir IndexedDB',async()=>{db.close();db=await open();assert((await get(db,'queue','op-a')).caixas===7,'Operação não persistiu');});
+await test('Confirmação simulada',async()=>{assert(await send(db,'op-a')==='confirmado','Falha na simulação');assert((await all(db,'ack')).length===1,'Registro não confirmado');});
+await test('Reenvio idempotente',async()=>{assert(await send(db,'op-a')==='ja_confirmado','Reenvio inesperado');assert((await all(db,'ack')).length===1,'Duplicou operação');});
+await test('Conflito não confirma operação',async()=>{await put(db,'queue',{id:'op-b',destino:'TESTE',palete:'1',sku:'M10',caixas:9,status:'pendente'});assert(await send(db,'op-b',true)==='conflito','Não identificou conflito');assert(!(await get(db,'ack','op-b')),'Conflito foi confirmado');});
+await test('Recuperação explícita do conflito',async()=>{const b=await get(db,'queue','op-b');assert(b.status==='conflito','Conflito perdido');b.status='pendente';await put(db,'queue',b);assert((await get(db,'queue','op-b')).status==='pendente','Não voltou à fila');});
+await test('Identificadores distintos permanecem separados',async()=>{assert((await all(db,'queue')).length===2,'Operações misturadas');assert((await all(db,'ack')).length===1,'Confirmações indevidas');});
+await test('Limpeza restrita ao laboratório',async()=>{await reset(db);assert((await all(db,'queue')).length===0&&(await all(db,'ack')).length===0,'Dados de teste restantes');});
+$('summary').textContent=ok+' testes passaram; '+bad+' falharam.';}catch(e){$('summary').textContent='Erro ao iniciar: '+e.message;}finally{if(db)db.close();button.disabled=false;}}
+$('run').addEventListener('click',run);
+})();
+</script></body></html>
