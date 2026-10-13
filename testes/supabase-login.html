@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Romaneio 2.0 — Teste isolado de autenticação</title>
+<style>
+:root{font-family:system-ui,Arial,sans-serif;color:#254D69;background:#f4fbfd}body{margin:0;padding:22px}main{max-width:720px;margin:auto}h1{font-size:1.55rem}.card{background:white;border:1px solid #b9dbe4;border-radius:16px;padding:20px;margin:16px 0}label{display:block;font-weight:700;margin:12px 0 5px}input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #a3bbc6;border-radius:8px;font:inherit}button{padding:12px 18px;border:0;border-radius:8px;background:#254D69;color:white;font-weight:700;margin:12px 8px 0 0;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#e9f7fa;padding:14px;border-radius:8px}small{line-height:1.5}#status{font-weight:700} .warn{border-left:4px solid #FFA385;padding:10px;background:#fff7f1}
+</style></head><body><main>
+<h1>Romaneio de Paletes 2.0 — Teste de autenticação</h1>
+<p class="warn">Ambiente isolado: não cria, altera nem exclui registros. Não é o aplicativo de produção. Não compartilhe sua senha ou chaves secretas.</p>
+<section class="card"><h2>Conexão</h2>
+<label for="url">URL do projeto Supabase</label><input id="url" type="url" placeholder="https://seu-projeto.supabase.co" autocomplete="off">
+<label for="key">Publishable key (sb_publishable_...)</label><input id="key" type="text" placeholder="sb_publishable_..." autocomplete="off" spellcheck="false">
+<small>Somente a chave pública. Nunca informe secret key, service_role ou senha do banco.</small>
+<label for="email">E-mail da administradora</label><input id="email" type="email" autocomplete="username">
+<label for="password">Senha do usuário (não é a senha do banco)</label><input id="password" type="password" autocomplete="current-password">
+<button id="login">Entrar e testar leitura</button><button id="logout" disabled>Sair</button>
+<p id="status" role="status">Aguardando teste.</p></section>
+<section class="card"><h2>Resultado de acesso</h2><pre id="result">Nenhuma consulta executada.</pre>
+<small>Consulta apenas o perfil próprio e a contagem de linhas visíveis em destinos, paletes e entradas. Nenhum dado de estoque é exibido.</small></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+let client=null;
+function status(message){$('status').textContent=message;}
+function result(data){$('result').textContent=JSON.stringify(data,null,2);}
+$('login').addEventListener('click',async()=>{
+ $('login').disabled=true;result({etapa:'Iniciando'});status('Conectando...');
+ try{
+  const url=$('url').value.trim(),key=$('key').value.trim(),email=$('email').value.trim(),password=$('password').value;
+  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(url))throw Error('URL Supabase inválida.');
+  if(!key.startsWith('sb_publishable_'))throw Error('Informe somente a publishable key.');
+  if(!email||!password)throw Error('Informe e-mail e senha do usuário.');
+  if(!window.supabase)throw Error('Biblioteca Supabase indisponível. Verifique a internet.');
+  client=window.supabase.createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  const {data:auth,error:authError}=await client.auth.signInWithPassword({email,password});
+  $('password').value='';
+  if(authError)throw authError;
+  if(!auth.user)throw Error('Login sem usuário.');
+  const {data:profile,error:profileError}=await client.from('rom_usuarios').select('perfil,ativo').eq('usuario_id',auth.user.id).maybeSingle();
+  const checks={};
+  for(const table of ['rom_destinos','rom_paletes','rom_entradas']){
+    const {count,error}=await client.from(table).select('*',{count:'exact',head:true});
+    checks[table]=error?{erro:error.message,codigo:error.code}:{linhas_visiveis:count};
+  }
+  result({login:'OK',usuario:auth.user.email,perfil:profileError?{erro:profileError.message,codigo:profileError.code}:profile,consultas:checks});
+  status(profileError?'Login OK; leitura do perfil falhou.':'Login e consultas concluídos. Confira o resultado.');
+  $('logout').disabled=false;
+ }catch(err){$('password').value='';status('Falha no teste: '+(err.message||String(err)));result({erro:err.message||String(err)});if(client){await client.auth.signOut().catch(()=>{});client=null;}}
+ finally{$('login').disabled=false;}
+});
+$('logout').addEventListener('click',async()=>{if(client)await client.auth.signOut();client=null;$('logout').disabled=true;result({sessao:'encerrada'});status('Sessão encerrada.');});
+})();
+</script></body></html>
