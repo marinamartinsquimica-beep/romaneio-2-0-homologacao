@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Testes da fila offline — Romaneio 2.0</title>
+<style>body{font:16px system-ui;background:#f4f8fb;color:#254D69;margin:0;padding:24px}main{max-width:850px;margin:auto;background:white;padding:24px;border-radius:12px}button{background:#254D69;color:white;border:0;border-radius:8px;padding:12px 18px;font-weight:600}button:disabled{opacity:.5}pre{background:#edf4f8;padding:16px;white-space:pre-wrap;overflow-wrap:anywhere}p{line-height:1.5}.ok{color:#16713d}.fail{color:#b32323}</style></head><body><main><h1>Romaneio 2.0 — Testes automáticos da fila offline</h1><p>Este laboratório testa exclusivamente o IndexedDB local. Não conecta ao Supabase e não altera dados do Romaneio em produção.</p><button id="run">Executar testes</button><pre id="results">Aguardando execução.</pre></main>
+<script type="module">
+import { FilaRomaneioOffline } from "./modulos/fila-offline-romaneio-v1.js";
+const output=document.getElementById("results"), button=document.getElementById("run");
+button.onclick=async()=>{
+button.disabled=true;const nome="romaneio2-teste-automatico-"+crypto.randomUUID();const fila=new FilaRomaneioOffline(nome);const linhas=[];let ok=0,erro=0;
+async function testar(nome,fn){try{await fn();linhas.push("OK — "+nome);ok++}catch(e){linhas.push("FALHOU — "+nome+": "+e.message);erro++}output.textContent=linhas.join("\n")}
+function exigir(valor,mensagem){if(!valor)throw Error(mensagem)}
+let primeiro,segundo,terceiro;
+try{
+await testar("Fila inicia vazia",async()=>exigir((await fila.listar()).length===0,"Há registros inesperados"));
+await testar("Cria operação pendente com UUID",async()=>{primeiro=await fila.adicionar({palete_chave:"LAB-001",caixas:7,versao_esperada:1});exigir(firstiroValido(primeiro),"UUID ou estado inválido")});
+await testar("Persiste após abrir outra instância",async()=>{const nova=new FilaRomaneioOffline(nome);exigir((await nova.listar()).some(x=>x.operacao_id===primeiro.operacao_id),"Não persistiu")});
+await testar("Falha de rede mantém pendência e UUID",async()=>{const enviados=[];await fila.enviarPendentes(async x=>{enviados.push(x.p_operacao_id);throw Error("Rede indisponível")});const atual=(await fila.listar())[0];exigir(atual.estado==="pendente"&&atual.tentativas===1&&enviados[0]===primeiro.operacao_id,"Perdeu pendência ou UUID")});
+await testar("Reenvio confirmado usa mesmo UUID",async()=>{const enviados=[];await fila.enviarPendentes(async x=>{enviados.push(x.p_operacao_id);return {status:"confirmada",versao:2}});const atual=(await fila.listar())[0];exigir(atual.estado==="confirmada"&&enviados[0]===primeiro.operacao_id,"Reenvio incorreto")});
+await testar("Operação confirmada não é reenviada",async()=>{let chamadas=0;await fila.enviarPendentes(async()=>{chamadas++;return {status:"confirmada"}});exigir(chamadas===0,"Enviou confirmada")});
+await testar("Conflito fica separado de pendente",async()=>{segundo=await fila.adicionar({palete_chave:"LAB-001",caixas:7,versao_esperada:1});await fila.enviarPendentes(async()=>({status:"conflito",motivo:"versao_alterada"}));const r=(await fila.listar()).find(x=>x.operacao_id===segundo.operacao_id);exigir(r.estado==="conflito","Não separou conflito")});
+await testar("Resposta inesperada não confirma operação",async()=>{terceiro=await fila.adicionar({palete_chave:"LAB-001",caixas:1,versao_esperada:2});await fila.enviarPendentes(async()=>({status:"desconhecido"}));const r=(await fila.listar()).find(x=>x.operacao_id===terceiro.operacao_id);exigir(r.estado==="pendente"&&r.tentativas===1,"Descartou pendente")});
+await testar("Entrada inválida é recusada",async()=>{let recusou=false;try{await fila.adicionar({palete_chave:"",caixas:-1,versao_esperada:0})}catch{recusou=true}exigir(recusou,"Aceitou entrada inválida")});
+}finally{const db=await fila.banco();db.close();indexedDB.deleteDatabase(nome);linhas.push("\nResultado: "+ok+" aprovados, "+erro+" falhas.");output.textContent=linhas.join("\n");button.disabled=false}
+};
+function firstiroValido(x){return typeof x.operacao_id==="string"&&x.operacao_id.length===36&&x.estado==="pendente"}
+</script></body></html>
