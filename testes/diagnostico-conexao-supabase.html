@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Laboratório — Conexão Supabase Romaneio</title>
+<style>body{font-family:system-ui,Arial,sans-serif;background:#f5f8fb;color:#254D69;margin:0;padding:20px}main{max-width:620px;margin:auto}h1{font-size:1.4rem}.box{background:white;border:1px solid #d7e3ec;border-radius:12px;padding:18px;margin:15px 0}button{background:#254D69;color:white;border:0;border-radius:9px;padding:14px;font-size:1rem;width:100%;cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f0f4f7;padding:12px;border-radius:8px}small{color:#4d6274}.good{color:#176d43}.bad{color:#a33b3b}</style></head>
+<body><main><h1>Laboratório de conexão — Romaneio 2.0</h1>
+<p>Teste isolado de rede. Não exige login, não grava dados e não altera o aplicativo oficial.</p>
+<div class="box"><strong>Projeto:</strong> <code>komvafqlmevmtxqnvxsx.supabase.co</code><p><small>Execute pelo 5G e, se possível, compare com o Wi-Fi. Uma resposta HTTP 401/403 é diferente de erro de rede: significa que o servidor respondeu.</small></p><button id="testar">Testar conexão real</button></div>
+<div class="box"><strong>Resultado</strong><pre id="resultado">Nenhum teste executado.</pre><button id="copiar" type="button" style="margin-top:10px;background:#5a7283">Copiar diagnóstico</button></div>
+<small>Não informe senhas, tokens ou chaves nesta página. Teste exclusivamente de leitura. Nenhuma biblioteca externa.</small>
+</main><script>
+const url='https://komvafqlmevmtxqnvxsx.supabase.co/auth/v1/health';
+const saida=document.getElementById('resultado');
+document.getElementById('testar').addEventListener('click',async()=>{
+const inicio=performance.now();saida.textContent='Conectando...';
+const controlador=new AbortController();const limite=setTimeout(()=>controlador.abort(),12000);
+try{
+const resposta=await fetch(url,{method:'GET',cache:'no-store',mode:'cors',credentials:'omit',signal:controlador.signal});
+const corpo=(await resposta.text()).slice(0,600);
+saida.textContent=['Data: '+new Date().toLocaleString('pt-BR'),'Endpoint: /auth/v1/health','HTTP: '+resposta.status+' '+resposta.statusText,'Tempo: '+Math.round(performance.now()-inicio)+' ms','Servidor respondeu: SIM','Corpo: '+corpo].join('\n');
+}catch(e){saida.textContent=['Data: '+new Date().toLocaleString('pt-BR'),'Endpoint: /auth/v1/health','Tempo: '+Math.round(performance.now()-inicio)+' ms','Servidor respondeu via fetch: NÃO','Erro: '+e.name+' — '+e.message,'Nota: bloqueio CORS também pode aparecer como TypeError; não prova falha de rede.'].join('\n');}
+finally{clearTimeout(limite);}
+});
+document.getElementById('copiar').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(saida.textContent);alert('Diagnóstico copiado.');}catch(e){alert('Selecione o texto e copie manualmente.');}});
+</script></body></html>
