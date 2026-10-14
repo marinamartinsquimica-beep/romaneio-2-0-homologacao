@@ -1,0 +1,18 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teste adaptador Supabase — Romaneio 2.0</title><style>body{font:16px system-ui;background:#f4f8fb;color:#254D69;padding:24px}main{max-width:800px;margin:auto;background:white;padding:24px;border-radius:12px}button{background:#254D69;color:white;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}pre{background:#eef5f9;padding:16px;white-space:pre-wrap}</style></head><body><main><h2>Teste automático — Adaptador Supabase</h2><p>Simulação local: não conecta ao Supabase e não altera estoque.</p><button id="run">Executar testes</button><pre id="result">Aguardando.</pre></main><script type="module">
+import {criarAdaptadorLab} from './modulos/adaptador-supabase-lab-v1.js';
+const el=document.getElementById('result');const btn=document.getElementById('run');
+btn.onclick=async()=>{btn.disabled=true;const anterior=globalThis.fetch;const resultados=[];let ok=0,fail=0;const validar=async(nome,fn)=>{try{await fn();resultados.push('OK — '+nome);ok++}catch(e){resultados.push('FALHOU — '+nome+': '+e.message);fail++}};
+const exigir=(c,m)=>{if(!c)throw Error(m)};
+const op={p_operacao_id:'11111111-1111-4111-8111-111111111111',p_palete_chave:'LAB-001',p_caixas:7,p_versao_esperada:1};
+const montar=(token='token-de-teste')=>criarAdaptadorLab({url:'https://komvafqlmevmtxqnvxsx.supabase.co',chavePublica:'chave-publica-de-teste',obterToken:async()=>token});
+try{
+await validar('Rejeita URL insegura',async()=>{let erro=false;try{criarAdaptadorLab({url:'http://localhost',chavePublica:'publica',obterToken:async()=>''})}catch{erro=true}exigir(erro,'URL insegura aceita')});
+await validar('Rejeita ausência de sessão',async()=>{let erro=false;try{await montar('')(op)}catch{erro=true}exigir(erro,'Aceitou ausência de token')});
+await validar('Envia UUID, palete, caixas e versão',async()=>{let body,headers,url;globalThis.fetch=async(u,opts)=>{url=u;body=JSON.parse(opts.body);headers=opts.headers;return {ok:true,json:async()=>({status:'confirmada',versao:2})}};const r=await montar()(op);exigir(r.status==='confirmada','Sem confirmação');exigir(body.p_operacao_id===op.p_operacao_id&&body.p_palete_chave===op.p_palete_chave&&body.p_caixas===7&&body.p_versao_esperada===1,'Parâmetros errados');exigir(headers.Authorization==='Bearer token-de-teste','Token ausente');exigir(url.endsWith('/rest/v1/rpc/rom_lab_movimentar'),'Endpoint errado')});
+await validar('Reconhece operação repetida',async()=>{globalThis.fetch=async()=>({ok:true,json:async()=>({status:'repetida',versao:2})});exigir((await montar()(op)).status==='repetida','Repetição não reconhecida')});
+await validar('Reconhece conflito',async()=>{globalThis.fetch=async()=>({ok:true,json:async()=>({status:'conflito',motivo:'versao_alterada'})});exigir((await montar()(op)).status==='conflito','Conflito não reconhecido')});
+await validar('Erro HTTP não confirma',async()=>{globalThis.fetch=async()=>({ok:false,status:403});let erro=false;try{await montar()(op)}catch{erro=true}exigir(erro,'Erro HTTP aceito')});
+await validar('Falha de rede não confirma',async()=>{globalThis.fetch=async()=>{throw Error('Failed to fetch')};let erro=false;try{await montar()(op)}catch{erro=true}exigir(erro,'Falha de rede aceita')});
+await validar('Resposta inesperada não confirma',async()=>{globalThis.fetch=async()=>({ok:true,json:async()=>({status:'desconhecido'})});let erro=false;try{await montar()(op)}catch{erro=true}exigir(erro,'Resposta inválida aceita')});
+}finally{globalThis.fetch=anterior;resultados.push('\nResultado: '+ok+' aprovados, '+fail+' falhas.');el.textContent=resultados.join('\n');btn.disabled=false}};
+</script></body></html>
