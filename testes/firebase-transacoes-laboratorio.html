@@ -17,7 +17,7 @@
 <p class="muted">Informe a chave pública de configuração do app Firebase. Ela será usada somente em memória e não está incluída neste repositório.</p>
 <label for="email">E-mail Firebase</label><input id="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false">
 <label for="password">Senha</label><input id="password" type="password" autocomplete="current-password">
-<label for="appCheckKey">Chave pública do App Check (reCAPTCHA v3)</label><input id="appCheckKey" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Chave pública do site cadastrada no Firebase App Check">
+<label for="appCheckKey">Chave pública do App Check (reCAPTCHA Enterprise)</label><input id="appCheckKey" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Chave pública do site cadastrada no Firebase App Check">
 <p class="muted">Obrigatória para chamadas ao backend; é uma chave pública de site, não uma senha. Registre o domínio GitHub Pages no App Check antes do teste.</p>
 <div class="actions"><button id="login">Entrar</button><button id="logout" class="secondary" disabled>Encerrar sessão</button></div>
 <p id="status" class="status" role="status" aria-live="polite">Aguardando autenticação.</p></section>
@@ -40,7 +40,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase
 import {getAuth,setPersistence,inMemoryPersistence,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {getFirestore,doc,collection,query,orderBy,limit,onSnapshot} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import {getFunctions,httpsCallable} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
-import {initializeAppCheck,ReCaptchaV3Provider} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app-check.js";
+import {initializeAppCheck,ReCaptchaEnterpriseProvider} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app-check.js";
 
 const $=id=>document.getElementById(id);
 let app=null,auth=null,db=null,functions=null,palletRef=null,ledgerQuery=null,initializeLab=null,moveLab=null,getLabStatus=null;
@@ -73,7 +73,11 @@ $("login").addEventListener("click",async()=>{
     if(!siteKey)throw new Error("Informe a chave pública do App Check cadastrada para este domínio.");
     if(!app){
       app=initializeApp({apiKey,authDomain:"romaneio-2-0-laboratorio.firebaseapp.com",projectId:"romaneio-2-0-laboratorio",appId:"1:343680211941:web:8ad689db2c09447c2ded0c"});
-      initializeAppCheck(app,{provider:new ReCaptchaV3Provider(siteKey),isTokenAutoRefreshEnabled:true});appCheckInitialized=true;
+    }
+    if(!appCheckInitialized){
+      initializeAppCheck(app,{provider:new ReCaptchaEnterpriseProvider(siteKey),isTokenAutoRefreshEnabled:true});appCheckInitialized=true;
+    }
+    if(!auth){
       auth=getAuth(app);db=getFirestore(app);functions=getFunctions(app,"southamerica-east1");
       palletRef=doc(db,"rom_lab_transacoes_paletes","LAB-PALLET-50");
       ledgerQuery=query(collection(db,"rom_lab_transacoes_auditoria"),orderBy("createdAt","desc"),limit(25));
