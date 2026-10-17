@@ -10,7 +10,7 @@ match /rom_lab_reservas17/{paleteId} {
       && d.keys().hasAll(['codigo','sku','lote','estoque','reservado','expedido','romaneio','operacoes','historico'])
       && d.codigo == paleteId && d.sku == 'G' && d.lote == '001'
       && d.estoque is int && d.estoque >= 0 && d.estoque <= 50
-      && d.reservado is int && d.reservado >= 0 && d.reservado <= d.estoque
+      && d.reservado is int && d.reservado >= 0 && d.reservado <= 100000
       && d.expedido is int && d.expedido >= 0 && d.expedido <= 50
       && d.estoque + d.expedido == 50
       && d.romaneio is int && d.romaneio >= 0 && d.romaneio <= 100000
@@ -41,7 +41,7 @@ match /rom_lab_reservas17/{paleteId} {
        && request.resource.data.romaneio > resource.data.romaneio
        && request.resource.data.operacoes.size() == resource.data.operacoes.size() + 1)
       ||
-      // Reserva: somente aumenta reservado, sem baixa nem mudança no romaneio.
+      // Reserva: pode superar o saldo físico; a divergência fica visível no aplicativo.
       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reservado','historico'])
        && request.resource.data.reservado > resource.data.reservado
        && request.resource.data.romaneio == resource.data.romaneio)
