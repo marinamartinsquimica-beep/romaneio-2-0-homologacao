@@ -1,0 +1,15 @@
+import {compararConferencia,decidirAtualizacao} from './conferencia-compartilhada.js';
+import assert from 'node:assert/strict';
+const base=[{sku:'G',lote:'001',caixas:30,palete:'1',destino:'A'},{sku:'G',lote:'001',caixas:21,palete:'2',destino:'B'}];
+const resultado=(saldo)=>compararConferencia(base,[{sku:'G',lote:'001',saldo}])[0];
+assert.equal(resultado(50).pendente,true);
+assert.equal(resultado(50).diferenca,1);
+assert.equal(resultado(51).pendente,false);
+assert.deepEqual(resultado(51).paletes,['1','2']);
+assert.equal(compararConferencia(base,[])[0].motivo,'SKU/lote ausente');
+assert.equal(compararConferencia(base,[{sku:'G',lote:'001',saldo:45},{sku:'G',lote:'001',saldo:6}])[0].pendente,false);
+assert.equal(decidirAtualizacao({revisao:1},{revisao:2}).aplicar,true);
+assert.equal(decidirAtualizacao({revisao:3},{revisao:2}).aplicar,false);
+assert.equal(decidirAtualizacao({revisao:3,estoque:50},{revisao:3,estoque:51}).motivo,'conflito na mesma revisão; requer conferência');
+assert.throws(()=>compararConferencia(base,[{sku:'G',lote:'001',saldo:-1}]));
+console.log('Testes 2.0.50: 9 verificações aprovadas');
