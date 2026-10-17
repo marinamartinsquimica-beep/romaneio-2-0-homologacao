@@ -424,7 +424,14 @@ $('aplicarUniaoSegura').onclick=async()=>{
    if(indices.length!==1)continue;
    const atual=indices[0].item;
    if(ultimo.tipo!=='exclusao'&&chave(atual)===chave(ultimo.item))continue;
-   if(chave(atual)!==chave(inicio)){
+   // Aceita qualquer estado comprovado da trajetória remota, não apenas
+   // a inclusão original. Uma edição já recebida pode preceder a exclusão.
+   const estadosConhecidos=[inicio];
+   for(const evento of eventos){
+    if(evento.antes)estadosConhecidos.push(evento.antes);
+    if(evento.tipo!=='exclusao'&&evento.item)estadosConhecidos.push(evento.item);
+   }
+   if(!estadosConhecidos.some(estado=>chave(estado)===chave(atual))){
     conflitosRecebidos.push(id+': estado local divergente');
     continue;
    }
