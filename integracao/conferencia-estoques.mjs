@@ -15,9 +15,9 @@ export function conferirEstoques(embalado,paripassu){
  for(const [k,a] of e){
   const b=p.get(k);
   if(!b)pendencias.push({sku:a.sku,lote:a.lote,tipo:'ausente_paripassu',embalado:a.saldo,paripassu:0,diferenca:a.saldo});
-  else if(a.saldo!==b.saldo)pendencias.push({sku:a.sku,lote:a.lote,tipo:'divergencia_saldo',embalado:a.saldo,paripassu:b.saldo,diferenca:a.saldo-b.saldo});
+  else if(a.saldo!==b.saldo||!Number.isInteger(b.saldo))pendencias.push({sku:a.sku,lote:a.lote,tipo:a.saldo===b.saldo?'caixa_fracionada':'divergencia_saldo',embalado:a.saldo,paripassu:b.saldo,diferenca:a.saldo-b.saldo});
  }
  for(const [k,b] of p)if(!e.has(k))pendencias.push({sku:b.sku,lote:b.lote,tipo:'ausente_embalado',embalado:0,paripassu:b.saldo,diferenca:-b.saldo});
  pendencias.sort((a,b)=>a.sku.localeCompare(b.sku,'pt-BR')||a.lote.localeCompare(b.lote,'pt-BR'));
- return {conferidos:new Set([...e.keys(),...p.keys()]).size,conformes:[...e].filter(([k,a])=>p.has(k)&&p.get(k).saldo===a.saldo).length,pendencias};
+ return {conferidos:new Set([...e.keys(),...p.keys()]).size,conformes:[...e].filter(([k,a])=>p.has(k)&&p.get(k).saldo===a.saldo&&Number.isInteger(p.get(k).saldo)).length,pendencias};
 }
