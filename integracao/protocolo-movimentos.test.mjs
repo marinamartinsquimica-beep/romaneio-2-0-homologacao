@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {prepararLoteMovimentos,reconciliarConfirmacoes,validarRegistroRemoto} from './protocolo-movimentos.js';
+const op=(id,tipo='inclusao')=>({id,tipo,item:{sku:'G',loteCompleto:'001',caixas:'13',palete:'LAB-A'}});
+const a=op('aparelhoA_00001'),b=op('aparelhoB_00002');
+const fila=[a,b,a,{id:'ruim',tipo:'inclusao',item:{}},op('aparelhoA_00003','edicao')];
+const lote=prepararLoteMovimentos(fila);
+assert.equal(lote.lote.length,2);
+assert.equal(lote.rejeitados.length,3);
+assert.equal(validarRegistroRemoto(a),true);
+assert.equal(validarRegistroRemoto({...a,tipo:'edicao'}),false);
+const parcial=reconciliarConfirmacoes([a,b],[{id:a.id,confirmado:true},{id:b.id,confirmado:false}]);
+assert.deepEqual(parcial.pendentes,[b]);
+assert.equal(parcial.confirmados,1);
+assert.deepEqual(reconciliarConfirmacoes([a,b],[]).pendentes,[a,b]);
+assert.equal(prepararLoteMovimentos([a,b],{limite:1}).lote.length,1);
+assert.deepEqual(fila[0],a);
+console.log('Protocolo 2.0.50: testes de IDs, repetição, confirmação parcial e preservação offline');
