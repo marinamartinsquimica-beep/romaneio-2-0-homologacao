@@ -67,7 +67,6 @@ export async function gerarExcelModeloEstoque({arquivo,operacao,estoqueOriginal,
  for(const vals of historico){const row=el(hd,'row');row.setAttribute('r',String(++last));'ABCDEFGHI'.split('').forEach((col,i)=>histCell(hd,row,col,vals[i]));data.appendChild(row)}
  const dim=hd.getElementsByTagNameNS(M,'dimension')[0];if(dim)dim.setAttribute('ref','A1:I'+last);zip.file(hp,serial(hd));
  const calc=zip.file('xl/workbook.xml');if(calc){const wd=parse(await calc.async('string'));let cp=wd.getElementsByTagNameNS(M,'calcPr')[0];if(!cp){cp=el(wd,'calcPr');wd.documentElement.appendChild(cp)}cp.setAttribute('fullCalcOnLoad','1');zip.file('xl/workbook.xml',serial(wd));}
- zip.remove('xl/calcChain.xml');
  // A planilha preserva suas partes OOXML originais, exceto valores H/I, histórico e recálculo.
  const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});
  return {blob,alteracoes:mudancas.length,registros:historico.length,operacao,id};
