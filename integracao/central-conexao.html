@@ -55,19 +55,20 @@ $('resolverTestePendente').onclick=async()=>{
   const identidade=x=>[normalizar(x?.sku),normalizar(x?.destino),String(x?.palete??''),Number(x?.caixas),normalizar(x?.loteCompleto)].join('|');
   const mesmaIdentidade=x=>identidade(x)===identidade(it);
   const remotos=snap.docs.map(d=>d.data());
-  const idsCorrespondentes=new Set(remotos.filter(m=>mesmaIdentidade(m.item)||mesmaIdentidade(m.antes)).map(m=>String(m.item?.registroId||m.antes?.registroId||'')).filter(Boolean));
+  // Exceção estrita para o teste: lote divergente entre aparelhos.
+  const candidato=m=>[m.item,m.antes].some(x=>x&&normalizar(x.sku)===normalizar(it.sku)&&normalizar(x.destino)===normalizar(it.destino)&&String(x.palete)==='99'&&Number(x.caixas)===1);
+  const correspondentes=remotos.filter(candidato);
+  const idsCorrespondentes=new Set(correspondentes.map(m=>String(m.item?.registroId||m.antes?.registroId||'')).filter(Boolean));
   if(idsCorrespondentes.size!==1){
-   const candidatos=remotos.filter(m=>normalizar(m.item?.sku||m.antes?.sku)===normalizar(it.sku));
-   const resumo=candidatos.slice(0,8).map(m=>{
-    const x=m.item||{};
-    return String(m.tipo||'?')+' | palete '+String(x.palete??'?')+' | destino '+String(x.destino||'?')+' | caixas '+String(x.caixas??'?')+' | lote '+String(x.loteCompleto||'?')+' | ID '+(x.registroId?'presente':'ausente');
-   });
-   saida.textContent='DIAGNÓSTICO SOMENTE LEITURA. Correspondências exatas: '+idsCorrespondentes.size+'. Eventos com SKU do teste: '+candidatos.length+'. Fila local: palete '+String(it.palete)+' | destino '+String(it.destino)+' | caixas '+String(it.caixas)+' | lote '+String(it.loteCompleto)+' | ID '+(id?'presente':'ausente')+'. '+(resumo.length?'Eventos remotos: '+resumo.join(' ; '):'Nenhum evento remoto com esse SKU.')+' Nenhuma alteração realizada.';
+   saida.textContent='DIAGNÓSTICO: '+correspondentes.length+' eventos candidatos, '+idsCorrespondentes.size+' identificadores remotos. Nenhuma alteração.';
    return;
   }
   const remotoId=[...idsCorrespondentes][0];
   const eventos=remotos.filter(m=>String(m.item?.registroId||m.antes?.registroId||'')===remotoId).sort((a,b)=>String(a.criadoEm).localeCompare(String(b.criadoEm)));
-  if(!eventos.some(m=>m.tipo==='inclusao'&&mesmaIdentidade(m.item))||eventos[eventos.length-1]?.tipo!=='exclusao'||!mesmaIdentidade(eventos[eventos.length-1].item))throw Error('Sequência remota de inclusão e exclusão não comprovada.');
+  if(eventos.length!==3||eventos[0].tipo!=='inclusao'||eventos[1].tipo!=='edicao'||eventos[2].tipo!=='exclusao'||!eventos.every(candidato)){
+   saida.textContent='Sequência remota diferente de inclusão, edição e exclusão. Nenhuma alteração.';
+   return;
+  }
   if(localStorage.getItem(CHAVE_OPERACIONAL)!==origem)throw Error('Fila alterada durante a verificação.');
   if(!window.confirm('Exclusão do teste confirmada no Firebase. Remover apenas a inclusão fictícia pendente da fila local? Nenhum palete ou estoque será alterado.')){saida.textContent='Cancelado. Nenhuma alteração.';return;}
   if(localStorage.getItem(CHAVE_OPERACIONAL)!==origem)throw Error('Fila alterada antes da confirmação.');
