@@ -121,8 +121,8 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 <h3>Baixa e ajuste — prévia segura</h3>
 <p style="color:#334155">As operações abaixo preparam a conferência sem alterar o Firebase nem a planilha oficial. Confirmação de baixa ou ajuste oficial permanece indisponível até integração autenticada com o arquivo.</p>
 <label for="etapa4Modo">Operação</label><select id="etapa4Modo"><option value="baixa">Baixa de expedição</option><option value="ajuste">Ajuste por contagem física</option></select>
-<label for="etapa4Movimentos">Dados (uma linha por registro: ID;SKU;LOTE;CAIXAS para baixa, ou SKU;LOTE;CAIXAS para ajuste)</label>
-<textarea id="etapa4Movimentos" rows="5" style="width:100%;padding:10px;border-radius:8px" placeholder="ID;SKU;LOTE;CAIXAS"></textarea>
+<p id="etapa4Orientacao">Baixa automática das caixas existentes no romaneio. Nenhuma digitação necessária.</p><label for="etapa4Movimentos" id="etapa4MovimentosLabel" hidden>Contagem física: SKU;LOTE;CAIXAS (uma linha por registro)</label>
+<textarea id="etapa4Movimentos" rows="5" hidden style="width:100%;padding:10px;border-radius:8px" placeholder="SKU;LOTE;CAIXAS"></textarea>
 <button type="button" id="etapa4Preparar">PREPARAR CONFERÊNCIA</button><button type="button" id="etapa4Exportar" disabled>BAIXAR EXCEL DO RESULTADO</button>
 <p id="etapa4OperacoesStatus" role="status"></p><div id="etapa4OperacoesResultado" style="max-height:250px;overflow:auto"></div>
 </section>
@@ -2753,6 +2753,24 @@ btn?.addEventListener('click',async()=>{
 <script type="module">
 import {prepararBaixa,prepararAjuste} from './integracao/operacoes-estoque.mjs';
 let resultadoEtapa4=null;
+const modoEtapa4=document.getElementById('etapa4Modo');
+modoEtapa4?.addEventListener('change',()=>{
+ const ajuste=modoEtapa4.value==='ajuste';
+ document.getElementById('etapa4Movimentos').hidden=!ajuste;
+ document.getElementById('etapa4MovimentosLabel').hidden=!ajuste;
+ document.getElementById('etapa4Orientacao').textContent=ajuste?'Informe a contagem física de SKU, lote e caixas.':'Baixa automática das caixas existentes no romaneio. Nenhuma digitação necessária.';
+ resultadoEtapa4=null;document.getElementById('etapa4Exportar').disabled=true;
+});
+function movimentosDoRomaneio(){
+ const linhas=[...document.querySelectorAll('#tabela tbody tr')];
+ if(!linhas.length)throw Error('Não há caixas no romaneio atual para baixar.');
+ return linhas.map((tr,i)=>{
+  const c=tr.cells,sku=String(c[1]?.textContent??'').trim(),lote=String(c[4]?.textContent??'').trim(),caixas=Number(String(c[7]?.textContent??'').trim());
+  if(!sku||!lote||!Number.isSafeInteger(caixas)||caixas<=0)throw Error('Entrada '+(i+1)+' do romaneio incompleta: SKU, lote completo ou caixas inválidos.');
+  return {id:'romaneio-'+(i+1),sku,lote,caixas};
+ });
+}
+
 document.getElementById('etapa4Exportar')?.addEventListener('click',async()=>{
  const button=document.getElementById('etapa4Exportar'),status=document.getElementById('etapa4OperacoesStatus');
  button.disabled=true;
@@ -2773,9 +2791,13 @@ document.getElementById('etapa4Preparar')?.addEventListener('click',()=>{
  const status=document.getElementById('etapa4OperacoesStatus'),saida=document.getElementById('etapa4OperacoesResultado');saida.replaceChildren();resultadoEtapa4=null;document.getElementById('etapa4Exportar').disabled=true;
  try{
   const e=window.__etapa4?.embalado;if(!e?.length)throw Error('Carregue primeiro o estoque compartilhado do Firebase.');
-  const modo=document.getElementById('etapa4Modo').value,linhas=document.getElementById('etapa4Movimentos').value.trim().split(/\r?\n/).filter(Boolean);
-  if(!linhas.length)throw Error('Informe os registros.');
-  const registros=linhas.map((linha,i)=>{const a=linha.split(';').map(x=>x.trim());if(a.length!==(modo==='baixa'?4:3))throw Error('Linha '+(i+1)+' deve ter '+(modo==='baixa'?4:3)+' campos.');const n=Number(a.at(-1));if(!Number.isSafeInteger(n)||n<0)throw Error('Quantidade inválida na linha '+(i+1));return modo==='baixa'?{id:a[0],sku:a[1],lote:a[2],caixas:n}:{sku:a[0],lote:a[1],caixas:n}});
+  const modo=modoEtapa4.value;
+  const registros=modo==='baixa'?movimentosDoRomaneio():document.getElementById('etapa4Movimentos').value.trim().split(/\r?\n/).filter(Boolean).map((linha,i)=>{
+   const a=linha.split(';').map(x=>x.trim());if(a.length!==3)throw Error('Linha '+(i+1)+' deve ter SKU;LOTE;CAIXAS.');
+   const caixas=Number(a[2]);if(!Number.isSafeInteger(caixas)||caixas<0)throw Error('Contagem inválida na linha '+(i+1));
+   return {sku:a[0],lote:a[1],caixas};
+  });
+  if(!registros.length)throw Error('Nenhuma contagem informada.');
   const resultado=modo==='baixa'?prepararBaixa(e,registros):prepararAjuste(e,registros);
   const ocorrencias=modo==='baixa'?[...resultado.aplicados.map(x=>({...x,situacao:'Preparada'})),...resultado.pendencias.map(x=>({...x,situacao:x.motivo}))]:resultado.alteracoes.map(x=>({...x,situacao:'Ajuste preparado',caixas:x.fisico}));
   const tab=document.createElement('table'),body=tab.createTBody();
