@@ -48,7 +48,8 @@ $('prepararEnvioReal').onclick=()=>{
   if(fila.some(op=>{if(!validarOperacional(op)||ids.has(op.id))return true;ids.add(op.id);return false;}))throw Error('Há operações incompatíveis ou IDs repetidos; envio bloqueado');
   preparacaoReal={uid:u.uid,assinatura:canonico(fila),ids:fila.map(x=>x.id)};
   $('confirmarEnvioReal').disabled=false;
-  $('estadoEnvioReal').textContent='PRONTO PARA CONFIRMAÇÃO: '+fila.length+' movimentações. Conta: '+(u.email||u.uid)+'. Revise a quantidade antes de clicar CONFIRMAR ENVIO DA FILA. Nenhum envio realizado.';
+  const detalhes=fila.map((op,i)=>{const it=op.item||{};return (i+1)+'. '+String(op.tipo).toUpperCase()+' | SKU: '+String(it.sku||'—')+' | Palete: '+String(it.palete??'—')+' | Destino: '+String(it.destino||'—')+' | Caixas: '+String(it.caixas??'—')+' | Lote: '+String(it.loteCompleto||'—');});
+  $('estadoEnvioReal').textContent='PRONTO PARA CONFIRMAÇÃO: '+fila.length+' movimentações. Conta: '+(u.email||u.uid)+'.\\n\\n'+detalhes.join('\\n')+'\\n\\nConfira cada movimentação antes de confirmar. Nenhum envio realizado.';
  }catch(e){preparacaoReal=null;$('confirmarEnvioReal').disabled=true;$('estadoEnvioReal').textContent='Não preparado: '+e.message;}
 };
 $('confirmarEnvioReal').onclick=async()=>{
