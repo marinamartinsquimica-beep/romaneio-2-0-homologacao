@@ -122,7 +122,7 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 <label for="etapa4Modo">Operação</label><select id="etapa4Modo"><option value="baixa">Baixa de expedição</option><option value="ajuste">Ajuste por contagem física</option></select>
 <label for="etapa4Movimentos">Dados (uma linha por registro: ID;SKU;LOTE;CAIXAS para baixa, ou SKU;LOTE;CAIXAS para ajuste)</label>
 <textarea id="etapa4Movimentos" rows="5" style="width:100%;padding:10px;border-radius:8px" placeholder="ID;SKU;LOTE;CAIXAS"></textarea>
-<button type="button" id="etapa4Preparar">PREPARAR CONFERÊNCIA</button>
+<button type="button" id="etapa4Preparar">PREPARAR CONFERÊNCIA</button><button type="button" id="etapa4Exportar" disabled>BAIXAR EXCEL DO RESULTADO</button>
 <p id="etapa4OperacoesStatus" role="status"></p><div id="etapa4OperacoesResultado" style="max-height:250px;overflow:auto"></div>
 </section>
 <div id="conferenciaParipassuIntegrada" style="margin:14px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc">
@@ -2751,8 +2751,20 @@ btn?.addEventListener('click',async()=>{
 <script type="module" src="./integracao/estoques-firebase-ui.mjs"></script>
 <script type="module">
 import {prepararBaixa,prepararAjuste} from './integracao/operacoes-estoque.mjs';
+let resultadoEtapa4=null;
+document.getElementById('etapa4Exportar')?.addEventListener('click',()=>{
+ if(!resultadoEtapa4)return;
+ if(typeof XLSX==='undefined'){alert('Biblioteca Excel indisponível');return;}
+ const {modo,resultado}=resultadoEtapa4;
+ const w=XLSX.utils.book_new();
+ const itens=resultado.itens.map(x=>({SKU:x.sku,LOTE:x.lote,SALDO:x.saldo,POSTURA:x.postura||''}));
+ XLSX.utils.book_append_sheet(w,XLSX.utils.json_to_sheet(itens),'SALDOS RESULTANTES');
+ const detalhes=modo==='baixa'?[...resultado.aplicados.map(x=>({...x,situacao:'PREPARADA'})),...resultado.pendencias.map(x=>({...x,situacao:'PENDENTE'}))]:resultado.alteracoes;
+ XLSX.utils.book_append_sheet(w,XLSX.utils.json_to_sheet(detalhes.length?detalhes:[{situacao:'SEM ALTERACOES'}]),'AUDITORIA');
+ XLSX.writeFile(w,'romaneio_2_'+modo+'_resultado_'+new Date().toISOString().slice(0,10)+'.xlsx');
+});
 document.getElementById('etapa4Preparar')?.addEventListener('click',()=>{
- const status=document.getElementById('etapa4OperacoesStatus'),saida=document.getElementById('etapa4OperacoesResultado');saida.replaceChildren();
+ const status=document.getElementById('etapa4OperacoesStatus'),saida=document.getElementById('etapa4OperacoesResultado');saida.replaceChildren();resultadoEtapa4=null;document.getElementById('etapa4Exportar').disabled=true;
  try{
   const e=window.__etapa4?.embalado;if(!e?.length)throw Error('Carregue primeiro o estoque compartilhado do Firebase.');
   const modo=document.getElementById('etapa4Modo').value,linhas=document.getElementById('etapa4Movimentos').value.trim().split(/\r?\n/).filter(Boolean);
@@ -2762,7 +2774,7 @@ document.getElementById('etapa4Preparar')?.addEventListener('click',()=>{
   const ocorrencias=modo==='baixa'?[...resultado.aplicados.map(x=>({...x,situacao:'Preparada'})),...resultado.pendencias.map(x=>({...x,situacao:x.motivo}))]:resultado.alteracoes.map(x=>({...x,situacao:'Ajuste preparado',caixas:x.fisico}));
   const tab=document.createElement('table'),body=tab.createTBody();
   for(const x of ocorrencias){const tr=body.insertRow();[x.sku,x.lote,x.caixas,x.situacao].forEach(v=>{const td=tr.insertCell();td.textContent=String(v??'')})}
-  saida.appendChild(tab);status.textContent='Prévia concluída: '+ocorrencias.length+' registros. Nenhum saldo oficial ou compartilhado foi alterado.';
+  saida.appendChild(tab);resultadoEtapa4={modo,resultado};document.getElementById('etapa4Exportar').disabled=false;status.textContent='Conferência concluída: '+ocorrencias.length+' registros. Excel do resultado disponível para download; não substitui a planilha oficial e não conserva sua formatação. Nenhum saldo compartilhado foi alterado.';
  }catch(e){status.textContent='Operação não preparada: '+e.message;}
 });
 </script>
