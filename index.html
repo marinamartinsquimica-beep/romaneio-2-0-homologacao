@@ -106,7 +106,14 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
   <p style="margin:8px 0;color:#475569">Importe uma cópia atualizada do estoque para conferir as pendências. Correções do estoque são feitas diretamente no SharePoint. Esta importação é somente leitura e não altera o arquivo.</p>
   <label for="arquivoEstoqueTeste" style="display:block;margin:10px 0">Selecionar planilha de estoque (.xlsx)</label>
   <input id="arquivoEstoqueTeste" type="file" accept=".xlsx,.xls" onchange="importarEstoqueTeste(event)" style="max-width:100%;margin-bottom:10px">
-  <button type="button" onclick="conferirEntradasExistentesTeste()" style="padding:9px 12px;margin:8px 0;cursor:pointer">Conferir entradas anteriores (teste)</button>
+  <div id="conferenciaParipassuIntegrada" style="margin:14px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc">
+<label for="arquivoParipassuOperacao">Conferência Estoque Embalado × PariPassu</label>
+<input id="arquivoParipassuOperacao" type="file" accept=".xlsx,.xls" style="margin:8px 0">
+<button type="button" id="btnConferirParipassu" style="width:auto">Conferir estoques</button>
+<p id="resumoConferenciaParipassu" role="status" style="color:#334155">Importe o Estoque Embalado acima e selecione a planilha PariPassu para conferir.</p>
+<div id="listaConferenciaParipassu" style="max-height:300px;overflow:auto"></div>
+</div>
+<button type="button" onclick="conferirEntradasExistentesTeste()" style="padding:9px 12px;margin:8px 0;cursor:pointer">Conferir entradas anteriores (teste)</button>
   <section id="pendenciasConferenciaEstoque" class="operator-pending" aria-label="Pendências de conferência do estoque"><h3>PENDÊNCIAS DE CONFERÊNCIA <span id="contadorPendenciasEstoque">0</span></h3><p>Registros do romaneio que precisam de conferência. O aviso não elimina a pendência. Confira o romaneio ou corrija o estoque diretamente na planilha do SharePoint e atualize a consulta.</p><div id="listaPendenciasEstoque" aria-live="polite">Importe uma cópia do estoque para conferir.</div></section>
 <div id="divergenciasEstoqueTeste" role="alert" aria-live="assertive" style="display:none;margin:12px 0;padding:14px 16px;border:2px solid #c2410c;border-radius:10px;background:#fff1e6;color:#7c2d12;font-weight:600"></div>
   <p id="resumoReservaTeste" role="status">Reservas: aguardando importação do estoque.</p>
@@ -2688,6 +2695,39 @@ window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(even
   }finally{atualizando=false;}
  });
 })();
+</script>
+<script type="module">
+import {extrairParipassu} from './integracao/leitor-paripassu.mjs';
+import {reavaliarConferencia} from './integracao/operacoes-estoque.mjs';
+const btn=document.getElementById('btnConferirParipassu');
+let anteriores=[];
+btn?.addEventListener('click',async()=>{
+ const resumo=document.getElementById('resumoConferenciaParipassu'),lista=document.getElementById('listaConferenciaParipassu');
+ btn.disabled=true;lista.replaceChildren();
+ try{
+  const embalado=window.estoqueTesteConsulta;
+  if(!embalado?.size)throw Error('Importe primeiro o Estoque Embalado.');
+  const file=document.getElementById('arquivoParipassuOperacao').files?.[0];
+  if(!file)throw Error('Selecione a planilha PariPassu.');
+  if(typeof XLSX==='undefined')throw Error('Leitor Excel indisponível.');
+  const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+  const normalizar=x=>String(x).trim().toUpperCase();
+  const nome=wb.SheetNames.find(x=>normalizar(x)==='1. ESTOQUE');
+  if(!nome)throw Error('Aba 1. Estoque não encontrada.');
+  const linhas=XLSX.utils.sheet_to_json(wb.Sheets[nome],{header:1,defval:'',raw:true});
+  const p=extrairParipassu(linhas);
+  const e=[...embalado.values()].map(x=>({sku:x.sku,lote:x.lote,saldo:x.saldo}));
+  const resultado=reavaliarConferencia(e,p.itens,anteriores);
+  anteriores=resultado.pendencias;
+  const conflitos=(p.conflitosRastreabilidade||[]).map(x=>({sku:x.sku,lote:x.lote,tipo:'conflito_rastreabilidade',embalado:'',paripassu:'',diferenca:''}));
+  const pendencias=[...resultado.pendencias,...conflitos];
+  resumo.textContent=resultado.conferidos+' lotes conferidos | '+resultado.conformes+' conformes | '+pendencias.length+' pendências | '+resultado.resolvidas.length+' resolvidas na nova conferência. Nenhum saldo alterado.';
+  if(!pendencias.length){lista.textContent='Sem divergências nesta conferência.';return;}
+  const table=document.createElement('table'),thead=table.createTHead().insertRow();
+  ['SKU','Lote','Pendência','Embalado','PariPassu','Diferença'].forEach(x=>{const th=document.createElement('th');th.textContent=x;thead.appendChild(th)});
+  const tbody=table.createTBody();pendencias.forEach(x=>{const tr=tbody.insertRow();[x.sku,x.lote,x.tipo,x.embalado,x.paripassu,x.diferenca].forEach(v=>{const td=tr.insertCell();td.textContent=String(v??'')})});lista.appendChild(table);
+ }catch(e){resumo.textContent='Conferência não realizada: '+e.message;}finally{btn.disabled=false;}
+});
 </script>
 </body>
 </html>
