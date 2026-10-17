@@ -34,3 +34,14 @@ export function compararConferencia(romaneio,estoque) {
       motivo:!encontrado?"SKU/lote ausente":r.caixas>disponivel?"Quantidade superior ao saldo":null};
   });
 }
+
+/** Compara revisões sem perder correções mais recentes. Nunca substitui dados locais. */
+export function decidirAtualizacao(local,remoto) {
+  if(!remoto||!Number.isSafeInteger(remoto.revisao)||remoto.revisao<1) return {aplicar:false,motivo:"revisão remota inválida"};
+  if(!local) return {aplicar:true,motivo:"primeira leitura"};
+  if(!Number.isSafeInteger(local.revisao)||local.revisao<1) return {aplicar:false,motivo:"revisão local inválida"};
+  if(remoto.revisao>local.revisao) return {aplicar:true,motivo:"revisão mais recente"};
+  if(remoto.revisao<local.revisao) return {aplicar:false,motivo:"revisão antiga"};
+  if(JSON.stringify(remoto)===JSON.stringify(local)) return {aplicar:false,motivo:"sem alteração"};
+  return {aplicar:false,motivo:"conflito na mesma revisão; requer conferência"};
+}
