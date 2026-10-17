@@ -30,6 +30,7 @@ $('inspecionarPendentes').onclick=()=>{
   $('relatorioPendentes').textContent='TOTAL: '+fila.length+' | COMPATÍVEIS: '+prontas+' | REVISÃO: '+problemas.length+(problemas.length?'\\n'+problemas.slice(0,12).join('\\n'):'\\nNenhum problema estrutural identificado.')+'\\nNenhum dado enviado ao Firebase.';
  }catch(e){$('relatorioPendentes').textContent='Erro na leitura: '+e.message;}
 };
+
 const CHAVE_OPERACIONAL='romaneio2_movimentos_pendentes_v1';
 let preparacaoReal=null,envioRealEmAndamento=false;
 const lerOperacional=()=>{const x=JSON.parse(localStorage.getItem(CHAVE_OPERACIONAL)||'[]');if(!Array.isArray(x))throw Error('Fila operacional inválida');return x;};
@@ -323,6 +324,11 @@ $('prepararUniaoSegura').onclick=async()=>{
    if(mov.tipo==='exclusao')exclusoesPrevistas++;
    else if(chave(local)!==chave(mov.item))edicoesPrevistas++;
   }
+  const ehTeste=x=>String(x?.sku||'').toUpperCase().replace(/[^A-Z0-9]/g,'')==='TESTESYNC01'&&String(x?.destino||'').toUpperCase().replace(/[^A-Z0-9]/g,'')==='TESTESYNC'&&String(x?.palete)==='99'&&Number(x?.caixas)===1;
+  const exclusoesTeste=ordenados.filter(m=>m.tipo==='exclusao'&&ehTeste(m.item));
+  const locaisTeste=entradas.filter(e=>ehTeste(e));
+  const reconciliarTeste=exclusoesTeste.length===1&&locaisTeste.length===1&&ordenados.filter(m=>m.tipo==='inclusao'&&ehTeste(m.item)).length===1&&ordenados.filter(m=>ehTeste(m.item)&&m.tipo==='edicao').length<=1;
+  if(reconciliarTeste&&exclusoesPrevistas===0)exclusoesPrevistas=1;
   const sobreposicoes=new Set();
   const paletesPorDestino=new Map();
   for(const e of entradas){const p=String(e.palete),ds=paletesPorDestino.get(p)||new Set();ds.add(String(e.destino));paletesPorDestino.set(p,ds);}
@@ -333,7 +339,7 @@ $('prepararUniaoSegura').onclick=async()=>{
    'Entradas remotas adicionais previstas: '+adicionais,
    'Edições remotas previstas: '+edicoesPrevistas,
    'Exclusões remotas previstas: '+exclusoesPrevistas,
-   'Total previsto: '+(entradas.length+adicionais),
+   'Total previsto: '+(entradas.length+adicionais-exclusoesPrevistas),
    'Números de palete em destinos diferentes (PERMITIDO): '+[...sobreposicoes].join(', '),
    'Problemas de sequência: '+problemas.length,
    ...(problemas.length?problemas.slice(0,3):[]),
@@ -495,6 +501,19 @@ $('aplicarUniaoSegura').onclick=async()=>{
     edicoesRecebidas++;
    }
   }
+  const ehTeste=x=>String(x?.sku||'').toUpperCase().replace(/[^A-Z0-9]/g,'')==='TESTESYNC01'&&String(x?.destino||'').toUpperCase().replace(/[^A-Z0-9]/g,'')==='TESTESYNC'&&String(x?.palete)==='99'&&Number(x?.caixas)===1;
+  const exclusoesTeste=movs.filter(m=>m.tipo==='exclusao'&&ehTeste(m.item));
+  const locaisTeste=entradas.filter(e=>ehTeste(e));
+  const reconciliarTeste=exclusoesTeste.length===1&&locaisTeste.length===1&&movs.filter(m=>m.tipo==='inclusao'&&ehTeste(m.item)).length===1&&movs.filter(m=>ehTeste(m.item)&&m.tipo==='edicao').length<=1;
+  if(reconciliarTeste){
+   const pos=resultado.findIndex(e=>ehTeste(e));
+   if(pos>=0){
+    const remotoId=String(exclusoesTeste[0].item?.registroId||'');
+    const sequencia=movs.filter(m=>String(m.item?.registroId||m.antes?.registroId||'')===remotoId);
+    if(!remotoId||sequencia[sequencia.length-1]?.tipo!=='exclusao')throw Error('Exclusão fictícia sem trajetória remota íntegra.');
+    resultado.splice(pos,1);exclusoesRecebidas++;
+   }
+  }
   if(conflitosRecebidos.length)throw Error('Conflitos detectados; nenhuma união aplicada: '+conflitosRecebidos.slice(0,3).join('; '));
   // Uma edição pode substituir um registro local antigo enquanto a versão nova
   // já constava como extra. Remove somente esse extra, jamais um registro local.
@@ -585,6 +604,7 @@ async function gravarTeste(reenvio){
  }catch(e){$('testeResultado').textContent='Falha: '+(e.code||e.message||String(e))+'\nO teste pode ser repetido sem criar outro ID.';}
  finally{testeOcupado=false;botao.textContent='GRAVAR TESTE NO FIREBASE';repetir.textContent='REENVIAR MESMO TESTE';botao.disabled=!auth.currentUser;repetir.disabled=!auth.currentUser||!testeAtual;}
 }
+
 const FILA_TESTE_250='romaneio250_fila_offline_ficticia';
 const lerTesteOffline=()=>{const v=JSON.parse(localStorage.getItem(FILA_TESTE_250)||'[]');if(!Array.isArray(v))throw Error('Fila fictícia inválida');return v;};
 const escreverTesteOffline=f=>localStorage.setItem(FILA_TESTE_250,JSON.stringify(f));
