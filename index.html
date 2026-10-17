@@ -1711,6 +1711,8 @@ function salvarLocalStorage() {
     }
 
     localStorage.setItem("entradas", JSON.stringify(dados));
+    // 2.0.50: evento local, sem envio remoto e sem bloquear salvamento offline.
+    try { window.dispatchEvent(new CustomEvent("romaneio:entradas-salvas", {detail:{quantidade:dados.length}})); } catch(e) { console.warn("Evento de sincronização indisponível",e); }
     registrarCopiaSegurancaOffline(dados);
     registrarMovimentosLocais(dados);
     const paletesAtuais = new Set(dados.map(item => String(item.palete)));
