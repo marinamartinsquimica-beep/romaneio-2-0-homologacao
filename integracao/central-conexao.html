@@ -431,7 +431,10 @@ $('aplicarUniaoSegura').onclick=async()=>{
     if(evento.tipo!=='exclusao'&&evento.item)estadosConhecidos.push(evento.item);
    }
    if(!estadosConhecidos.some(estado=>chave(estado)===chave(atual))){
-    conflitosRecebidos.push(id+': estado local divergente');
+    const esperado=estadosConhecidos[estadosConhecidos.length-1]||inicio;
+    const campos=['data','sku','destino','palete','loteCompleto','lote','postura','caixas','observacoes'];
+    const diferentes=campos.filter(c=>String(atual?.[c]??'')!==String(esperado?.[c]??''));
+    conflitosRecebidos.push(id+': estado local divergente; campos diferentes: '+(diferentes.join(', ')||'formatação/identidade')+'; eventos: '+eventos.map(e=>e.tipo).join(' > '));
     continue;
    }
    if(ultimo.tipo==='exclusao'){
