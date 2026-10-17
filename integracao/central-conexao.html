@@ -662,7 +662,8 @@ $('estoquePrevia').onclick=async()=>{
   if(arquivo.size>8*1024*1024)throw Error('Arquivo acima de 8 MB.');
   if(typeof XLSX==='undefined')throw Error('Leitor Excel indisponível.');
   const livro=XLSX.read(await arquivo.arrayBuffer(),{type:'array',cellDates:false});
-  const nomeAba=livro.SheetNames.find(x=>x.trim().toLowerCase()===(tipo==='embalado'?'estoque':'estoque'))||livro.SheetNames[0];
+  const nomeAba=livro.SheetNames.find(x=>x.trim().toLowerCase()==='estoque');
+  if(!nomeAba)throw Error('Aba ESTOQUE não encontrada. Confira o modelo oficial antes de publicar.');
   const linhas=XLSX.utils.sheet_to_json(livro.Sheets[nomeAba],{header:1,defval:'',raw:true});
   const normalizar=x=>String(x??'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toUpperCase();
   const cab=linhas.findIndex(l=>l.some(x=>normalizar(x)==='SKU')&&l.some(x=>['LOTE','LOTE COMPLETO'].includes(normalizar(x)))&&l.some(x=>['SALDO','QTD','QUANTIDADE'].includes(normalizar(x))));
@@ -678,6 +679,7 @@ $('estoquePrevia').onclick=async()=>{
   const esperada=snap.exists()?snap.data().versao||'':'';
   const versao=crypto.randomUUID();
   const dados=validarEstoqueOficial({tipo,nome:arquivo.name,versao,itens},tipo);
+  if(new TextEncoder().encode(JSON.stringify({...dados,importadoEm:new Date().toISOString(),autorUid:auth.currentUser.uid})).length>850000)throw Error('Estoque acima do limite seguro de um documento Firebase. Publicação bloqueada.');
   previaEstoque={tipo,dados,esperada,arquivoNome:arquivo.name};
   saidaEstoque.textContent='Prévia: '+arquivo.name+' | Aba '+nomeAba+' | '+dados.itens.length+' lotes | '+dados.itens.reduce((n,x)=>n+x.saldo,0)+' caixas. Versão vigente: '+(esperada||'nenhuma')+'. Confira antes de publicar.';
   botaoPublicarEstoque.disabled=false;
