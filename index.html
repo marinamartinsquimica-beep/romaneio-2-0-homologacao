@@ -2623,7 +2623,7 @@ function abrirPainelOperador(){if(window.matchMedia('(max-width:767px)').matches
 function operadorVoltarRomaneios(){document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false');abrirAba('total');document.querySelector('#tabela')?.scrollIntoView({behavior:'smooth',block:'start'});}
 function operadorAbrirEstoque(){operadorSelecionarAba('estoque');document.getElementById('opTabEstoque')?.scrollIntoView({behavior:'smooth',block:'start'});}
 function operadorVerPendencias(){if(typeof consultarFilaMovimentos==='function')consultarFilaMovimentos();operadorAtualizarPainel();}
-async async function sincronizarRomaneioCelular(){
+async function sincronizarRomaneioCelular(){
  if(!navigator.onLine){alert("Sem conexão. Os dados permanecem salvos neste aparelho. Tente novamente quando houver internet.");return;}
  const registros=JSON.parse(localStorage.getItem("entradas")||"[]");
  await filaBackupOffline;
