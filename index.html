@@ -2662,6 +2662,9 @@ window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(even
   if(event.key!=='entradas'||atualizando)return;
   // Não substituir o formulário em edição nem entradas com envio pendente.
   if(typeof indiceEditando!=='undefined'&&indiceEditando!==null)return;
+  // Não substituir a tabela enquanto o operador preenche um novo palete.
+  if(typeof campoSku!=='undefined'&&campoSku?.value?.trim())return;
+  if(typeof campoCaixas!=='undefined'&&campoCaixas?.value?.trim())return;
   const fila=JSON.parse(localStorage.getItem('romaneio2_movimentos_pendentes_v1')||'[]');
   if(!Array.isArray(fila)||fila.length)return;
   const tbody=document.querySelector('#tabela tbody');
