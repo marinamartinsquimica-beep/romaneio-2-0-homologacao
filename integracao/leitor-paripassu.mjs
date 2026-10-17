@@ -24,8 +24,8 @@ export function extrairParipassu(linhas){
   }else mapa.set(chave,{sku,lote,ovos,ovosPorCaixa});
   linhasValidas++;
  }
- if(!mapa.size)throw Error('Nenhum produto embalado reconhecido no PariPassu.');
  if(semSku)throw Error(semSku+' linhas sem SKU ou ovos/caixa reconhecidos. Publicação bloqueada para revisão.');
+ if(!mapa.size)throw Error('Nenhum produto embalado reconhecido no PariPassu.');
  const itens=[...mapa.values()].map(x=>{
   if(x.ovos%x.ovosPorCaixa!==0)fracionadas++;
   return {sku:x.sku,lote:x.lote,saldo:x.ovos/x.ovosPorCaixa,ovos:x.ovos,ovosPorCaixa:x.ovosPorCaixa};
