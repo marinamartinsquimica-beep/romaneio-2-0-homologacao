@@ -582,6 +582,32 @@ $('exportarBackupUniao').onclick=()=>{
  }catch(e){saida.textContent='Backup não concluído: '+(e.message||String(e))+'. Dados locais intactos.';}
 };
 window.addEventListener('online',status);window.addEventListener('offline',status);
+
+// Envio automático de movimentações operacionais; nunca executa baixa de estoque.
+// Preserva a validação, a transação idempotente e a remoção apenas após confirmação Firestore.
+let envioAutomaticoAgendado=false;
+async function enviarFilaAutomaticamente(){
+ if(envioAutomaticoAgendado||envioRealEmAndamento||!navigator.onLine||!auth.currentUser)return;
+ envioAutomaticoAgendado=true;
+ try{
+  const fila=lerOperacional();
+  if(!fila.length)return;
+  const ids=new Set();
+  if(fila.some(op=>{if(!validarOperacional(op)||ids.has(op.id))return true;ids.add(op.id);return false;})){
+   $('estadoEnvioReal').textContent='Sincronização automática pausada: fila exige revisão; dados preservados.';
+   return;
+  }
+  $('prepararEnvioReal').click();
+  if(preparacaoReal&&$('confirmarEnvioReal').disabled===false)await $('confirmarEnvioReal').click();
+ }catch(e){$('estadoEnvioReal').textContent='Sincronização automática adiada: '+(e.message||String(e));}
+ finally{envioAutomaticoAgendado=false;status();}
+}
+window.addEventListener('online',()=>{void enviarFilaAutomaticamente();});
+window.addEventListener('storage',e=>{if(e.key===CHAVE_OPERACIONAL)void enviarFilaAutomaticamente();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void enviarFilaAutomaticamente();});
+setInterval(()=>{if(!document.hidden)void enviarFilaAutomaticamente();},15000);
+auth.authStateReady().then(()=>enviarFilaAutomaticamente()).catch(()=>{});
+
 $('verificar').onclick=async()=>{
  const botao=$('verificar'),saida=$('verificacaoFirebase');
  botao.disabled=true;botao.textContent='VERIFICANDO…';saida.textContent='Consultando o servidor de autenticação Firebase…';
