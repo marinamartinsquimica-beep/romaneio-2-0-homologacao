@@ -374,7 +374,36 @@ $('aplicarUniaoSegura').onclick=async()=>{
   const criarId=()=>{if(!crypto?.randomUUID)throw Error('Identificador seguro indisponível');let id;do{id=crypto.randomUUID();}while(novosIds.has(id));novosIds.add(id);return id;};
   const localComIds=entradas.map(x=>({...x,registroId:x.registroId||criarId()}));
   const novos=extras.map(x=>({...x.item,registroId:novosIds.has(x.item.registroId)?criarId():(x.item.registroId||criarId())}));
+  // Reproduz edições/exclusões remotas sobre entradas locais apenas quando
+  // o estado anterior é idêntico. Nunca remove registros locais divergentes.
   const resultado=[...localComIds,...novos];
+  let edicoesRecebidas=0,exclusoesRecebidas=0;
+  const conflitosRecebidos=[];
+  const idRegistro=x=>String(x?.registroId||'');
+  const localizarAnterior=(antes)=>{
+   const id=idRegistro(antes);
+   if(id){const candidatos=resultado.map((x,i)=>({x,i})).filter(z=>idRegistro(z.x)===id);if(candidatos.length===1)return candidatos[0].i;}
+   const candidatos=resultado.map((x,i)=>({x,i})).filter(z=>chave(z.x)===chave(antes));
+   return candidatos.length===1?candidatos[0].i:-1;
+  };
+  for(const mov of movs){
+   if(mov.tipo!=='edicao'&&mov.tipo!=='exclusao')continue;
+   const anterior=mov.tipo==='edicao'?mov.antes:mov.item;
+   if(!anterior)continue;
+   const indice=localizarAnterior(anterior);
+   if(indice<0)continue;
+   const atual=resultado[indice];
+   if(chave(atual)!==chave(anterior)){
+    conflitosRecebidos.push(mov.id+': alteração local divergente');
+    continue;
+   }
+   if(mov.tipo==='exclusao'){resultado.splice(indice,1);exclusoesRecebidas++;}
+   else{
+    resultado[indice]={...mov.item,registroId:atual.registroId||mov.item.registroId};
+    edicoesRecebidas++;
+   }
+  }
+  if(conflitosRecebidos.length)throw Error('Conflitos detectados; nenhuma união aplicada: '+conflitosRecebidos.slice(0,3).join('; '));
   if(localStorage.getItem('entradas')!==entradasBrutas||localStorage.getItem('romaneio2_movimentos_pendentes_v1')!==filaBruta||localStorage.getItem(baseChave)!==baseBruta)throw Error('Dados locais mudaram durante a conferência. Recomece.');
   const mensagem='Aplicar união controlada neste aparelho?\\n\\nEntradas preservadas: '+entradas.length+'\\nEntradas remotas adicionadas: '+novos.length+'\\nTotal: '+resultado.length+'\\n\\nNenhuma baixa de estoque será realizada. A página do Romaneio deverá ser recarregada.';
   if(!window.confirm(mensagem)){saida.textContent='Operação cancelada. Nenhum dado alterado.';return;}
