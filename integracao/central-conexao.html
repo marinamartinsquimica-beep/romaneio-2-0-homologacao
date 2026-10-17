@@ -670,8 +670,8 @@ $('estoquePrevia').onclick=async()=>{
    if(!nomeAba)throw Error('Aba 1. Estoque não encontrada no arquivo PariPassu.');
    const linhas=XLSX.utils.sheet_to_json(livro.Sheets[nomeAba],{header:1,defval:'',raw:true});
    const leitura=extrairParipassu(linhas);
-   itens=leitura.itens;
-   observacao=' | '+leitura.industriaisIgnorados+' linhas industriais excluídas | '+leitura.caixasFracionadas+' lotes com caixas parciais';
+   itens=leitura.itens.map(x=>({...x,conflitoRastreamento:leitura.conflitos.some(c=>c.sku===x.sku&&c.lote===x.lote)}));
+   observacao=' | '+leitura.duplicadosIgnorados+' registros repetidos desconsiderados | '+leitura.conflitos.length+' conflitos de rastreamento | '+leitura.caixasFracionadas+' lotes com caixas parciais';
   }else{
    // Estoque Embalado: manter o saldo oficial de caixas; não recalcular ovos.
    nomeAba=livro.SheetNames.find(x=>normalizar(x)==='ESTOQUE');
