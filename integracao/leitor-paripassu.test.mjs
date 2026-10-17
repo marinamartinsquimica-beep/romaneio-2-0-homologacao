@@ -43,3 +43,10 @@ test('exclui INDUSTRIA DIRETO sem afetar produtos embalados',()=>{
  const r=extrairParipassu([cab,linha('L1','INDÚSTRIA DIRETO',240),linha('L2','5008-CAIXA (240)-GRANDE',240)]);
  assert.equal(r.industriaisIgnorados,1);assert.equal(r.itens.length,1);
 });
+
+test('caixa parcial continua pendente mesmo se os dois saldos forem iguais',()=>{
+ const r=extrairParipassu([cab,linha('L1','5008-CAIXA (240)-GRANDE',360)]);
+ const x=conferirEstoques([{sku:'5008',lote:'L1',saldo:1.5}],r.itens);
+ assert.equal(x.pendencias.length,1);
+ assert.equal(x.pendencias[0].tipo,'caixas_fracionadas');
+});
