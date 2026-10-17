@@ -254,8 +254,26 @@ $('prepararUniaoSegura').onclick=async()=>{
   }
   const locais=new Map();
   for(const e of entradas){const k=chave(e);locais.set(k,(locais.get(k)||0)+1);}
-  let adicionais=0;
-  for(const [k,n] of contagem)adicionais+=Math.max(0,n-(locais.get(k)||0));
+  let adicionais=0,edicoesPrevistas=0,exclusoesPrevistas=0;
+  const idsLocais=new Map(entradas.filter(e=>e.registroId).map(e=>[String(e.registroId),e]));
+  const idsRemotos=new Map();
+  for(const mov of ordenados){
+   const id=String(mov.item?.registroId||mov.antes?.registroId||'');
+   if(id)idsRemotos.set(id,mov);
+  }
+  const idsJaContados=new Set();
+  for(const [k,n] of contagem){
+   const remotos=ordenados.filter(m=>m.item&&chave(m.item)===k&&m.tipo!=='exclusao');
+   const comIdentidade=remotos.filter(m=>idsLocais.has(String(m.item.registroId||'')));
+   if(comIdentidade.length)idsJaContados.add(k);
+   else adicionais+=Math.max(0,n-(locais.get(k)||0));
+  }
+  for(const [id,mov] of idsRemotos){
+   const local=idsLocais.get(id);
+   if(!local)continue;
+   if(mov.tipo==='exclusao')exclusoesPrevistas++;
+   else if(chave(local)!==chave(mov.item))edicoesPrevistas++;
+  }
   const sobreposicoes=new Set();
   const paletesPorDestino=new Map();
   for(const e of entradas){const p=String(e.palete),ds=paletesPorDestino.get(p)||new Set();ds.add(String(e.destino));paletesPorDestino.set(p,ds);}
@@ -264,6 +282,8 @@ $('prepararUniaoSegura').onclick=async()=>{
    'PRÉ-CONFERÊNCIA DA UNIÃO — SEM ALTERAR DADOS',
    'Entradas locais preservadas: '+entradas.length,
    'Entradas remotas adicionais previstas: '+adicionais,
+   'Edições remotas previstas: '+edicoesPrevistas,
+   'Exclusões remotas previstas: '+exclusoesPrevistas,
    'Total previsto: '+(entradas.length+adicionais),
    'Números de palete em destinos diferentes (PERMITIDO): '+[...sobreposicoes].join(', '),
    'Problemas de sequência: '+problemas.length,
@@ -374,7 +394,9 @@ $('aplicarUniaoSegura').onclick=async()=>{
   const novosIds=new Set(entradas.map(x=>x.registroId).filter(Boolean));
   const criarId=()=>{if(!crypto?.randomUUID)throw Error('Identificador seguro indisponível');let id;do{id=crypto.randomUUID();}while(novosIds.has(id));novosIds.add(id);return id;};
   const localComIds=entradas.map(x=>({...x,registroId:x.registroId||criarId()}));
-  const novos=extras.map(x=>({...x.item,registroId:novosIds.has(x.item.registroId)?criarId():(x.item.registroId||criarId())}));
+  const idsLocaisExistentes=new Set(entradas.map(x=>String(x.registroId||'')).filter(Boolean));
+  const extrasSemDuplicar=extras.filter(x=>!x.item.registroId||!idsLocaisExistentes.has(String(x.item.registroId)));
+  const novos=extrasSemDuplicar.map(x=>({...x.item,registroId:novosIds.has(x.item.registroId)?criarId():(x.item.registroId||criarId())}));
   // Reproduz edições/exclusões remotas sobre entradas locais apenas quando
   // o estado anterior é idêntico. Nunca remove registros locais divergentes.
   const resultado=[...localComIds,...novos];
