@@ -2556,6 +2556,9 @@ async function importarEstoqueTeste(event) {
     if (typeof XLSX === "undefined") throw new Error("Biblioteca de leitura Excel indisponível. Verifique sua conexão.");
     const dados = await arquivo.arrayBuffer();
     const wb = XLSX.read(dados, {type:"array", cellDates:false});
+    // Mantém o arquivo original integral em memória para futura exportação de baixa/ajuste.
+    // Nunca gerar planilha reconstruída apenas com as linhas da consulta.
+    const originalExcel = dados.slice(0);
     const nomeAba = wb.SheetNames.find(nome => String(nome).trim().toLowerCase() === "estoque");
     if (!nomeAba) throw new Error("Aba Estoque não encontrada.");
     const linhas = XLSX.utils.sheet_to_json(wb.Sheets[nomeAba], {header:1, defval:"", raw:true});
@@ -2579,6 +2582,7 @@ async function importarEstoqueTeste(event) {
     }
     if (!mapa.size) throw new Error("Nenhum saldo válido encontrado.");
     window.estoqueTesteConsulta = mapa; // Consulta local; não altera estoque oficial.
+    window.estoqueEmbaladoArquivoOriginal = {nome:arquivo.name, bytes:originalExcel, importadoEm:new Date().toISOString()};
     try{localStorage.setItem(CHAVE_ESTOQUE_CONSULTA_LOCAL,JSON.stringify({nome:arquivo.name,em:new Date().toISOString(),itens:[...mapa.values()]}));}
     catch(e){console.warn('Sem espaço para preservar consulta local',e);}
     window.reservaTesteAtiva = true;
@@ -2588,7 +2592,7 @@ async function importarEstoqueTeste(event) {
     const total=[...mapa.values()].reduce((acc,x)=>acc+x.saldo,0);
     aviso.textContent="Arquivo: "+arquivo.name+" | "+mapa.size+" lotes | "+total.toLocaleString("pt-BR")+" caixas em saldo. Exibindo todos os lotes. Reservas locais de novas entradas ativadas. Nenhuma baixa foi feita.";
     resumo.classList.remove("hidden");
-  } catch(e) {window.estoqueTesteConsulta=null; window.reservaTesteAtiva=false; aviso.textContent="Erro ao importar: "+e.message;}
+  } catch(e) {aviso.textContent="Erro ao importar: "+e.message+" — última consulta válida preservada."; }
 }
 </script>
 
