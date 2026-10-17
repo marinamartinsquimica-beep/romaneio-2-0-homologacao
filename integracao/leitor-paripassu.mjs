@@ -3,8 +3,8 @@ const normalizar=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,''
 export function extrairParipassu(linhas){
  const cab=linhas.findIndex(l=>l.some(v=>normalizar(v)==='TIPO PRODUTO')&&l.some(v=>normalizar(v)==='QUANTIDADE')&&l.some(v=>normalizar(v)==='LOTE'));
  if(cab<0)throw Error('Cabeçalho PariPassu não encontrado: Tipo Produto, Lote e Quantidade.');
- const h=linhas[cab].map(normalizar),iProduto=h.indexOf('TIPO PRODUTO'),iLote=h.indexOf('LOTE'),iOvos=h.indexOf('QUANTIDADE');
- const mapa=new Map();let industriais=0,semSku=0,linhasValidas=0,fracionadas=0;
+ const h=linhas[cab].map(normalizar),iProduto=h.indexOf('TIPO PRODUTO'),iLote=h.indexOf('LOTE'),iOvos=h.indexOf('QUANTIDADE'),iRastro=h.indexOf('CODIGO DE RASTREAMENTO');
+ const mapa=new Map(),rastros=new Map(),conflitos=[];let industriais=0,semSku=0,linhasValidas=0,fracionadas=0,duplicados=0;
  for(const linha of linhas.slice(cab+1)){
   if(linha.every(v=>String(v??'').trim()===''))continue;
   const produto=String(linha[iProduto]??'').trim(),lote=String(linha[iLote]??'').trim();
@@ -15,6 +15,21 @@ export function extrairParipassu(linhas){
   const bruto=linha[iOvos],ovos=Number(String(bruto??'').trim().replace(',','.'));
   if(String(bruto??'').trim()===''||!Number.isSafeInteger(ovos)||ovos<0)throw Error('Quantidade de ovos inválida no SKU '+skuMatch[1]+' e lote '+lote+'.');
   const sku=skuMatch[1],ovosPorCaixa=Number(ovosCaixaMatch[1]);
+  const rastro=iRastro<0?'':String(linha[iRastro]??'').trim();
+  if(rastro){
+   const anteriorRastro=rastros.get(rastro);
+   if(anteriorRastro){
+    duplicados++;
+    if(anteriorRastro.sku!==sku||anteriorRastro.lote!==lote||anteriorRastro.ovos!==ovos){
+     conflitos.push({codigo:rastro,sku,lote,anterior:anteriorRastro.ovos,atual:ovos});
+     // Divergência de uma mesma identificação: não duplicar ovos; usar último registro e sinalizar conflito.
+     const antigo=mapa.get(JSON.stringify([anteriorRastro.sku,anteriorRastro.lote.toUpperCase()]));
+     if(antigo)antigo.ovos-=anteriorRastro.ovos;
+    }else continue;
+   }
+   rastros.set(rastro,{sku,lote,ovos});
+  }
+
   if(!Number.isSafeInteger(ovosPorCaixa)||ovosPorCaixa<=0)throw Error('Capacidade inválida: '+produto);
   const chave=JSON.stringify([sku,lote.toUpperCase()]),anterior=mapa.get(chave);
   if(anterior){
@@ -31,5 +46,5 @@ export function extrairParipassu(linhas){
   return {sku:x.sku,lote:x.lote,saldo:x.ovos/x.ovosPorCaixa,ovos:x.ovos,ovosPorCaixa:x.ovosPorCaixa};
  });
  // Caixas fracionadas são divergências de conferência, não motivo para bloquear a importação.
- return {itens,industriaisIgnorados:industriais,linhasValidas,caixasFracionadas:fracionadas};
+ return {itens,industriaisIgnorados:industriais,linhasValidas,caixasFracionadas:fracionadas,duplicadosIgnorados:duplicados,conflitosRastreabilidade:conflitos};
 }
