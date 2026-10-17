@@ -111,6 +111,11 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 <div id="divergenciasEstoqueTeste" role="alert" aria-live="assertive" style="display:none;margin:12px 0;padding:14px 16px;border:2px solid #c2410c;border-radius:10px;background:#fff1e6;color:#7c2d12;font-weight:600"></div>
   <p id="resumoReservaTeste" role="status">Reservas: aguardando importação do estoque.</p>
   <p id="resultadoEstoqueTeste" role="status" aria-live="polite">Nenhuma planilha importada nesta sessão.</p>
+  <section id="conferenciaParipassu" aria-live="polite" style="margin:12px 0;padding:14px;border:1px solid #dce7eb;border-radius:12px;background:#fff;color:#254D69">
+   <h3 style="margin:0 0 8px">CONFERÊNCIA ESTOQUE EMBALADO × PARIPASSU</h3>
+   <p id="estadoConferenciaParipassu">Aguardando as duas versões oficiais sincronizadas pelo Firebase.</p>
+   <div id="listaConferenciaParipassu" style="max-height:300px;overflow:auto"></div>
+  </section>
   <div id="resumoPorSkuOperador" class="hidden" style="margin:18px 0;padding:16px;border:1px solid #dce7eb;border-radius:14px;background:#fff"><h3 style="color:#254D69;margin:0 0 8px">RESUMO POR SKU</h3><p style="color:#48647a;font-size:13px">Consolidado de todos os lotes. Reservas deste dispositivo; nenhuma baixa é realizada.</p><div style="overflow:auto;max-height:46vh"><table class="operator-table" style="min-width:900px"><thead><tr><th>SKU</th><th>Produto</th><th>Tamanho</th><th>Caixas</th><th>Ovos</th><th>Reservado (CX)</th><th>Disponível (CX)</th></tr></thead><tbody id="linhasResumoSkuOperador"></tbody></table></div></div>
   <div id="resumoEstoqueTeste" class="hidden" style="overflow:auto;max-height:60vh"><table style="width:100%;border-collapse:collapse"><thead><tr><th>SKU</th><th>Lote completo</th><th>Saldo (CX)</th><th>Reservado (CX)</th><th>Disponível (CX)</th><th>Situação</th></tr></thead><tbody id="linhasEstoqueTeste"></tbody></table></div>
 </section>
@@ -2531,6 +2536,44 @@ function renderizarEstoqueCompletoTeste() {
 // Etapa 2A: leitura isolada do estoque. Não modifica registros, reservas ou arquivos.
 const CHAVE_ESTOQUE_CONSULTA_LOCAL='romaneio2_estoque_embalado_consulta_v1';
 const CHAVE_PARIPASSU_CONSULTA_LOCAL='romaneio2_estoque_paripassu_consulta_v1';
+async function atualizarConferenciaParipassu(){
+ const estado=document.getElementById('estadoConferenciaParipassu'),lista=document.getElementById('listaConferenciaParipassu');
+ if(!estado||!lista)return;
+ const ler=chave=>{try{return JSON.parse(localStorage.getItem(chave)||'null');}catch{return null;}};
+ const embalado=ler(CHAVE_ESTOQUE_CONSULTA_LOCAL),paripassu=ler(CHAVE_PARIPASSU_CONSULTA_LOCAL);
+ lista.replaceChildren();
+ if(!embalado?.itens?.length||!paripassu?.itens?.length){
+  estado.textContent='Aguardando '+(!embalado?.itens?.length?'Estoque Embalado':'Estoque PariPassu')+' sincronizado. Nenhuma baixa será executada.';
+  return;
+ }
+ if(embalado.origem!=='firebase'||paripassu.origem!=='firebase'){
+  estado.textContent='Conferência oficial aguardando duas bases recebidas do Firebase. Arquivos locais não são usados como confirmação oficial.';
+  return;
+ }
+ try{
+  const {conferirEstoques}=await import('./integracao/conferencia-estoques.mjs');
+  const resultado=conferirEstoques(embalado.itens,paripassu.itens);
+  estado.textContent='Embalado '+embalado.versao+' | PariPassu '+paripassu.versao+' | '+resultado.conformes+' lotes conformes | '+resultado.pendencias.length+' pendências. Apenas conferência.';
+  if(!resultado.pendencias.length)return;
+  const tabela=document.createElement('table');
+  tabela.style.cssText='width:100%;border-collapse:collapse;font-size:13px';
+  const cab=document.createElement('tr');
+  for(const nome of ['SKU','LOTE','SITUAÇÃO','EMBALADO','PARIPASSU','DIFERENÇA']){
+   const th=document.createElement('th');th.textContent=nome;th.style.padding='8px';cab.appendChild(th);
+  }
+  tabela.appendChild(cab);
+  for(const p of resultado.pendencias.slice(0,200)){
+   const tr=document.createElement('tr');
+   for(const valor of [p.sku,p.lote,p.tipo==='ausente_paripassu'?'Ausente PariPassu':p.tipo==='ausente_embalado'?'Ausente Embalado':'Saldo divergente',p.embalado,p.paripassu,p.diferenca]){
+    const td=document.createElement('td');td.textContent=String(valor);td.style.padding='7px';td.style.borderTop='1px solid #dce7eb';tr.appendChild(td);
+   }
+   tabela.appendChild(tr);
+  }
+  lista.appendChild(tabela);
+  if(resultado.pendencias.length>200){const p=document.createElement('p');p.textContent='Exibindo as primeiras 200 pendências.';lista.appendChild(p);}
+ }catch(e){estado.textContent='Conferência indisponível: '+(e.message||e);}
+}
+window.addEventListener('load',()=>{void atualizarConferenciaParipassu();});
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin||event.data?.origem!=='romaneio-estoque-firebase-v1')return;
  const central=document.querySelector('iframe[src="./integracao/central-conexao.html"]');
@@ -2543,6 +2586,7 @@ window.addEventListener('message',event=>{
   const anterior=JSON.parse(localStorage.getItem(chave)||'null');
   if(anterior?.versao===d.versao)return;
   localStorage.setItem(chave,JSON.stringify({nome:d.nome||'Estoque Firebase',em:d.importadoEm||new Date().toISOString(),versao:d.versao,itens:d.itens,origem:'firebase'}));
+  void atualizarConferenciaParipassu();
   if(d.tipo==='embalado'){
    window.estoqueTesteConsulta=new Map(d.itens.map(x=>[chaveReservaTeste(x.sku,x.lote),x]));
    window.reservaTesteAtiva=true;
