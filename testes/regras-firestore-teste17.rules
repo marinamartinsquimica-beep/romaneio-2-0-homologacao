@@ -46,6 +46,11 @@ match /rom_lab_reservas17/{paleteId} {
        && request.resource.data.reservado > resource.data.reservado
        && request.resource.data.romaneio == resource.data.romaneio)
       ||
+      // Ajuste de reserva pelo responsavel (laboratorio): sem baixa nem alteracao de estoque.
+      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(["reservado","historico"])
+       && request.resource.data.reservado < resource.data.reservado
+       && request.resource.data.romaneio == resource.data.romaneio)
+      ||
       // Baixa: transfere quantidade reservada para expedida e reduz estoque.
       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reservado','estoque','expedido','historico'])
        && request.resource.data.reservado < resource.data.reservado
