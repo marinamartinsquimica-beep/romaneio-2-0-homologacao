@@ -2564,7 +2564,7 @@ async function atualizarConferenciaParipassu(){
   tabela.appendChild(cab);
   for(const p of resultado.pendencias){
    const tr=document.createElement('tr');
-   for(const valor of [p.sku,p.lote,p.tipo==='ausente_paripassu'?'Ausente PariPassu':p.tipo==='ausente_embalado'?'Ausente Embalado':p.tipo==='caixa_fracionada'?'Caixa incompleta':'Saldo divergente',p.embalado,p.paripassu,p.diferenca]){
+   for(const valor of [p.sku,p.lote,p.tipo==='ausente_paripassu'?'Ausente PariPassu':p.tipo==='ausente_embalado'?'Ausente Embalado':p.tipo==='caixa_fracionada'?'Caixa incompleta':p.tipo==='conflito_rastreamento'?'Rastreamento divergente':'Saldo divergente',p.embalado,p.paripassu,p.diferenca]){
     const td=document.createElement('td');td.textContent=String(valor);td.style.padding='7px';td.style.borderTop='1px solid #dce7eb';tr.appendChild(td);
    }
    tabela.appendChild(tr);
