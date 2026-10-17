@@ -15,7 +15,7 @@ function gravar(f){localStorage.setItem(CHAVE,JSON.stringify(f));}
 const erros=[];
 const publicador=criarPublicadorMovimentos({
  transacionar:fn=>runTransaction(db,fn),
- referencia:id=>doc(db,'rom_v250_movimentos',id),
+ referencia:id=>doc(db,'rom_v250_contas',auth.currentUser.uid,'movimentos',id),
  registrarErro:e=>erros.push(e),
  obterUsuario:()=>auth.currentUser
 });
