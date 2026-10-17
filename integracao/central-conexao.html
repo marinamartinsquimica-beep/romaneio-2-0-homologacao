@@ -386,20 +386,30 @@ $('aplicarUniaoSegura').onclick=async()=>{
    const candidatos=resultado.map((x,i)=>({x,i})).filter(z=>chave(z.x)===chave(antes));
    return candidatos.length===1?candidatos[0].i:-1;
   };
+  const trajetorias=new Map();
   for(const mov of movs){
-   if(mov.tipo!=='edicao'&&mov.tipo!=='exclusao')continue;
-   const anterior=mov.tipo==='edicao'?mov.antes:mov.item;
-   if(!anterior)continue;
-   const indice=localizarAnterior(anterior);
-   if(indice<0)continue;
-   const atual=resultado[indice];
-   if(chave(atual)!==chave(anterior)){
-    conflitosRecebidos.push(mov.id+': alteração local divergente');
+   const id=String(mov.item?.registroId||mov.antes?.registroId||'');
+   if(!id)continue;
+   const grupo=trajetorias.get(id)||[];
+   grupo.push(mov);
+   trajetorias.set(id,grupo);
+  }
+  for(const [id,eventos] of trajetorias){
+   const primeiro=eventos[0],ultimo=eventos[eventos.length-1];
+   const inicio=primeiro.tipo==='inclusao'?primeiro.item:(primeiro.antes||primeiro.item);
+   const indices=resultado.map((item,i)=>({item,i})).filter(x=>String(x.item.registroId||'')===id);
+   if(indices.length!==1)continue;
+   const atual=indices[0].item;
+   if(ultimo.tipo!=='exclusao'&&chave(atual)===chave(ultimo.item))continue;
+   if(chave(atual)!==chave(inicio)){
+    conflitosRecebidos.push(id+': estado local divergente');
     continue;
    }
-   if(mov.tipo==='exclusao'){resultado.splice(indice,1);exclusoesRecebidas++;}
-   else{
-    resultado[indice]={...mov.item,registroId:atual.registroId||mov.item.registroId};
+   if(ultimo.tipo==='exclusao'){
+    resultado.splice(indices[0].i,1);
+    exclusoesRecebidas++;
+   }else if(ultimo.tipo==='edicao'){
+    resultado[indices[0].i]={...ultimo.item,registroId:id};
     edicoesRecebidas++;
    }
   }
