@@ -3,9 +3,11 @@
  * Não habilitar em produção sem regras de segurança e testes ponta a ponta.
  */
 import {prepararLoteMovimentos,reconciliarConfirmacoes} from './protocolo-movimentos.js';
-export function criarPublicadorMovimentos({transacionar,referencia,registrarErro}){
- if([transacionar,referencia,registrarErro].some(fn=>typeof fn!=='function'))throw new TypeError('Dependências ausentes');
+export function criarPublicadorMovimentos({transacionar,referencia,registrarErro,obterUsuario}){
+ if([transacionar,referencia,registrarErro,obterUsuario].some(fn=>typeof fn!=='function'))throw new TypeError('Dependências ausentes');
  async function publicar(fila,{limite=50}={}){
+  const usuario=obterUsuario();
+  if(!usuario?.uid)throw new Error('Autenticação necessária; fila preservada');
   const {lote,rejeitados}=prepararLoteMovimentos(fila,{limite});
   const confirmacoes=[];
   for(const op of lote){
@@ -15,7 +17,7 @@ export function criarPublicadorMovimentos({transacionar,referencia,registrarErro
     const estado=await transacionar(async tx=>{
      const ref=referencia(op.id);
      const anterior=await tx.get(ref);
-     const conteudo={id:op.id,dispositivoId:String(op.dispositivoId||''),tipo:op.tipo,item:op.item,antes:op.antes||null,criadoEm:String(op.criadoEm||'')};
+     const conteudo={id:op.id,autorUid:usuario.uid,dispositivoId:String(op.dispositivoId||''),tipo:op.tipo,item:op.item,antes:op.antes||null,criadoEm:String(op.criadoEm||'')};
      if(anterior.exists()){
       const remoto=anterior.data();
       if(JSON.stringify(remoto)!==JSON.stringify(conteudo))throw new Error('Conflito: mesmo ID com conteúdo diferente');
