@@ -175,6 +175,24 @@ $('preverRecebimento').onclick=async()=>{
   for(const [k,g] of gruposLocais){const diferenca=g.length-(gruposRemotos.get(k)||0);if(diferenca>0)diferencasLocais.push(diferenca+' × '+resumo(g[0]));}
   const idsLocais=entradas.filter(e=>e.registroId).length;
   const idsRemotos=ordenados.filter(d=>d.item?.registroId).length;
+  // Prévia de união: preserva multiplicidades e não confunde paletes de destinos distintos.
+  const uniao=new Map(gruposLocais);
+  const faltantesRemotos=[];
+  for(const [k,n] of ativos){
+   const atual=uniao.get(k)||[];
+   const falta=Math.max(0,n-atual.length);
+   if(falta){
+    const item=ordenados.filter(d=>chave(d.item)===k).at(-1)?.item;
+    if(!item){falhas.push('Sem amostra remota para '+k);continue;}
+    faltantesRemotos.push({item,quantidade:falta});
+    uniao.set(k,[...atual,...Array(falta).fill(item)]);
+   }
+  }
+  const totalUniao=[...uniao.values()].reduce((total,g)=>total+g.length,0);
+  const chavesLocais=new Set(entradas.map(e=>String(e.palete)+'|'+String(e.destino)));
+  const paletesCompartilhados=new Set(entradas.map(e=>String(e.palete)));
+  const sobreposicoes=faltantesRemotos.filter(({item})=>paletesCompartilhados.has(String(item.palete))&&!chavesLocais.has(String(item.palete)+'|'+String(item.destino)));
+  const podePreparar=snap.size<50&&!falhas.length&&!pendentes.length;
   const linhas=[
    'RECONCILIAÇÃO HISTÓRICA — SOMENTE LEITURA',
    'Operações consultadas: '+ordenados.length+' (janela: '+snap.size+'/50)',
@@ -183,6 +201,12 @@ $('preverRecebimento').onclick=async()=>{
    'Equivalentes locais: '+iguais,
    'Ativas remotas ausentes localmente: '+faltam,
    'Entradas locais não equivalentes: '+sobram,
+   'PRÉVIA DE UNIÃO (SEM APLICAR): '+totalUniao+' entradas no total',
+   'Entradas locais preservadas: '+entradas.length,
+   'Entradas remotas adicionais: '+faltantesRemotos.reduce((n,x)=>n+x.quantidade,0),
+   'Paletes com mesmo número em destinos diferentes: '+sobreposicoes.length,
+   'Pré-condições para futura integração: '+(podePreparar?'sem impedimentos detectados nesta janela':'REVISÃO OBRIGATÓRIA'),
+   'IMPORTANTE: números de palete repetidos em destinos distintos exigem conferência antes de unir.',
    'Identidades presentes: '+idsLocais+'/'+entradas.length+' locais; '+idsRemotos+'/'+ordenados.length+' operações remotas',
    ...(diferencasRemotas.length?['REMOTO NÃO EQUIVALENTE (até 8):',...diferencasRemotas.slice(0,8)]:[]),
    ...(diferencasLocais.length?['LOCAL NÃO EQUIVALENTE (até 8):',...diferencasLocais.slice(0,8)]:[]),
