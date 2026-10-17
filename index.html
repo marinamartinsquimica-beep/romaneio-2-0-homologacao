@@ -2529,6 +2529,22 @@ function renderizarEstoqueCompletoTeste() {
   }
 }
 // Etapa 2A: leitura isolada do estoque. Não modifica registros, reservas ou arquivos.
+const CHAVE_ESTOQUE_CONSULTA_LOCAL='romaneio2_estoque_embalado_consulta_v1';
+function restaurarEstoqueConsultaLocal(){
+ try{
+  const dados=JSON.parse(localStorage.getItem(CHAVE_ESTOQUE_CONSULTA_LOCAL)||'null');
+  if(!dados||!Array.isArray(dados.itens)||!dados.itens.length)return;
+  const mapa=new Map(dados.itens.map(x=>[chaveReservaTeste(x.sku,x.lote),x]));
+  window.estoqueTesteConsulta=mapa;
+  window.reservaTesteAtiva=true;
+  atualizarResumoReservaTeste();
+  operadorAtualizarCardsEstoque();
+  const aviso=document.getElementById('resultadoEstoqueTeste');
+  if(aviso)aviso.textContent='Estoque Embalado (consulta local): '+dados.nome+' · '+mapa.size+' lotes · importado em '+new Date(dados.em).toLocaleString('pt-BR')+'. Sem baixa automática.';
+  document.getElementById('resumoEstoqueTeste')?.classList.remove('hidden');
+ }catch(e){console.warn('Cópia local de consulta indisponível',e);}
+}
+window.addEventListener('load',restaurarEstoqueConsultaLocal);
 async function importarEstoqueTeste(event) {
   const arquivo = event.target.files && event.target.files[0];
   if (!arquivo) return;
@@ -2562,7 +2578,9 @@ async function importarEstoqueTeste(event) {
       }
     }
     if (!mapa.size) throw new Error("Nenhum saldo válido encontrado.");
-    window.estoqueTesteConsulta = mapa; // Apenas sessão atual, não sincroniza entre aparelhos.
+    window.estoqueTesteConsulta = mapa; // Consulta local; não altera estoque oficial.
+    try{localStorage.setItem(CHAVE_ESTOQUE_CONSULTA_LOCAL,JSON.stringify({nome:arquivo.name,em:new Date().toISOString(),itens:[...mapa.values()]}));}
+    catch(e){console.warn('Sem espaço para preservar consulta local',e);}
     window.reservaTesteAtiva = true;
     atualizarResumoReservaTeste();
     renderizarEstoqueCompletoTeste();
