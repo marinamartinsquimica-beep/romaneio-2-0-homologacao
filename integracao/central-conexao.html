@@ -404,6 +404,20 @@ $('aplicarUniaoSegura').onclick=async()=>{
    }
   }
   if(conflitosRecebidos.length)throw Error('Conflitos detectados; nenhuma união aplicada: '+conflitosRecebidos.slice(0,3).join('; '));
+  // Uma edição pode substituir um registro local antigo enquanto a versão nova
+  // já constava como extra. Remove somente esse extra, jamais um registro local.
+  const totaisRemotos=new Map();
+  for(const [k,g] of grupos)totaisRemotos.set(k,g.length);
+  const totaisLocais=new Map();
+  for(const item of resultado){const k=chave(item);totaisLocais.set(k,(totaisLocais.get(k)||0)+1);}
+  for(const novo of novos){
+   const k=chave(novo);
+   if((totaisLocais.get(k)||0)>(totaisRemotos.get(k)||0)){
+    const indice=resultado.indexOf(novo);
+    if(indice>=0){resultado.splice(indice,1);totaisLocais.set(k,totaisLocais.get(k)-1);}
+   }
+  }
+
   if(localStorage.getItem('entradas')!==entradasBrutas||localStorage.getItem('romaneio2_movimentos_pendentes_v1')!==filaBruta||localStorage.getItem(baseChave)!==baseBruta)throw Error('Dados locais mudaram durante a conferência. Recomece.');
   const mensagem='Aplicar união controlada neste aparelho?\\n\\nEntradas preservadas: '+entradas.length+'\\nEntradas remotas adicionadas: '+novos.length+'\\nTotal: '+resultado.length+'\\n\\nNenhuma baixa de estoque será realizada. A página do Romaneio deverá ser recarregada.';
   if(!window.confirm(mensagem)){saida.textContent='Operação cancelada. Nenhum dado alterado.';return;}
