@@ -23,6 +23,7 @@ const sincronizador=criarSincronizadorFila({ler,gravar,publicador,avisar:r=>wind
 export async function sincronizarMovimentos250(){
  if(!habilitado)throw Error('Envio Firebase ainda não homologado; fila local preservada');
  if(!navigator.onLine)throw Error('Sem internet; fila local preservada');
+ await auth.authStateReady();
  if(!auth.currentUser)throw Error('Reconecte o Firebase pela Central de Conexão');
  return sincronizador.executar();
 }
