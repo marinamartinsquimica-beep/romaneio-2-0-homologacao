@@ -8,8 +8,8 @@ export function prepararBaixa(estoque,movimentos){
  if(!Array.isArray(movimentos))throw Error('Movimentos inválidos.');
  for(const m of movimentos){
   const id=String(m.id??'').trim();if(!id)throw Error('ID de movimento obrigatório.');
-  if(vistos.has(id))continue;vistos.add(id);
-  const caixas=numero(m.caixas,'Caixas'),k=chave(m),x=saldos.get(k);
+  if(vistos.has(id))throw Error('Movimento repetido na solicitação: '+id);vistos.add(id);
+  const caixas=numero(m.caixas,'Caixas'),k=chave(m),x=saldos.get(k);if(!String(m.sku??'').trim()||!String(m.lote??'').trim())throw Error('SKU/lote obrigatório na baixa.');
   if(!x||x.saldo<caixas){pendencias.push({id,sku:m.sku,lote:m.lote,caixas,disponivel:x?.saldo??null,motivo:x?'Saldo insuficiente':'Lote ausente'});continue;}
   x.saldo-=caixas;aplicados.push({id,sku:m.sku,lote:m.lote,caixas});
  }
@@ -19,7 +19,7 @@ export function prepararAjuste(estoque,contagens){
  const saldos=mapa(estoque),vistos=new Set(),alteracoes=[];
  if(!Array.isArray(contagens)||!contagens.length)throw Error('Informe contagens.');
  for(const c of contagens){
-  const k=chave(c);if(vistos.has(k))throw Error('Contagem duplicada.');vistos.add(k);
+  if(!String(c.sku??'').trim()||!String(c.lote??'').trim())throw Error('SKU/lote obrigatório na contagem.');const k=chave(c);if(vistos.has(k))throw Error('Contagem duplicada.');vistos.add(k);
   const item=saldos.get(k),fisico=numero(c.caixas,'Contagem física');
   if(!item)throw Error('Lote fora do estoque: '+c.sku+'/'+c.lote);
   if(item.saldo!==fisico){alteracoes.push({sku:c.sku,lote:c.lote,anterior:item.saldo,fisico,diferenca:fisico-item.saldo});item.saldo=fisico;}
