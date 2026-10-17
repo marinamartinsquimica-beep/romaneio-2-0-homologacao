@@ -1532,7 +1532,7 @@ function registrarMovimentosLocais(atuais) {
   // Pareia somente mudanças inequívocas no mesmo palete/SKU/lote; demais mudanças são exclusões e inclusões.
   for(let i=removidos.length-1;i>=0;i--){
     const antigo=removidos[i];
-    const j=adicionados.findIndex(novo=>(antigo.registroId&&novo.registroId&&novo.registroId===antigo.registroId)||(String(novo.palete)===String(antigo.palete)&&String(novo.sku)===String(antigo.sku)&&String(novo.loteCompleto)===String(antigo.loteCompleto)));
+    const j=adicionados.findIndex(novo=>(antigo.registroId&&novo.registroId&&novo.registroId===antigo.registroId)||(String(novo.palete)===String(antigo.palete)&&String(novo.destino||'')===String(antigo.destino||'')&&String(novo.sku)===String(antigo.sku)&&String(novo.loteCompleto)===String(antigo.loteCompleto)));
     if(j>=0){const novo=adicionados.splice(j,1)[0];removidos.splice(i,1);fila.push({...criar("edicao",novo),antes:antigo});}
   }
   for(const item of removidos)fila.push(criar("exclusao",item));
