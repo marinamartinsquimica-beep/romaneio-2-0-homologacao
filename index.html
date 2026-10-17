@@ -2530,6 +2530,29 @@ function renderizarEstoqueCompletoTeste() {
 }
 // Etapa 2A: leitura isolada do estoque. Não modifica registros, reservas ou arquivos.
 const CHAVE_ESTOQUE_CONSULTA_LOCAL='romaneio2_estoque_embalado_consulta_v1';
+const CHAVE_PARIPASSU_CONSULTA_LOCAL='romaneio2_estoque_paripassu_consulta_v1';
+window.addEventListener('message',event=>{
+ if(event.origin!==location.origin||event.data?.origem!=='romaneio-estoque-firebase-v1')return;
+ const central=document.querySelector('iframe[src="./integracao/central-conexao.html"]');
+ if(!central||event.source!==central.contentWindow)return;
+ const d=event.data;
+ if(!['embalado','paripassu'].includes(d.tipo)||typeof d.versao!=='string'||!Array.isArray(d.itens))return;
+ if(d.itens.length>15000||d.itens.some(x=>!x||typeof x.sku!=='string'||typeof x.lote!=='string'||!Number.isFinite(x.saldo)||x.saldo<0))return;
+ const chave=d.tipo==='embalado'?CHAVE_ESTOQUE_CONSULTA_LOCAL:CHAVE_PARIPASSU_CONSULTA_LOCAL;
+ try{
+  const anterior=JSON.parse(localStorage.getItem(chave)||'null');
+  if(anterior?.versao===d.versao)return;
+  localStorage.setItem(chave,JSON.stringify({nome:d.nome||'Estoque Firebase',em:d.importadoEm||new Date().toISOString(),versao:d.versao,itens:d.itens,origem:'firebase'}));
+  if(d.tipo==='embalado'){
+   window.estoqueTesteConsulta=new Map(d.itens.map(x=>[chaveReservaTeste(x.sku,x.lote),x]));
+   window.reservaTesteAtiva=true;
+   atualizarResumoReservaTeste();
+   operadorAtualizarCardsEstoque();
+   document.getElementById('resumoEstoqueTeste')?.classList.remove('hidden');
+  }
+ }catch(e){console.warn('Falha ao armazenar consulta de estoque Firebase',e);}
+});
+
 const CHAVE_EXCEL_ORIGINAL_DB='romaneio2_documentos_oficiais_v1';
 function abrirBancoExcelOriginal(){
  return new Promise((resolve,reject)=>{
