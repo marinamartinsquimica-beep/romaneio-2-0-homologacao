@@ -673,26 +673,19 @@ $('estoquePrevia').onclick=async()=>{
    itens=leitura.itens;
    observacao=' | '+leitura.industriaisIgnorados+' linhas industriais excluídas | '+leitura.caixasFracionadas+' lotes com caixas parciais';
   }else{
+   // Estoque Embalado: manter o saldo oficial de caixas; não recalcular ovos.
    nomeAba=livro.SheetNames.find(x=>normalizar(x)==='ESTOQUE');
-   if(!nomeAba)throw Error('Aba ESTOQUE não encontrada no Estoque Embalado.');
+   if(!nomeAba)throw Error('Aba ESTOQUE não encontrada. Confira o modelo oficial.');
    const linhas=XLSX.utils.sheet_to_json(livro.Sheets[nomeAba],{header:1,defval:'',raw:true});
-   const cab=linhas.findIndex(l=>l.some(x=>normalizar(x)==='SKU')&&l.some(x=>normalizar(x)==='OVOS EM ESTOQUE')&&l.some(x=>normalizar(x)==='OVOS CAIXA')&&l.some(x=>['LOTE','LOTE COMPLETO'].includes(normalizar(x))));
-   if(cab<0)throw Error('Colunas SKU, LOTE COMPLETO, OVOS EM ESTOQUE e OVOS CAIXA não encontradas.');
-   const h=linhas[cab].map(normalizar),is=h.indexOf('SKU'),il=h.indexOf('LOTE COMPLETO')>=0?h.indexOf('LOTE COMPLETO'):h.indexOf('LOTE'),io=h.indexOf('OVOS EM ESTOQUE'),ic=h.indexOf('OVOS CAIXA');
-   const mapa=new Map();
+   const cab=linhas.findIndex(l=>l.some(x=>normalizar(x)==='SKU')&&l.some(x=>['LOTE','LOTE COMPLETO'].includes(normalizar(x)))&&l.some(x=>['SALDO','QTD','QUANTIDADE'].includes(normalizar(x))));
+   if(cab<0)throw Error('Cabeçalhos SKU, LOTE e SALDO/QTD não identificados.');
+   const h=linhas[cab].map(normalizar),sku=h.indexOf('SKU'),lote=h.indexOf('LOTE COMPLETO')>=0?h.indexOf('LOTE COMPLETO'):h.indexOf('LOTE'),saldo=['SALDO','QTD','QUANTIDADE'].map(x=>h.indexOf(x)).find(x=>x>=0);
+   itens=[];
    for(const l of linhas.slice(cab+1)){
     if(l.every(v=>String(v??'').trim()===''))continue;
-    const sku=String(l[is]??'').trim(),lote=String(l[il]??'').trim();
-    if(/INDUSTRI/i.test(normalizar(l.join(' '))))continue;
-    if(!sku||!lote)throw Error('SKU ou lote ausente no Estoque Embalado.');
-    const ovos=Number(String(l[io]??'').replace(',','.')),capacidade=Number(String(l[ic]??'').replace(',','.'));
-    if(!Number.isSafeInteger(ovos)||ovos<0||![90,240,360].includes(capacidade))throw Error('Ovos em estoque ou OVOS CAIXA inválidos: '+sku+'/'+lote);
-    const k=JSON.stringify([sku.toUpperCase(),lote.toUpperCase()]),prev=mapa.get(k);
-    if(prev){if(prev.ovosPorCaixa!==capacidade)throw Error('Capacidades diferentes para '+sku+'/'+lote);prev.ovos+=ovos;}
-    else mapa.set(k,{sku,lote,ovos,ovosPorCaixa:capacidade});
+    if(!String(l[sku]??'').trim()||!String(l[lote]??'').trim())throw Error('Linha incompleta na planilha; revise antes de publicar.');
+    itens.push({sku:String(l[sku]).trim(),lote:String(l[lote]).trim(),saldo:l[saldo]});
    }
-   itens=[...mapa.values()].map(x=>({...x,saldo:x.ovos/x.ovosPorCaixa}));
-   observacao=' | '+itens.filter(x=>!Number.isInteger(x.saldo)).length+' lotes com caixas parciais';
   }
   const ref=doc(db,'rom_v250_contas',auth.currentUser.uid,'estoques_oficiais',tipo),snap=await getDoc(ref);
   const esperada=snap.exists()?snap.data().versao||'':'';
