@@ -2645,5 +2645,24 @@ document.getElementById('tabTotal')?.addEventListener('click',()=>{document.getE
 document.getElementById('tabCaminhao')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
 window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(event.matches&&document.getElementById('painelOperadorDesktop').classList.contains('active'))abrirAba('total');});
 </script>
+<script type="module">
+import {sincronizarMovimentos250,estadoSincronizacao250} from './integracao/envio-movimentos250.js';
+let ocupada=false;
+async function enviarPendentes(){
+ if(ocupada||!navigator.onLine||document.hidden)return;
+ try{
+  if(!estadoSincronizacao250().autenticado||!estadoSincronizacao250().pendentes)return;
+  ocupada=true;
+  await sincronizarMovimentos250();
+  if(typeof atualizarIndicadorFilaMovimentos==='function')atualizarIndicadorFilaMovimentos();
+ }catch(erro){console.warn('Fila preservada; sincronização será retomada:',erro);}
+ finally{ocupada=false;}
+}
+window.addEventListener('romaneio:entradas-salvas',()=>{void enviarPendentes();});
+window.addEventListener('online',()=>{void enviarPendentes();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void enviarPendentes();});
+setInterval(()=>{void enviarPendentes();},15000);
+void enviarPendentes();
+</script>
 </body>
 </html>
