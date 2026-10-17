@@ -2558,13 +2558,13 @@ async function atualizarConferenciaParipassu(){
   const tabela=document.createElement('table');
   tabela.style.cssText='width:100%;border-collapse:collapse;font-size:13px';
   const cab=document.createElement('tr');
-  for(const nome of ['SKU','LOTE','SITUAÇÃO','CAIXAS EMBALADO','CAIXAS PARIPASSU','DIFERENÇA (CX)']){
+  for(const nome of ['SKU','LOTE','PENDÊNCIA','EMBALADO (CX)','PARIPASSU (CX)','DIFERENÇA (CX)','OVOS PARIPASSU','OVOS/CAIXA']){
    const th=document.createElement('th');th.textContent=nome;th.style.padding='8px';cab.appendChild(th);
   }
   tabela.appendChild(cab);
   for(const p of resultado.pendencias){
    const tr=document.createElement('tr');
-   for(const valor of [p.sku,p.lote,p.tipo==='ausente_paripassu'?'Ausente PariPassu':p.tipo==='ausente_embalado'?'Ausente Embalado':p.tipo==='caixa_fracionada'?'Caixa incompleta':p.tipo==='conflito_rastreamento'?'Rastreamento divergente':'Saldo divergente',p.embalado,p.paripassu,p.diferenca]){
+   for(const valor of [p.sku,p.lote,p.tipo==='ausente_paripassu'?'Ausente PariPassu':p.tipo==='ausente_embalado'?'Ausente Embalado':p.tipo==='caixa_fracionada'?'Caixa incompleta':p.tipo==='conflito_rastreamento'?'Rastreamento divergente':'Saldo divergente',p.embalado,p.paripassu,p.diferenca,p.ovosParipassu??'—',p.ovosPorCaixa??'—']){
     const td=document.createElement('td');td.textContent=String(valor);td.style.padding='7px';td.style.borderTop='1px solid #dce7eb';tr.appendChild(td);
    }
    tabela.appendChild(tr);
