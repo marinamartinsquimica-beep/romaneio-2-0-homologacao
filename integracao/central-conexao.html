@@ -656,7 +656,7 @@ async function autorizadoPublicarEstoque(){
 $('estoquePrevia').onclick=async()=>{
  limparPreviaEstoque();
  try{
-  await autorizadoPublicarEstoque();
+  // Prévia local liberada para testes; a publicação continua exigindo autorização.
   const arquivo=$('estoqueArquivo').files?.[0],tipo=$('estoqueTipo').value;
   if(!arquivo)throw Error('Selecione uma planilha Excel.');
   if(!/\.xlsx?$/i.test(arquivo.name))throw Error('Selecione arquivo .xlsx ou .xls.');
@@ -687,14 +687,15 @@ $('estoquePrevia').onclick=async()=>{
     itens.push({sku:String(l[sku]).trim(),lote:String(l[lote]).trim(),saldo:l[saldo]});
    }
   }
-  const ref=doc(db,'rom_v250_contas',auth.currentUser.uid,'estoques_oficiais',tipo),snap=await getDoc(ref);
-  const esperada=snap.exists()?snap.data().versao||'':'';
+  const usuarioPrevia=auth.currentUser;
+  let esperada='';
+  if(usuarioPrevia){const ref=doc(db,'rom_v250_contas',usuarioPrevia.uid,'estoques_oficiais',tipo);const snap=await getDoc(ref);esperada=snap.exists()?snap.data().versao||'':'';}
   const versao=crypto.randomUUID();
   const dados=validarEstoqueOficial({tipo,nome:arquivo.name,versao,itens},tipo);
-  if(new TextEncoder().encode(JSON.stringify({...dados,importadoEm:new Date().toISOString(),autorUid:auth.currentUser.uid})).length>850000)throw Error('Estoque acima do limite seguro de um documento Firebase. Publicação bloqueada.');
-  previaEstoque={tipo,dados,esperada,arquivoNome:arquivo.name};
+  if(new TextEncoder().encode(JSON.stringify({...dados,importadoEm:new Date().toISOString(),autorUid:usuarioPrevia?.uid||''})).length>850000)throw Error('Estoque acima do limite seguro de um documento Firebase. Publicação bloqueada.');
+  previaEstoque={tipo,dados,esperada,arquivoNome:arquivo.name,uid:usuarioPrevia?.uid||''};
   saidaEstoque.textContent='Prévia: '+arquivo.name+' | Aba '+nomeAba+' | '+dados.itens.length+' lotes | '+dados.itens.reduce((n,x)=>n+x.saldo,0)+' caixas'+observacao+'. Versão vigente: '+(esperada||'nenhuma')+'. Confira antes de publicar.';
-  botaoPublicarEstoque.disabled=false;
+  botaoPublicarEstoque.disabled=!usuarioPrevia;
  }catch(e){saidaEstoque.textContent='Não publicado: '+(e.message||e);}
 };
 $('estoquePublicar').onclick=async()=>{
@@ -704,6 +705,7 @@ $('estoquePublicar').onclick=async()=>{
  botaoPublicarEstoque.disabled=true;
  try{
   await autorizadoPublicarEstoque();
+  if(!p.uid||p.uid!==auth.currentUser?.uid)throw Error('A conta mudou desde a prévia. Gere uma nova prévia.');
   const r=await publicarEstoqueOficial({db,uid:auth.currentUser.uid,tipo:p.tipo,dados:p.dados,versaoEsperada:p.esperada,doc,runTransaction,autorizado:true});
   saidaEstoque.textContent='Publicação confirmada pelo Firebase: '+r.tipo+' | '+r.quantidadeLotes+' lotes | versão '+r.versao;
   previaEstoque=null;
