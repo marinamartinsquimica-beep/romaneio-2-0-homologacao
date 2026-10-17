@@ -91,7 +91,7 @@ $('prepararEnvioReal').onclick=()=>{
   $('estadoEnvioReal').textContent='PRONTO PARA CONFIRMAÇÃO: '+fila.length+' movimentações. Conta: '+(u.email||u.uid)+'.\\n\\n'+detalhes.join('\\n')+'\\n\\nConfira cada movimentação antes de confirmar. Nenhum envio realizado.';
  }catch(e){preparacaoReal=null;$('confirmarEnvioReal').disabled=true;$('estadoEnvioReal').textContent='Não preparado: '+e.message;}
 };
-$('confirmarEnvioReal').onclick=async()=>{
+async function confirmarEnvioRealOperacional(){
  const b=$('confirmarEnvioReal');if(!preparacaoReal||envioRealEmAndamento)return;
  envioRealEmAndamento=true;b.disabled=true;b.textContent='SINCRONIZANDO…';
  try{
@@ -125,7 +125,8 @@ $('confirmarEnvioReal').onclick=async()=>{
   $('estadoEnvioReal').textContent+='\n'+(falhas.length?'REVISAR: '+falhas.join(' | '):'Concluído: operações confirmadas removidas da fila local.');
  }catch(e){$('estadoEnvioReal').textContent='Envio não concluído: '+(e.code||e.message||String(e))+'. Fila preservada.';}
  finally{preparacaoReal=null;envioRealEmAndamento=false;b.disabled=true;b.textContent='CONFIRMAR ENVIO DA FILA';status();}
-};
+}
+$('confirmarEnvioReal').onclick=confirmarEnvioRealOperacional;
 $('consultarCompartilhados').onclick=async()=>{
  const b=$('consultarCompartilhados'),out=$('resultadoCompartilhados');b.disabled=true;b.textContent='CONSULTANDO…';out.textContent='Consultando registros remotos…';
  try{
@@ -426,7 +427,20 @@ $('prepararPublicacaoLocal').onclick=async()=>{
 };
 
 let backupUniaoNestaSessao=false;
-$('aplicarUniaoSegura').onclick=async()=>{
+let uniaoAutomaticaEmAndamento=false;
+const CHAVE_BACKUP_AUTOMATICO='romaneio2_backup_automatico_pre_uniao_v1';
+function salvarBackupAutomatico(){
+ const chaves=['entradas','romaneio2_movimentos_pendentes_v1','romaneio2_ultimo_estado_movimentos_v1','romaneio2_historico_correcoes'];
+ const dados={};
+ for(const chave of chaves)dados[chave]=localStorage.getItem(chave);
+ const entradas=JSON.parse(dados.entradas||'[]');
+ if(!Array.isArray(entradas))throw Error('Entradas inválidas: união automática bloqueada');
+ // Uma cópia anterior só é substituída após uma união segura; não descartar backup de recuperação.
+ if(localStorage.getItem(CHAVE_BACKUP_AUTOMATICO))return false;
+ localStorage.setItem(CHAVE_BACKUP_AUTOMATICO,JSON.stringify({criadoEm:new Date().toISOString(),dados}));
+ return true;
+}
+async function aplicarUniaoSeguraOperacional(){
  const botao=$('aplicarUniaoSegura'),saida=$('resultadoAplicarUniao');
  botao.disabled=true;
  try{
@@ -549,7 +563,7 @@ $('aplicarUniaoSegura').onclick=async()=>{
 
   if(localStorage.getItem('entradas')!==entradasBrutas||localStorage.getItem('romaneio2_movimentos_pendentes_v1')!==filaBruta||localStorage.getItem(baseChave)!==baseBruta)throw Error('Dados locais mudaram durante a conferência. Recomece.');
   const mensagem='Aplicar união controlada neste aparelho?\\n\\nEntradas preservadas: '+entradas.length+'\\nEntradas remotas adicionadas: '+novos.length+'\\nTotal: '+resultado.length+'\\n\\nNenhuma baixa de estoque será realizada. A página do Romaneio deverá ser recarregada.';
-  if(!window.confirm(mensagem)){saida.textContent='Operação cancelada. Nenhum dado alterado.';return;}
+  if(!uniaoAutomaticaEmAndamento&&!window.confirm(mensagem)){saida.textContent='Operação cancelada. Nenhum dado alterado.';return;}
   if(localStorage.getItem('entradas')!==entradasBrutas||localStorage.getItem('romaneio2_movimentos_pendentes_v1')!==filaBruta||localStorage.getItem(baseChave)!==baseBruta)throw Error('Dados locais mudaram antes da confirmação. Recomece.');
   try{
    localStorage.setItem('entradas',JSON.stringify(resultado));
@@ -560,10 +574,12 @@ $('aplicarUniaoSegura').onclick=async()=>{
    throw erro;
   }
   backupUniaoNestaSessao=false;
+  if(uniaoAutomaticaEmAndamento)localStorage.removeItem(CHAVE_BACKUP_AUTOMATICO);
   saida.textContent='UNIÃO APLICADA NESTE APARELHO: '+entradas.length+' entradas preservadas + '+novos.length+' recebidas = '+resultado.length+'. Nenhum estoque ou fila alterado. Abra o Romaneio e atualize a página para conferir.';
  }catch(e){saida.textContent='União não aplicada: '+(e.message||String(e))+'. Verifique os dados antes de tentar novamente.';}
  finally{botao.disabled=false;}
-};
+}
+$('aplicarUniaoSegura').onclick=aplicarUniaoSeguraOperacional;
 $('exportarBackupUniao').onclick=()=>{
  const saida=$('resultadoBackupUniao');
  try{
@@ -581,7 +597,59 @@ $('exportarBackupUniao').onclick=()=>{
   saida.textContent='Cópia preparada para download: '+copia.dados.entradas.length+' entradas locais. Nenhum dado foi alterado. Guarde o arquivo em local seguro.';
  }catch(e){saida.textContent='Backup não concluído: '+(e.message||String(e))+'. Dados locais intactos.';}
 };
+
+// Recebimento automático conservador: nunca sobrepõe fila local e mantém backup
+// recuperável caso uma validação ou gravação falhe.
+let recebimentoAutomaticoEmAndamento=false;
+async function receberAutomaticamente(){
+ if(recebimentoAutomaticoEmAndamento||!navigator.onLine||!auth.currentUser||lerOperacional().length)return;
+ recebimentoAutomaticoEmAndamento=true;
+ try{
+  if(!salvarBackupAutomatico())return; // exige revisão de backup anterior
+  uniaoAutomaticaEmAndamento=true;
+  backupUniaoNestaSessao=true;
+  await aplicarUniaoSeguraOperacional();
+  // O aplicador mantém o backup se houve conflito ou falha.
+ }catch(e){$('resultadoAplicarUniao').textContent='Recebimento automático pausado: '+(e.message||String(e));}
+ finally{uniaoAutomaticaEmAndamento=false;recebimentoAutomaticoEmAndamento=false;}
+}
+
 window.addEventListener('online',status);window.addEventListener('offline',status);
+
+// Envio automático de movimentações operacionais; nunca executa baixa de estoque.
+// Preserva a validação, a transação idempotente e a remoção apenas após confirmação Firestore.
+let envioAutomaticoAgendado=false;
+async function enviarFilaAutomaticamente(){
+ if(envioAutomaticoAgendado||envioRealEmAndamento||!navigator.onLine||!auth.currentUser)return;
+ envioAutomaticoAgendado=true;
+ try{
+  const fila=lerOperacional();
+  if(!fila.length)return;
+  const ids=new Set();
+  if(fila.some(op=>{if(!validarOperacional(op)||ids.has(op.id))return true;ids.add(op.id);return false;})){
+   $('estadoEnvioReal').textContent='Sincronização automática pausada: fila exige revisão; dados preservados.';
+   return;
+  }
+  $('prepararEnvioReal').click();
+  if(preparacaoReal&&$('confirmarEnvioReal').disabled===false)await confirmarEnvioRealOperacional();
+ }catch(e){$('estadoEnvioReal').textContent='Sincronização automática adiada: '+(e.message||String(e));}
+ finally{envioAutomaticoAgendado=false;status();}
+}
+let cicloEmAndamento=false;
+async function cicloAutomatico(){
+ if(cicloEmAndamento||!navigator.onLine||!auth.currentUser)return;
+ cicloEmAndamento=true;
+ try{
+  await enviarFilaAutomaticamente();
+  if(!lerOperacional().length)await receberAutomaticamente();
+ }finally{cicloEmAndamento=false;}
+}
+window.addEventListener('online',()=>{void cicloAutomatico();});
+window.addEventListener('storage',e=>{if(e.key===CHAVE_OPERACIONAL)void cicloAutomatico();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void cicloAutomatico();});
+setInterval(()=>{if(!document.hidden)void cicloAutomatico();},15000);
+auth.authStateReady().then(()=>cicloAutomatico()).catch(()=>{});
+
 $('verificar').onclick=async()=>{
  const botao=$('verificar'),saida=$('verificacaoFirebase');
  botao.disabled=true;botao.textContent='VERIFICANDO…';saida.textContent='Consultando o servidor de autenticação Firebase…';
@@ -594,7 +662,7 @@ $('verificar').onclick=async()=>{
  }catch(e){saida.textContent='FALHA NA VERIFICAÇÃO: '+(e.code||e.message||String(e))+'.\nVerifique a rede ou reconecte a conta.';}
  finally{botao.disabled=false;botao.textContent='TESTAR CONEXÃO FIREBASE';status();}
 };
-onAuthStateChanged(auth,u=>{if(uidTempoReal&&u?.uid!==uidTempoReal)pararTempoReal('Sessão alterada; acompanhamento interrompido.');$('sessao').textContent=u?'Sessão autenticada: '+(u.email||'usuário operacional'):'Sessão não autenticada — reconecte abaixo';$('login').hidden=!!u;$('sair').hidden=!u;atualizarTeste(u);status();});
+onAuthStateChanged(auth,u=>{if(uidTempoReal&&u?.uid!==uidTempoReal)pararTempoReal('Sessão alterada; acompanhamento interrompido.');$('sessao').textContent=u?'Sessão autenticada: '+(u.email||'usuário operacional'):'Sessão não autenticada — reconecte abaixo';$('login').hidden=!!u;$('sair').hidden=!u;atualizarTeste(u);status();if(u)void cicloAutomatico();});
 $('login').onsubmit=async e=>{e.preventDefault();const b=$('login').querySelector('button');b.disabled=true;$('sessao').textContent='Autenticando…';try{await setPersistence(auth,browserLocalPersistence);await signInWithEmailAndPassword(auth,$('email').value,$('senha').value);$('senha').value='';}catch(err){$('sessao').textContent='Falha ao autenticar ('+(err.code||'erro desconhecido')+'). Confira o login e tente novamente.';}finally{b.disabled=false;}};
 $('sair').onclick=async()=>{try{await signOut(auth);}catch(e){$('sessao').textContent='Não foi possível encerrar a sessão: '+(e.code||'erro');}};
 async function gravarTeste(reenvio){
