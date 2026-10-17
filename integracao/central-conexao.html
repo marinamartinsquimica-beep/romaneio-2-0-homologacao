@@ -658,14 +658,14 @@ $('estoquePrevia').onclick=async()=>{
   await autorizadoPublicarEstoque();
   const arquivo=$('estoqueArquivo').files?.[0],tipo=$('estoqueTipo').value;
   if(!arquivo)throw Error('Selecione uma planilha Excel.');
-  if(!/\\.xlsx?$/i.test(arquivo.name))throw Error('Selecione arquivo .xlsx ou .xls.');
+  if(!/\.xlsx?$/i.test(arquivo.name))throw Error('Selecione arquivo .xlsx ou .xls.');
   if(arquivo.size>8*1024*1024)throw Error('Arquivo acima de 8 MB.');
   if(typeof XLSX==='undefined')throw Error('Leitor Excel indisponível.');
   const livro=XLSX.read(await arquivo.arrayBuffer(),{type:'array',cellDates:false});
   const nomeAba=livro.SheetNames.find(x=>x.trim().toLowerCase()==='estoque');
   if(!nomeAba)throw Error('Aba ESTOQUE não encontrada. Confira o modelo oficial antes de publicar.');
   const linhas=XLSX.utils.sheet_to_json(livro.Sheets[nomeAba],{header:1,defval:'',raw:true});
-  const normalizar=x=>String(x??'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toUpperCase();
+  const normalizar=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
   const cab=linhas.findIndex(l=>l.some(x=>normalizar(x)==='SKU')&&l.some(x=>['LOTE','LOTE COMPLETO'].includes(normalizar(x)))&&l.some(x=>['SALDO','QTD','QUANTIDADE'].includes(normalizar(x))));
   if(cab<0)throw Error('Cabeçalhos SKU, LOTE e SALDO/QTD não identificados. Nenhuma publicação realizada.');
   const h=linhas[cab].map(normalizar),sku=h.indexOf('SKU'),lote=h.indexOf('LOTE COMPLETO')>=0?h.indexOf('LOTE COMPLETO'):h.indexOf('LOTE'),saldo=['SALDO','QTD','QUANTIDADE'].map(x=>h.indexOf(x)).find(x=>x>=0);
