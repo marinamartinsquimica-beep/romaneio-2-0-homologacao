@@ -28,6 +28,6 @@ export function extrairParipassu(linhas){
   if(x.ovos%x.ovosPorCaixa!==0)fracionadas++;
   return {sku:x.sku,lote:x.lote,saldo:x.ovos/x.ovosPorCaixa,ovos:x.ovos,ovosPorCaixa:x.ovosPorCaixa};
  });
- if(fracionadas)throw Error(fracionadas+' lotes têm ovos que não formam caixas inteiras. Publicação bloqueada; revisar ou definir regra de caixas parciais.');
- return {itens,industriaisIgnorados:industriais,linhasValidas};
+ // Caixas fracionadas são divergências de conferência, não motivo para bloquear a importação.
+ return {itens,industriaisIgnorados:industriais,linhasValidas,caixasFracionadas:fracionadas};
 }
