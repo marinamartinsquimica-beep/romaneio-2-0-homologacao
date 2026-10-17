@@ -19,5 +19,5 @@ export function conferirEstoques(embalado,paripassu){
  }
  for(const [k,b] of p)if(!e.has(k))pendencias.push({sku:b.sku,lote:b.lote,tipo:'ausente_embalado',embalado:0,paripassu:b.saldo,diferenca:-b.saldo});
  pendencias.sort((a,b)=>a.sku.localeCompare(b.sku,'pt-BR')||a.lote.localeCompare(b.lote,'pt-BR'));
- return {conferidos:new Set([...e.keys(),...p.keys()]).size,conformes:[...e].filter(([k,a])=>p.has(k)&&Math.abs(p.get(k).saldo-a.saldo)<=1e-9&&Number.isInteger(p.get(k).saldo)).length,pendencias};
+ return {conferidos:new Set([...e.keys(),...p.keys()]).size,conformes:[...e].filter(([k,a])=>p.has(k)&&Math.abs(p.get(k).saldo-a.saldo)<=1e-9&&Number.isInteger(p.get(k).saldo)&&Number.isInteger(p.get(k).saldo)).length,pendencias};
 }
