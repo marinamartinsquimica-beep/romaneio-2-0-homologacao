@@ -52,8 +52,14 @@ $('resolverTestePendente').onclick=async()=>{
   const id=String(it.registroId||'');if(!id)throw Error('Registro sem identificador estável.');
   const q=query(collection(db,'rom_v250_contas',auth.currentUser.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
   const snap=await getDocs(q);if(snap.metadata.fromCache||snap.size>=50)throw Error('Histórico remoto não confiável ou incompleto.');
-  const eventos=snap.docs.map(d=>d.data()).filter(m=>String(m.item?.registroId||m.antes?.registroId||'')===id).sort((a,b)=>String(a.criadoEm).localeCompare(String(b.criadoEm)));
-  if(!eventos.length||eventos[eventos.length-1].tipo!=='exclusao')throw Error('Não há exclusão final confirmada para esse registro no Firebase.');
+  const identidade=x=>[normalizar(x?.sku),normalizar(x?.destino),String(x?.palete??''),Number(x?.caixas),normalizar(x?.loteCompleto)].join('|');
+  const mesmaIdentidade=x=>identidade(x)===identidade(it);
+  const remotos=snap.docs.map(d=>d.data());
+  const idsCorrespondentes=new Set(remotos.filter(m=>mesmaIdentidade(m.item)||mesmaIdentidade(m.antes)).map(m=>String(m.item?.registroId||m.antes?.registroId||'')).filter(Boolean));
+  if(idsCorrespondentes.size!==1)throw Error('Identidade remota ausente ou ambígua; nenhuma alteração.');
+  const remotoId=[...idsCorrespondentes][0];
+  const eventos=remotos.filter(m=>String(m.item?.registroId||m.antes?.registroId||'')===remotoId).sort((a,b)=>String(a.criadoEm).localeCompare(String(b.criadoEm)));
+  if(!eventos.some(m=>m.tipo==='inclusao'&&mesmaIdentidade(m.item))||eventos[eventos.length-1]?.tipo!=='exclusao'||!mesmaIdentidade(eventos[eventos.length-1].item))throw Error('Sequência remota de inclusão e exclusão não comprovada.');
   if(localStorage.getItem(CHAVE_OPERACIONAL)!==origem)throw Error('Fila alterada durante a verificação.');
   if(!window.confirm('Exclusão do teste confirmada no Firebase. Remover apenas a inclusão fictícia pendente da fila local? Nenhum palete ou estoque será alterado.')){saida.textContent='Cancelado. Nenhuma alteração.';return;}
   if(localStorage.getItem(CHAVE_OPERACIONAL)!==origem)throw Error('Fila alterada antes da confirmação.');
