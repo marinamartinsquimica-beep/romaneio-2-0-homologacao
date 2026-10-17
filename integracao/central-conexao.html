@@ -177,7 +177,7 @@ $('preverRecebimento').onclick=async()=>{
   const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
   const snap=await getDocs(q);
   if(snap.metadata.fromCache)throw Error('Consulta apenas em cache');
-  const operacionais=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||String(d.item?.sku||'')==='TESTE-SYNC-01'));
+  const operacionais=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
   const entradas=JSON.parse(localStorage.getItem('entradas')||'[]');
   const pendentes=JSON.parse(localStorage.getItem('romaneio2_movimentos_pendentes_v1')||'[]');
   if(!Array.isArray(entradas)||!Array.isArray(pendentes))throw Error('Dados locais inválidos');
@@ -287,7 +287,7 @@ $('prepararUniaoSegura').onclick=async()=>{
   const snap=await getDocs(q);
   if(snap.metadata.fromCache)throw Error('Consulta retornou somente dados em cache');
   if(snap.size===50)throw Error('Histórico pode estar incompleto: limite de 50 registros');
-  const movimentos=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||String(d.item?.sku||'')==='TESTE-SYNC-01'));
+  const movimentos=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
   const chave=x=>JSON.stringify([x?.data,x?.sku,x?.destino,x?.palete,x?.loteCompleto,x?.lote,x?.postura,x?.caixas,x?.observacoes]);
   const contagem=new Map(),problemas=[];
   const ordenados=movimentos.sort((a,b)=>String(a.criadoEm||'').localeCompare(String(b.criadoEm||''))||String(a.id).localeCompare(String(b.id)));
@@ -365,7 +365,7 @@ $('prepararPublicacaoLocal').onclick=async()=>{
   const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
   const snap=await getDocs(q);
   if(snap.metadata.fromCache||snap.size>=50)throw Error('Histórico incompleto ou somente em cache');
-  const movs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||String(d.item?.sku||'')==='TESTE-SYNC-01'));
+  const movs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
   movs.sort((a,b)=>String(a.criadoEm||'').localeCompare(String(b.criadoEm||''))||String(a.id).localeCompare(String(b.id)));
   const chave=x=>JSON.stringify([x?.data,x?.sku,x?.destino,x?.palete,x?.loteCompleto,x?.lote,x?.postura,x?.caixas,x?.observacoes]);
   const remotos=new Map(),erros=[];
@@ -426,7 +426,7 @@ $('aplicarUniaoSegura').onclick=async()=>{
   const q=query(collection(db,'rom_v250_contas',auth.currentUser.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
   const snap=await getDocs(q);
   if(snap.metadata.fromCache||snap.size>=50)throw Error('Histórico remoto não confiável ou incompleto; união bloqueada.');
-  const movs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||String(d.item?.sku||'')==='TESTE-SYNC-01'));
+  const movs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
   movs.sort((a,b)=>String(a.criadoEm||'').localeCompare(String(b.criadoEm||''))||String(a.id).localeCompare(String(b.id)));
   const chave=x=>JSON.stringify([x?.data,x?.sku,x?.destino,x?.palete,x?.loteCompleto,x?.lote,x?.postura,x?.caixas,x?.observacoes]);
   const grupos=new Map(),falhas=[];
