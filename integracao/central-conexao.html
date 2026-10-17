@@ -5,6 +5,7 @@ import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,setPersist
 import {getFirestore,doc,runTransaction,collection,query,orderBy,limit,getDocs,getDoc,onSnapshot} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 import {validarEstoqueOficial} from './contrato-estoques.mjs';
 import {publicarEstoqueOficial} from './publicacao-estoques.mjs';
+import {extrairParipassu} from './leitor-paripassu.mjs';
 const config={apiKey:'AIzaSyAtlG-oys01gqgCdiANbzuzx9Mh9SiMRQo',authDomain:'romaneio-2-0-laboratorio.firebaseapp.com',projectId:'romaneio-2-0-laboratorio',storageBucket:'romaneio-2-0-laboratorio.firebasestorage.app',messagingSenderId:'343680211941',appId:'1:343680211941:web:8ad689db2c09447c2ded0c'};
 const app=getApps().length?getApp():initializeApp(config),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 let testeAtual=null;
@@ -662,18 +663,36 @@ $('estoquePrevia').onclick=async()=>{
   if(arquivo.size>8*1024*1024)throw Error('Arquivo acima de 8 MB.');
   if(typeof XLSX==='undefined')throw Error('Leitor Excel indisponível.');
   const livro=XLSX.read(await arquivo.arrayBuffer(),{type:'array',cellDates:false});
-  const nomeAba=livro.SheetNames.find(x=>x.trim().toLowerCase()==='estoque');
-  if(!nomeAba)throw Error('Aba ESTOQUE não encontrada. Confira o modelo oficial antes de publicar.');
-  const linhas=XLSX.utils.sheet_to_json(livro.Sheets[nomeAba],{header:1,defval:'',raw:true});
   const normalizar=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
-  const cab=linhas.findIndex(l=>l.some(x=>normalizar(x)==='SKU')&&l.some(x=>['LOTE','LOTE COMPLETO'].includes(normalizar(x)))&&l.some(x=>['SALDO','QTD','QUANTIDADE'].includes(normalizar(x))));
-  if(cab<0)throw Error('Cabeçalhos SKU, LOTE e SALDO/QTD não identificados. Nenhuma publicação realizada.');
-  const h=linhas[cab].map(normalizar),sku=h.indexOf('SKU'),lote=h.indexOf('LOTE COMPLETO')>=0?h.indexOf('LOTE COMPLETO'):h.indexOf('LOTE'),saldo=['SALDO','QTD','QUANTIDADE'].map(x=>h.indexOf(x)).find(x=>x>=0);
-  const itens=[];
-  for(const l of linhas.slice(cab+1)){
-   if(l.every(v=>String(v??'').trim()===''))continue;
-   if(!String(l[sku]??'').trim()||!String(l[lote]??'').trim())throw Error('Linha incompleta na planilha; revise antes de publicar.');
-   itens.push({sku:String(l[sku]).trim(),lote:String(l[lote]).trim(),saldo:l[saldo]});
+  let nomeAba,itens,observacao='';
+  if(tipo==='paripassu'){
+   nomeAba=livro.SheetNames.find(x=>normalizar(x)==='1. ESTOQUE');
+   if(!nomeAba)throw Error('Aba 1. Estoque não encontrada no arquivo PariPassu.');
+   const linhas=XLSX.utils.sheet_to_json(livro.Sheets[nomeAba],{header:1,defval:'',raw:true});
+   const leitura=extrairParipassu(linhas);
+   itens=leitura.itens;
+   observacao=' | '+leitura.industriaisIgnorados+' linhas industriais excluídas | '+leitura.caixasFracionadas+' lotes com caixas parciais';
+  }else{
+   nomeAba=livro.SheetNames.find(x=>normalizar(x)==='ESTOQUE');
+   if(!nomeAba)throw Error('Aba ESTOQUE não encontrada no Estoque Embalado.');
+   const linhas=XLSX.utils.sheet_to_json(livro.Sheets[nomeAba],{header:1,defval:'',raw:true});
+   const cab=linhas.findIndex(l=>l.some(x=>normalizar(x)==='SKU')&&l.some(x=>normalizar(x)==='OVOS EM ESTOQUE')&&l.some(x=>normalizar(x)==='OVOS CAIXA')&&l.some(x=>['LOTE','LOTE COMPLETO'].includes(normalizar(x))));
+   if(cab<0)throw Error('Colunas SKU, LOTE COMPLETO, OVOS EM ESTOQUE e OVOS CAIXA não encontradas.');
+   const h=linhas[cab].map(normalizar),is=h.indexOf('SKU'),il=h.indexOf('LOTE COMPLETO')>=0?h.indexOf('LOTE COMPLETO'):h.indexOf('LOTE'),io=h.indexOf('OVOS EM ESTOQUE'),ic=h.indexOf('OVOS CAIXA');
+   const mapa=new Map();
+   for(const l of linhas.slice(cab+1)){
+    if(l.every(v=>String(v??'').trim()===''))continue;
+    const sku=String(l[is]??'').trim(),lote=String(l[il]??'').trim();
+    if(/INDUSTRI/i.test(normalizar(l.join(' '))))continue;
+    if(!sku||!lote)throw Error('SKU ou lote ausente no Estoque Embalado.');
+    const ovos=Number(String(l[io]??'').replace(',','.')),capacidade=Number(String(l[ic]??'').replace(',','.'));
+    if(!Number.isSafeInteger(ovos)||ovos<0||![90,240,360].includes(capacidade))throw Error('Ovos em estoque ou OVOS CAIXA inválidos: '+sku+'/'+lote);
+    const k=JSON.stringify([sku.toUpperCase(),lote.toUpperCase()]),prev=mapa.get(k);
+    if(prev){if(prev.ovosPorCaixa!==capacidade)throw Error('Capacidades diferentes para '+sku+'/'+lote);prev.ovos+=ovos;}
+    else mapa.set(k,{sku,lote,ovos,ovosPorCaixa:capacidade});
+   }
+   itens=[...mapa.values()].map(x=>({...x,saldo:x.ovos/x.ovosPorCaixa}));
+   observacao=' | '+itens.filter(x=>!Number.isInteger(x.saldo)).length+' lotes com caixas parciais';
   }
   const ref=doc(db,'rom_v250_contas',auth.currentUser.uid,'estoques_oficiais',tipo),snap=await getDoc(ref);
   const esperada=snap.exists()?snap.data().versao||'':'';
@@ -681,7 +700,7 @@ $('estoquePrevia').onclick=async()=>{
   const dados=validarEstoqueOficial({tipo,nome:arquivo.name,versao,itens},tipo);
   if(new TextEncoder().encode(JSON.stringify({...dados,importadoEm:new Date().toISOString(),autorUid:auth.currentUser.uid})).length>850000)throw Error('Estoque acima do limite seguro de um documento Firebase. Publicação bloqueada.');
   previaEstoque={tipo,dados,esperada,arquivoNome:arquivo.name};
-  saidaEstoque.textContent='Prévia: '+arquivo.name+' | Aba '+nomeAba+' | '+dados.itens.length+' lotes | '+dados.itens.reduce((n,x)=>n+x.saldo,0)+' caixas. Versão vigente: '+(esperada||'nenhuma')+'. Confira antes de publicar.';
+  saidaEstoque.textContent='Prévia: '+arquivo.name+' | Aba '+nomeAba+' | '+dados.itens.length+' lotes | '+dados.itens.reduce((n,x)=>n+x.saldo,0)+' caixas'+observacao+'. Versão vigente: '+(esperada||'nenhuma')+'. Confira antes de publicar.';
   botaoPublicarEstoque.disabled=false;
  }catch(e){saidaEstoque.textContent='Não publicado: '+(e.message||e);}
 };
