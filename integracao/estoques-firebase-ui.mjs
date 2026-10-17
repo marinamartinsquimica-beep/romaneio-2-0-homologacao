@@ -28,7 +28,7 @@ function observar(uid){
  for(const tipo of ['embalado','paripassu']){
   unsub.push(onSnapshot(doc(db,'rom_v250_contas',uid,'estoques_oficiais',tipo),snap=>{
    const d=snap.exists()?snap.data():null;versoes[tipo]=d?.versao||'';
-   if(tipo==='embalado'&&d?.itens?.length){window.estoqueTesteConsulta=new Map(d.itens.map(x=>[x.sku+'\u0000'+x.lote.toUpperCase(),x]));window.reservaTesteAtiva=true;for(const fn of ['atualizarResumoReservaTeste','renderizarEstoqueCompletoTeste','operadorAtualizarCardsEstoque','renderizarPendenciasConferenciaEstoque'])try{window[fn]?.()}catch{}}
+   if(tipo==='embalado'&&d?.itens?.length){window.estoqueTesteConsulta=new Map(d.itens.map(x=>[String(x.sku).trim()+'\u0000'+String(x.lote).trim().toUpperCase(),x]));window.reservaTesteAtiva=true;for(const fn of ['atualizarResumoReservaTeste','renderizarEstoqueCompletoTeste','operadorAtualizarCardsEstoque','renderizarPendenciasConferenciaEstoque'])try{window[fn]?.()}catch{}}
    window.__etapa4=window.__etapa4||{};window.__etapa4[tipo]=d?.itens||null;
    const e=window.__etapa4.embalado,p=window.__etapa4.paripassu;
    if(e&&p){const r=conferirEstoques(e,p);const el=$('etapa4Resumo');if(el)el.textContent=r.conferidos+' lotes | '+r.conformes+' conformes | '+r.pendencias.length+' pendências. Dados sincronizados no Firebase.';const out=$('etapa4Pendencias');if(out){out.replaceChildren();for(const x of r.pendencias){const li=document.createElement('li');li.textContent=x.sku+' / '+x.lote+' — '+x.tipo+' ('+x.diferenca+' caixas)';out.appendChild(li)}}}
@@ -43,7 +43,7 @@ $('etapa4Publicar')?.addEventListener('click',async()=>{
   await auth.authStateReady();const u=auth.currentUser;if(!u)throw Error('Autenticação necessária na Central de Conexão.');
   const tipo=$('etapa4Tipo').value,file=$('etapa4Arquivo').files?.[0],itens=await importar(file,tipo);
   if(!navigator.onLine)throw Error('Sem conexão. Arquivo não publicado.');
-  if(JSON.stringify(itens).length>750000)throw Error('Estoque excede tamanho seguro para um documento Firebase; publicação cancelada sem perda de dados.');
+  if(new TextEncoder().encode(JSON.stringify(itens)).length>750000)throw Error('Estoque excede tamanho seguro para um documento Firebase; publicação cancelada sem perda de dados.');
   if(!confirm('Publicar '+itens.length+' lotes de '+tipo+' para os aparelhos autenticados? A planilha oficial não será modificada.'))return;
   const versao=crypto.randomUUID();
   const r=await publicarEstoqueOficial({db,uid:u.uid,tipo,dados:{tipo,nome:file.name,versao,itens},versaoEsperada:versoes[tipo],doc,runTransaction,autorizado:true});
