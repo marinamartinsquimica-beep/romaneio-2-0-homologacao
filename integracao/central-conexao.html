@@ -426,6 +426,19 @@ $('prepararPublicacaoLocal').onclick=async()=>{
 };
 
 let backupUniaoNestaSessao=false;
+let uniaoAutomaticaEmAndamento=false;
+const CHAVE_BACKUP_AUTOMATICO='romaneio2_backup_automatico_pre_uniao_v1';
+function salvarBackupAutomatico(){
+ const chaves=['entradas','romaneio2_movimentos_pendentes_v1','romaneio2_ultimo_estado_movimentos_v1','romaneio2_historico_correcoes'];
+ const dados={};
+ for(const chave of chaves)dados[chave]=localStorage.getItem(chave);
+ const entradas=JSON.parse(dados.entradas||'[]');
+ if(!Array.isArray(entradas))throw Error('Entradas inválidas: união automática bloqueada');
+ // Uma cópia anterior só é substituída após uma união segura; não descartar backup de recuperação.
+ if(localStorage.getItem(CHAVE_BACKUP_AUTOMATICO))return false;
+ localStorage.setItem(CHAVE_BACKUP_AUTOMATICO,JSON.stringify({criadoEm:new Date().toISOString(),dados}));
+ return true;
+}
 $('aplicarUniaoSegura').onclick=async()=>{
  const botao=$('aplicarUniaoSegura'),saida=$('resultadoAplicarUniao');
  botao.disabled=true;
@@ -549,7 +562,7 @@ $('aplicarUniaoSegura').onclick=async()=>{
 
   if(localStorage.getItem('entradas')!==entradasBrutas||localStorage.getItem('romaneio2_movimentos_pendentes_v1')!==filaBruta||localStorage.getItem(baseChave)!==baseBruta)throw Error('Dados locais mudaram durante a conferência. Recomece.');
   const mensagem='Aplicar união controlada neste aparelho?\\n\\nEntradas preservadas: '+entradas.length+'\\nEntradas remotas adicionadas: '+novos.length+'\\nTotal: '+resultado.length+'\\n\\nNenhuma baixa de estoque será realizada. A página do Romaneio deverá ser recarregada.';
-  if(!window.confirm(mensagem)){saida.textContent='Operação cancelada. Nenhum dado alterado.';return;}
+  if(!uniaoAutomaticaEmAndamento&&!window.confirm(mensagem)){saida.textContent='Operação cancelada. Nenhum dado alterado.';return;}
   if(localStorage.getItem('entradas')!==entradasBrutas||localStorage.getItem('romaneio2_movimentos_pendentes_v1')!==filaBruta||localStorage.getItem(baseChave)!==baseBruta)throw Error('Dados locais mudaram antes da confirmação. Recomece.');
   try{
    localStorage.setItem('entradas',JSON.stringify(resultado));
@@ -560,6 +573,7 @@ $('aplicarUniaoSegura').onclick=async()=>{
    throw erro;
   }
   backupUniaoNestaSessao=false;
+  if(uniaoAutomaticaEmAndamento)localStorage.removeItem(CHAVE_BACKUP_AUTOMATICO);
   saida.textContent='UNIÃO APLICADA NESTE APARELHO: '+entradas.length+' entradas preservadas + '+novos.length+' recebidas = '+resultado.length+'. Nenhum estoque ou fila alterado. Abra o Romaneio e atualize a página para conferir.';
  }catch(e){saida.textContent='União não aplicada: '+(e.message||String(e))+'. Verifique os dados antes de tentar novamente.';}
  finally{botao.disabled=false;}
@@ -581,6 +595,23 @@ $('exportarBackupUniao').onclick=()=>{
   saida.textContent='Cópia preparada para download: '+copia.dados.entradas.length+' entradas locais. Nenhum dado foi alterado. Guarde o arquivo em local seguro.';
  }catch(e){saida.textContent='Backup não concluído: '+(e.message||String(e))+'. Dados locais intactos.';}
 };
+
+// Recebimento automático conservador: nunca sobrepõe fila local e mantém backup
+// recuperável caso uma validação ou gravação falhe.
+let recebimentoAutomaticoEmAndamento=false;
+async function receberAutomaticamente(){
+ if(recebimentoAutomaticoEmAndamento||!navigator.onLine||!auth.currentUser||lerOperacional().length)return;
+ recebimentoAutomaticoEmAndamento=true;
+ try{
+  if(!salvarBackupAutomatico())return; // exige revisão de backup anterior
+  uniaoAutomaticaEmAndamento=true;
+  backupUniaoNestaSessao=true;
+  await $('aplicarUniaoSegura').click();
+  // O aplicador mantém o backup se houve conflito ou falha.
+ }catch(e){$('resultadoAplicarUniao').textContent='Recebimento automático pausado: '+(e.message||String(e));}
+ finally{uniaoAutomaticaEmAndamento=false;recebimentoAutomaticoEmAndamento=false;}
+}
+
 window.addEventListener('online',status);window.addEventListener('offline',status);
 
 // Envio automático de movimentações operacionais; nunca executa baixa de estoque.
