@@ -18,3 +18,8 @@ test('caixas fracionadas permanecem importáveis e sinalizadas',()=>{
 test('rejeita produto não industrial sem SKU/capacidade',()=>{
  assert.throws(()=>extrairParipassu([cab,linha('L1','PRODUTO DESCONHECIDO',240)]),/sem SKU/);
 });
+
+test('reconhece capacidade 270 e capacidade não cadastrada',()=>{
+ const r=extrairParipassu([cab,linha('L270','5008-CAIXA (270)-GRANDE',540),linha('L180','5010-CAIXA (180)-GRANDE',360)]);
+ assert.deepEqual(r.itens.map(x=>x.saldo),[2,2]);
+});
