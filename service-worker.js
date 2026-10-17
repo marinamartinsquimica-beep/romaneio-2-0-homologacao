@@ -1,4 +1,4 @@
-const CACHE_NAME = "romaneio-2-0-cache-v250-r2";
+const CACHE_NAME = "romaneio-2-0-cache-v250-r3";
 
 const FILES_TO_CACHE = [
   "./",
@@ -36,7 +36,7 @@ self.addEventListener("fetch", event => {
 
   if (req.method !== "GET") return;
 
-  if (url.pathname.endsWith("/version.json") || req.mode === "navigate") {
+  if (url.pathname.endsWith("/version.json") || url.pathname.includes("/integracao/") || req.mode === "navigate") {
     event.respondWith(
       fetch(req).then(resp => {
         const copy = resp.clone();
