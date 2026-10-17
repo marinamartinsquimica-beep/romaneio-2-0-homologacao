@@ -9,7 +9,7 @@ export function extrairParipassu(linhas){
   if(linha.every(v=>String(v??'').trim()===''))continue;
   const produto=String(linha[iProduto]??'').trim(),lote=String(linha[iLote]??'').trim();
   if(/INDUSTRI/i.test(normalizar(produto))){industriais++;continue;}
-  const skuMatch=produto.match(/^(\d+)\s*-/),ovosCaixaMatch=produto.match(/\(\s*(90|120|240|360)\s*\)/);
+  const skuMatch=produto.match(/^(\d+)\s*-/),ovosCaixaMatch=produto.match(/\(\s*(\d+)\s*\)/);
   if(!skuMatch||!ovosCaixaMatch){semSku++;continue;}
   if(!lote)throw Error('Lote ausente em produto '+skuMatch[1]+'.');
   const bruto=linha[iOvos],ovos=Number(String(bruto??'').trim().replace(',','.'));
@@ -20,6 +20,7 @@ export function extrairParipassu(linhas){
   if(anterior){
    if(anterior.ovosPorCaixa!==ovosPorCaixa)throw Error('Embalagens incompatíveis para SKU '+sku+' e lote '+lote+'.');
    anterior.ovos+=ovos;
+   if(!Number.isSafeInteger(anterior.ovos))throw Error('Volume de ovos excede o limite seguro: '+sku+'/'+lote);
   }else mapa.set(chave,{sku,lote,ovos,ovosPorCaixa});
   linhasValidas++;
  }
