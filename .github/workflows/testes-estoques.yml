@@ -1,0 +1,19 @@
+name: Testes de estoques
+on:
+  push:
+    branches: [desenvolvimento/v2.0.50]
+  pull_request:
+    paths:
+      - 'integracao/**'
+      - '.github/workflows/testes-estoques.yml'
+  workflow_dispatch:
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Testes automatizados de estoque
+        run: node --test integracao/*.test.mjs
