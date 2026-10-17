@@ -21,3 +21,14 @@ test('caixa fracionada permanece pendência mesmo com mesmo saldo numérico',()=
  const c=conferirEstoques([{sku:'5008',lote:'L1',saldo:0.5}],r.itens);
  assert.equal(c.pendencias[0].tipo,'caixa_fracionada');
 });
+
+test('indústria direto com acento também fica fora',()=>{
+ const r=extrairParipassu([cab,['A','X','L1','INDÚSTRIA DIRETO',1,'un',999,1],['A','Y','L1','5008-CAIXA (240)-GRANDE',1,'un',240,1]]);
+ assert.equal(r.industriaisIgnorados,1);assert.equal(r.itens[0].saldo,1);
+});
+test('Estoque Embalado conserva saldo oficial sem recalcular ovos',()=>{
+ const r=extrairParipassu([cab,['A','X','L1','5008-CAIXA (240)-GRANDE',1,'un',2400,1]]);
+ const e=[{sku:'5008',lote:'L1',saldo:10}];
+ const c=conferirEstoques(e,r.itens);
+ assert.equal(c.conformes,1);assert.equal(c.pendencias.length,0);assert.equal(e[0].saldo,10);
+});
