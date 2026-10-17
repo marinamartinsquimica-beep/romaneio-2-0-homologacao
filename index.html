@@ -2558,11 +2558,11 @@ async function atualizarConferenciaParipassu(){
   const tabela=document.createElement('table');
   tabela.style.cssText='width:100%;border-collapse:collapse;font-size:13px';
   const cab=document.createElement('tr');
-  for(const nome of ['SKU','LOTE','SITUAÇÃO','EMBALADO','PARIPASSU','DIFERENÇA']){
+  for(const nome of ['SKU','LOTE','SITUAÇÃO','CAIXAS EMBALADO','CAIXAS PARIPASSU','DIFERENÇA (CX)']){
    const th=document.createElement('th');th.textContent=nome;th.style.padding='8px';cab.appendChild(th);
   }
   tabela.appendChild(cab);
-  for(const p of resultado.pendencias.slice(0,200)){
+  for(const p of resultado.pendencias){
    const tr=document.createElement('tr');
    for(const valor of [p.sku,p.lote,p.tipo==='ausente_paripassu'?'Ausente PariPassu':p.tipo==='ausente_embalado'?'Ausente Embalado':p.tipo==='caixa_fracionada'?'Caixa incompleta':'Saldo divergente',p.embalado,p.paripassu,p.diferenca]){
     const td=document.createElement('td');td.textContent=String(valor);td.style.padding='7px';td.style.borderTop='1px solid #dce7eb';tr.appendChild(td);
@@ -2570,7 +2570,7 @@ async function atualizarConferenciaParipassu(){
    tabela.appendChild(tr);
   }
   lista.appendChild(tabela);
-  if(resultado.pendencias.length>200){const p=document.createElement('p');p.textContent='Exibindo as primeiras 200 pendências.';lista.appendChild(p);}
+
  }catch(e){estado.textContent='Conferência indisponível: '+(e.message||e);}
 }
 window.addEventListener('load',()=>{void atualizarConferenciaParipassu();});
