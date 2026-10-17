@@ -22,9 +22,8 @@ export function extrairParipassu(linhas){
     duplicados++;
     if(anteriorRastro.sku!==sku||anteriorRastro.lote!==lote||anteriorRastro.ovos!==ovos){
      conflitos.push({codigo:rastro,sku,lote,anterior:anteriorRastro.ovos,atual:ovos});
-     // Divergência de uma mesma identificação: não duplicar ovos; usar último registro e sinalizar conflito.
-     const antigo=mapa.get(JSON.stringify([anteriorRastro.sku,anteriorRastro.lote.toUpperCase()]));
-     if(antigo)antigo.ovos-=anteriorRastro.ovos;
+     // Registros diferentes com a mesma referência permanecem somados, mas a divergência é sinalizada.
+     // Apenas repetição idêntica é ignorada, evitando eliminar caixas legítimas.
     }else continue;
    }
    rastros.set(rastro,{sku,lote,ovos});
