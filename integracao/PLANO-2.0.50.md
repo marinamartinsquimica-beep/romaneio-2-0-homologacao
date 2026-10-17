@@ -19,3 +19,12 @@
 - Acesso MASTER exige autorização separada por UID/claim ou documento de papel protegido por regras; possuir login operacional não concede MASTER automaticamente. Com uma única conta operacional compartilhada, é necessária outra identidade administrativa para separar privilégios de forma efetiva.
 - Não armazenar credenciais nem autorizar acesso MASTER por PIN fixo no JavaScript. Responsável/dispositivo e trilha de eventos preservados.
 - Regras Firestore e fluxo de login ainda dependem de validação e testes antes de publicar; não habilitar gravação de dados reais no projeto laboratório sem autorização por função e separação de dados.
+
+## Ajuste operacional — autonomia do operador de computador
+
+- A CENTRAL DE CONEXÃO E SINCRONIZAÇÃO (aba MASTER operacional) deve ser acessível ao operador do computador, sem depender da criadora do sistema.
+- Operador pode reconectar Firebase Auth com credenciais operacionais, verificar online/offline, autenticação, pendências, erros e repetir envios seguros.
+- Reestabelecimento de rede e sessão válida: reconexão automática, sem pedir senha. Sessão expirada: formulário de login no computador; não armazenar senha.
+- Acesso à central de conexão não equivale a privilégio administrativo do Firebase: proibir edição de regras, papéis e credenciais técnicas pela interface operacional.
+- Celulares preservam interface operacional e fila offline; falhas de sincronização não bloqueiam movimentações.
+- Primeiro uso e recuperação rotineira devem ser possíveis por operador autorizado, sem intervenção da criadora.
