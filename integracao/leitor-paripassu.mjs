@@ -3,7 +3,9 @@ const normalizar=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,''
 export function extrairParipassu(linhas){
  const cab=linhas.findIndex(l=>l.some(v=>normalizar(v)==='TIPO PRODUTO')&&l.some(v=>normalizar(v)==='QUANTIDADE')&&l.some(v=>normalizar(v)==='LOTE'));
  if(cab<0)throw Error('Cabeçalho PariPassu não encontrado: Tipo Produto, Lote e Quantidade.');
- const h=linhas[cab].map(normalizar),iProduto=h.indexOf('TIPO PRODUTO'),iLote=h.indexOf('LOTE'),iOvos=h.indexOf('QUANTIDADE');
+ const h=linhas[cab].map(normalizar),iProduto=h.indexOf('TIPO PRODUTO'),iLote=h.indexOf('LOTE'),iOvos=h.indexOf('QUANTIDADE'),iRastreio=h.indexOf('CODIGO DE RASTREAMENTO');
+ if(iRastreio<0)throw Error('Coluna Código de Rastreamento ausente no PariPassu.');
+ const vistos=new Map(),conflitos=[];let duplicadosIgnorados=0;
  const mapa=new Map();let industriais=0,semSku=0,linhasValidas=0,fracionadas=0;
  for(const linha of linhas.slice(cab+1)){
   if(linha.every(v=>String(v??'').trim()===''))continue;
@@ -15,6 +17,16 @@ export function extrairParipassu(linhas){
   const bruto=linha[iOvos],ovos=Number(String(bruto??'').trim().replace(',','.'));
   if(String(bruto??'').trim()===''||!Number.isSafeInteger(ovos)||ovos<0)throw Error('Quantidade de ovos inválida no SKU '+skuMatch[1]+' e lote '+lote+'.');
   const sku=skuMatch[1],ovosPorCaixa=Number(ovosCaixaMatch[1]);
+  const rastreio=String(linha[iRastreio]??'').trim();
+  if(!rastreio)throw Error('Código de Rastreamento ausente: '+sku+'/'+lote);
+  const identidade=JSON.stringify([rastreio.toUpperCase(),sku,lote.toUpperCase()]);
+  const visto=vistos.get(identidade);
+  if(visto){
+   if(visto.ovos===ovos&&visto.ovosPorCaixa===ovosPorCaixa){duplicadosIgnorados++;continue;}
+   conflitos.push({sku,lote,rastreio,ovosAnterior:visto.ovos,ovosNovo:ovos});
+   continue; // Não somar o mesmo rastreamento duas vezes.
+  }
+  vistos.set(identidade,{ovos,ovosPorCaixa});
   if(!Number.isSafeInteger(ovosPorCaixa)||ovosPorCaixa<=0)throw Error('Capacidade inválida: '+produto);
   const chave=JSON.stringify([sku,lote.toUpperCase()]),anterior=mapa.get(chave);
   if(anterior){
@@ -31,5 +43,5 @@ export function extrairParipassu(linhas){
   return {sku:x.sku,lote:x.lote,saldo:x.ovos/x.ovosPorCaixa,ovos:x.ovos,ovosPorCaixa:x.ovosPorCaixa};
  });
  // Caixas fracionadas são divergências de conferência, não motivo para bloquear a importação.
- return {itens,industriaisIgnorados:industriais,linhasValidas,caixasFracionadas:fracionadas};
+ return {itens,industriaisIgnorados:industriais,linhasValidas,caixasFracionadas:fracionadas,duplicadosIgnorados,conflitos};
 }
