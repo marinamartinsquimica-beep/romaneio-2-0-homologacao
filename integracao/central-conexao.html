@@ -129,29 +129,56 @@ $('iniciarTempoReal').onclick=async()=>{
 $('pararTempoReal').onclick=()=>pararTempoReal();
 window.addEventListener('pagehide',()=>{if(cancelarTempoReal)cancelarTempoReal();});
 $('preverRecebimento').onclick=async()=>{
- const botao=$('preverRecebimento'),saida=$('resultadoPrevia');botao.disabled=true;botao.textContent='ANALISANDO…';
+ const botao=$('preverRecebimento'),saida=$('resultadoPrevia');
+ botao.disabled=true;botao.textContent='ANALISANDO…';
  try{
-  await auth.authStateReady();const u=auth.currentUser;if(!u)throw Error('Autenticação necessária');
+  await auth.authStateReady();
+  const u=auth.currentUser;if(!u)throw Error('Autenticação necessária');
   const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
-  const snap=await getDocs(q);if(snap.metadata.fromCache)throw Error('Consulta apenas em cache: aguarde conexão ao servidor');
-  const remoto=snap.docs.map(d=>({id:d.id,...d.data()}));
-  const operacionais=remoto.filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&!String(d.item?.sku||'').startsWith('TESTE-'));
-  const entradas=JSON.parse(localStorage.getItem('entradas')||'[]');if(!Array.isArray(entradas))throw Error('Entradas locais inválidas');
-  const pendentes=JSON.parse(localStorage.getItem('romaneio2_movimentos_pendentes_v1')||'[]');if(!Array.isArray(pendentes))throw Error('Fila local inválida');
-  const pendentesIds=new Set(pendentes.map(x=>x.id));
-  const iguais=(a,b)=>a&&b&&String(a.palete||'')===String(b.palete||'')&&String(a.sku||'')===String(b.sku||'')&&String(a.loteCompleto||'')===String(b.loteCompleto||'')&&Number(a.caixas)===Number(b.caixas)&&String(a.destino||'')===String(b.destino||'');
-  let jaLocais=0,novos=0,conflitos=0,pendentesContagem=0,exclusoes=0,edicoes=0;const exemplos=[];
-  for(const d of operacionais){
-   if(pendentesIds.has(d.id)){pendentesContagem++;continue;}
-   if(d.tipo==='exclusao'){exclusoes++;continue;}
-   if(d.tipo==='edicao'){edicoes++;continue;}
-   const semelhantes=entradas.filter(e=>iguais(e,d.item));
-   if(semelhantes.length){jaLocais++;continue;}
-   const mesmaChave=entradas.some(e=>String(e.palete||'')===String(d.item?.palete||'')&&String(e.sku||'')===String(d.item?.sku||'')&&String(e.loteCompleto||'')===String(d.item?.loteCompleto||''));
-   if(mesmaChave)conflitos++;else novos++;
-   if(exemplos.length<5)exemplos.push(d.id+' ('+(mesmaChave?'revisar':'possível novo')+')');
+  const snap=await getDocs(q);
+  if(snap.metadata.fromCache)throw Error('Consulta apenas em cache');
+  const operacionais=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&!String(d.item?.sku||'').startsWith('TESTE-'));
+  const entradas=JSON.parse(localStorage.getItem('entradas')||'[]');
+  const pendentes=JSON.parse(localStorage.getItem('romaneio2_movimentos_pendentes_v1')||'[]');
+  if(!Array.isArray(entradas)||!Array.isArray(pendentes))throw Error('Dados locais inválidos');
+  const chave=x=>JSON.stringify([x?.data,x?.sku,x?.destino,x?.palete,x?.loteCompleto,x?.lote,x?.postura,x?.caixas,x?.observacoes]);
+  const ativos=new Map(),falhas=[];
+  const ordenados=operacionais.sort((a,b)=>String(a.criadoEm||'').localeCompare(String(b.criadoEm||''))||String(a.id).localeCompare(String(b.id)));
+  let inclusoes=0,exclusoes=0,edicoes=0;
+  const incluir=item=>{const k=chave(item);ativos.set(k,(ativos.get(k)||0)+1);};
+  const retirar=(item,id)=>{
+   const k=chave(item),n=ativos.get(k)||0;
+   if(!n){falhas.push(id+': estado anterior ausente');return false;}
+   if(n===1)ativos.delete(k);else ativos.set(k,n-1);
+   return true;
+  };
+  for(const d of ordenados){
+   if(!d.item||typeof d.item!=='object'){falhas.push(d.id+': item inválido');continue;}
+   if(d.tipo==='inclusao'){incluir(d.item);inclusoes++;}
+   else if(d.tipo==='exclusao'){if(retirar(d.item,d.id))exclusoes++;}
+   else if(d.tipo==='edicao'){if(!d.antes)falhas.push(d.id+': edição sem estado anterior');else if(retirar(d.antes,d.id)){incluir(d.item);edicoes++;}}
+   else falhas.push(d.id+': tipo desconhecido');
   }
-  saida.textContent='PRÉVIA SOMENTE LEITURA — '+new Date().toLocaleTimeString('pt-BR')+'\\nMovimentações operacionais consultadas: '+operacionais.length+' (janela de até 50 registros totais).\\nInclusões já semelhantes aos dados locais: '+jaLocais+'\\nPossíveis novas inclusões: '+novos+'\\nPossíveis conflitos: '+conflitos+'\\nEdições para análise posterior: '+edicoes+'\\nExclusões para análise posterior: '+exclusoes+'\\nIDs ainda pendentes localmente: '+pendentesContagem+(exemplos.length?'\\nExemplos: '+exemplos.join(', '):'')+'\\nATENÇÃO: comparação preliminar, sem identidade estável por registro. Nenhuma movimentação aplicada.';
+  const locais=new Map();
+  for(const e of entradas){const k=chave(e);locais.set(k,(locais.get(k)||0)+1);}
+  let iguais=0,faltam=0,sobram=0;
+  for(const [k,n] of ativos){const l=locais.get(k)||0;iguais+=Math.min(n,l);faltam+=Math.max(0,n-l);locais.delete(k);}
+  for(const n of locais.values())sobram+=n;
+  const linhas=[
+   'RECONCILIAÇÃO HISTÓRICA — SOMENTE LEITURA',
+   'Operações consultadas: '+ordenados.length+' (janela: '+snap.size+'/50)',
+   'Inclusões: '+inclusoes+' | Edições: '+edicoes+' | Exclusões: '+exclusoes,
+   'Entradas remotas ativas: '+[...ativos.values()].reduce((a,n)=>a+n,0),
+   'Equivalentes locais: '+iguais,
+   'Ativas remotas ausentes localmente: '+faltam,
+   'Entradas locais não equivalentes: '+sobram,
+   'Inconsistências de sequência: '+falhas.length,
+   'Operações ainda na fila local: '+ordenados.filter(d=>pendentes.some(p=>p.id===d.id)).length,
+   ...(falhas.length?['Exemplos: '+falhas.slice(0,3).join('; ')]:[]),
+   snap.size===50?'ATENÇÃO: histórico pode estar incompleto (limite de 50).':'ATENÇÃO: histórico anterior ou identidade individual ainda não garantidos.',
+   'NENHUM PALETE, ESTOQUE OU FILA FOI ALTERADO.'
+  ];
+  saida.textContent=linhas.join(String.fromCharCode(10));
  }catch(e){saida.textContent='Análise não concluída: '+(e.code||e.message||String(e))+'. Nenhum dado alterado.';}
  finally{botao.disabled=false;botao.textContent='ANALISAR MOVIMENTAÇÕES RECEBIDAS';}
 };
