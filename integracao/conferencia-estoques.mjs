@@ -12,7 +12,7 @@ function consolidar(itens){
 }
 export function conferirEstoques(embalado,paripassu){
  const e=consolidar(embalado),p=consolidar(paripassu),pendencias=[];
- const adicionar=x=>adicionar({...x,ovosParipassu:p.get(chave(x))?.ovosParipassu??null,ovosPorCaixa:p.get(chave(x))?.ovosPorCaixa??null});
+ const adicionar=x=>pendencias.push({...x,ovosParipassu:p.get(chave(x))?.ovosParipassu??null,ovosPorCaixa:p.get(chave(x))?.ovosPorCaixa??null});
  for(const [k,a] of e){
   const b=p.get(k);
   if(b?.conflitoRastreamento)adicionar({sku:a.sku,lote:a.lote,tipo:'conflito_rastreamento',embalado:a.saldo,paripassu:b.saldo,diferenca:a.saldo-b.saldo});
