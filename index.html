@@ -2530,6 +2530,32 @@ function renderizarEstoqueCompletoTeste() {
 }
 // Etapa 2A: leitura isolada do estoque. Não modifica registros, reservas ou arquivos.
 const CHAVE_ESTOQUE_CONSULTA_LOCAL='romaneio2_estoque_embalado_consulta_v1';
+const CHAVE_EXCEL_ORIGINAL_DB='romaneio2_documentos_oficiais_v1';
+function abrirBancoExcelOriginal(){
+ return new Promise((resolve,reject)=>{
+  const req=indexedDB.open(CHAVE_EXCEL_ORIGINAL_DB,1);
+  req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('originais'))db.createObjectStore('originais');};
+  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+ });
+}
+async function guardarExcelOriginalEstoque(nome,bytes){
+ const db=await abrirBancoExcelOriginal();
+ try{
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction('originais','readwrite');
+   tx.objectStore('originais').put({nome,bytes,importadoEm:new Date().toISOString()},'estoque_embalado');
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+ }finally{db.close();}
+}
+async function recuperarExcelOriginalEstoque(){
+ const db=await abrirBancoExcelOriginal();
+ try{return await new Promise((resolve,reject)=>{
+  const tx=db.transaction('originais','readonly'),req=tx.objectStore('originais').get('estoque_embalado');
+  req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);
+ });}finally{db.close();}
+}
+
 function restaurarEstoqueConsultaLocal(){
  try{
   const dados=JSON.parse(localStorage.getItem(CHAVE_ESTOQUE_CONSULTA_LOCAL)||'null');
@@ -2544,7 +2570,10 @@ function restaurarEstoqueConsultaLocal(){
   document.getElementById('resumoEstoqueTeste')?.classList.remove('hidden');
  }catch(e){console.warn('Cópia local de consulta indisponível',e);}
 }
-window.addEventListener('load',restaurarEstoqueConsultaLocal);
+window.addEventListener('load',()=>{
+ restaurarEstoqueConsultaLocal();
+ recuperarExcelOriginalEstoque().then(original=>{if(original)window.estoqueEmbaladoArquivoOriginal=original;}).catch(e=>console.warn('Excel original indisponível',e));
+});
 async function importarEstoqueTeste(event) {
   const arquivo = event.target.files && event.target.files[0];
   if (!arquivo) return;
@@ -2582,6 +2611,7 @@ async function importarEstoqueTeste(event) {
     }
     if (!mapa.size) throw new Error("Nenhum saldo válido encontrado.");
     window.estoqueTesteConsulta = mapa; // Consulta local; não altera estoque oficial.
+    await guardarExcelOriginalEstoque(arquivo.name,originalExcel);
     window.estoqueEmbaladoArquivoOriginal = {nome:arquivo.name, bytes:originalExcel, importadoEm:new Date().toISOString()};
     try{localStorage.setItem(CHAVE_ESTOQUE_CONSULTA_LOCAL,JSON.stringify({nome:arquivo.name,em:new Date().toISOString(),itens:[...mapa.values()]}));}
     catch(e){console.warn('Sem espaço para preservar consulta local',e);}
