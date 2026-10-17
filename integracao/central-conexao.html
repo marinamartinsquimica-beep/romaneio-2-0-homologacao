@@ -647,7 +647,7 @@ async function cicloAutomatico(){
 window.addEventListener('online',()=>{void cicloAutomatico();});
 window.addEventListener('storage',e=>{if(e.key===CHAVE_OPERACIONAL)void cicloAutomatico();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void cicloAutomatico();});
-setInterval(()=>{if(!document.hidden)void enviarFilaAutomaticamente();},15000);
+setInterval(()=>{if(!document.hidden)void cicloAutomatico();},15000);
 auth.authStateReady().then(()=>cicloAutomatico()).catch(()=>{});
 
 $('verificar').onclick=async()=>{
