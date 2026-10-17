@@ -10,7 +10,7 @@ export function extrairParipassu(linhas){
   const produto=String(linha[iProduto]??'').trim(),lote=String(linha[iLote]??'').trim();
   if(/INDUSTRI/i.test(normalizar(produto))){industriais++;continue;}
   const skuMatch=produto.match(/^(\d+)\s*-/),ovosCaixaMatch=produto.match(/\(\s*(\d+)\s*\)/);
-  if(!skuMatch||!ovosCaixaMatch){semSku++;continue;}
+  if(!skuMatch||!ovosCaixaMatch||Number(ovosCaixaMatch[1])<=0){semSku++;continue;}
   if(!lote)throw Error('Lote ausente em produto '+skuMatch[1]+'.');
   const bruto=linha[iOvos],ovos=Number(String(bruto??'').trim().replace(',','.'));
   if(String(bruto??'').trim()===''||!Number.isSafeInteger(ovos)||ovos<0)throw Error('Quantidade de ovos inválida no SKU '+skuMatch[1]+' e lote '+lote+'.');
