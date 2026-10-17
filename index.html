@@ -2755,7 +2755,7 @@ document.getElementById('etapa4Preparar')?.addEventListener('click',()=>{
  const status=document.getElementById('etapa4OperacoesStatus'),saida=document.getElementById('etapa4OperacoesResultado');saida.replaceChildren();
  try{
   const e=window.__etapa4?.embalado;if(!e?.length)throw Error('Carregue primeiro o estoque compartilhado do Firebase.');
-  const modo=document.getElementById('etapa4Modo').value,linhas=document.getElementById('etapa4Movimentos').value.trim().split(/\\r?\\n/).filter(Boolean);
+  const modo=document.getElementById('etapa4Modo').value,linhas=document.getElementById('etapa4Movimentos').value.trim().split(/\r?\n/).filter(Boolean);
   if(!linhas.length)throw Error('Informe os registros.');
   const registros=linhas.map((linha,i)=>{const a=linha.split(';').map(x=>x.trim());if(a.length!==(modo==='baixa'?4:3))throw Error('Linha '+(i+1)+' deve ter '+(modo==='baixa'?4:3)+' campos.');const n=Number(a.at(-1));if(!Number.isSafeInteger(n)||n<0)throw Error('Quantidade inválida na linha '+(i+1));return modo==='baixa'?{id:a[0],sku:a[1],lote:a[2],caixas:n}:{sku:a[0],lote:a[1],caixas:n}});
   const resultado=modo==='baixa'?prepararBaixa(e,registros):prepararAjuste(e,registros);
