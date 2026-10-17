@@ -4,6 +4,7 @@ on:
     branches: [desenvolvimento/v2.0.50]
     paths:
       - 'integracao/**'
+      - 'index.html'
       - '.github/workflows/testes-romaneio-250.yml'
   workflow_dispatch:
 jobs:
@@ -29,3 +30,33 @@ jobs:
           node --check integracao/publicador-firestore.js
           node --check integracao/sincronizador-fila.js
           node --check integracao/envio-movimentos250.js
+      - name: Validar sintaxe do painel principal
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.capture = False
+                  self.parts = []
+              def handle_starttag(self, tag, attrs):
+                  if tag == 'script':
+                      props = dict(attrs)
+                      self.capture = not props.get('src') and props.get('type', '') in ('', 'text/javascript', 'module')
+                      if self.capture:
+                          self.parts.append('')
+              def handle_endtag(self, tag):
+                  if tag == 'script':
+                      self.capture = False
+              def handle_data(self, data):
+                  if self.capture:
+                      self.parts[-1] += data
+          parser = Scripts()
+          parser.feed(Path('index.html').read_text(encoding='utf-8'))
+          assert parser.parts, 'Nenhum script interno encontrado'
+          for i, code in enumerate(parser.parts):
+              Path(f'/tmp/romaneio-script-{i}.mjs').write_text(code, encoding='utf-8')
+          print(f'{len(parser.parts)} scripts internos extraídos')
+          PY
+          for arquivo in /tmp/romaneio-script-*.mjs; do node --check "$arquivo"; done
