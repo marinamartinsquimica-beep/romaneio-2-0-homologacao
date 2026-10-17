@@ -48,5 +48,5 @@ test('caixa parcial continua pendente mesmo se os dois saldos forem iguais',()=>
  const r=extrairParipassu([cab,linha('L1','5008-CAIXA (240)-GRANDE',360)]);
  const x=conferirEstoques([{sku:'5008',lote:'L1',saldo:1.5}],r.itens);
  assert.equal(x.pendencias.length,1);
- assert.equal(x.pendencias[0].tipo,'caixas_fracionadas');
+ assert.equal(x.pendencias[0].tipo,'caixa_fracionada');
 });
