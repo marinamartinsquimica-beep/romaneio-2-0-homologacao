@@ -1323,6 +1323,8 @@ async function finalizarCaminhao() {
 }
 
 function preencherLinha(linha, item) {
+    // Identidade persistente por linha, independente de SKU, lote, caixas ou palete.
+    linha.dataset.registroId = item.registroId || linha.dataset.registroId || criarIdentificadorMovimento();
     linha.replaceChildren();
     const valores = [item.data, item.sku, item.destino || "", item.palete, item.loteCompleto, item.lote, item.postura, item.caixas, item.observacoes || ""];
 
@@ -1526,7 +1528,7 @@ function registrarMovimentosLocais(atuais) {
   for(const [k,grupo] of novos){const diff=grupo.length-(antigos.get(k)?.length||0);if(diff>0)adicionados.push(...grupo.slice(0,diff));}
   if(!removidos.length&&!adicionados.length)return;
   const fila=lerFilaMovimentos();
-  const criar=(tipo,item)=>({id:criarIdentificadorMovimento(),dispositivoId:identificarDispositivoLocal(),tipo,item,criadoEm:new Date().toISOString(),estado:"pendente"});
+  const criar=(tipo,item)=>({id:criarIdentificadorMovimento(),dispositivoId:identificarDispositivoLocal(),tipo,item,registroId:item.registroId||null,criadoEm:new Date().toISOString(),estado:"pendente"});
   // Pareia somente mudanças inequívocas no mesmo palete/SKU/lote; demais mudanças são exclusões e inclusões.
   for(let i=removidos.length-1;i>=0;i--){
     const antigo=removidos[i];
@@ -1696,7 +1698,9 @@ function salvarLocalStorage() {
     let dados = [];
 
     for (let linha of tbody.rows) {
+        if (!linha.dataset.registroId) linha.dataset.registroId = criarIdentificadorMovimento();
         dados.push({
+            registroId: linha.dataset.registroId,
             data: linha.cells[0].innerText,
             sku: linha.cells[1].innerText,
             destino: linha.cells[2].innerText,
