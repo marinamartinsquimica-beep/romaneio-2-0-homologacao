@@ -116,6 +116,15 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
 <p id="etapa4Resumo">Aguardando os dois estoques compartilhados.</p>
 <ul id="etapa4Pendencias" style="max-height:220px;overflow:auto;color:#334155"></ul>
 </section>
+<section id="etapa4Operacoes" style="margin:12px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc">
+<h3>Baixa e ajuste — prévia segura</h3>
+<p style="color:#334155">As operações abaixo preparam a conferência sem alterar o Firebase nem a planilha oficial. Confirmação de baixa ou ajuste oficial permanece indisponível até integração autenticada com o arquivo.</p>
+<label for="etapa4Modo">Operação</label><select id="etapa4Modo"><option value="baixa">Baixa de expedição</option><option value="ajuste">Ajuste por contagem física</option></select>
+<label for="etapa4Movimentos">Dados (uma linha por registro: ID;SKU;LOTE;CAIXAS para baixa, ou SKU;LOTE;CAIXAS para ajuste)</label>
+<textarea id="etapa4Movimentos" rows="5" style="width:100%;padding:10px;border-radius:8px" placeholder="ID;SKU;LOTE;CAIXAS"></textarea>
+<button type="button" id="etapa4Preparar">PREPARAR CONFERÊNCIA</button>
+<p id="etapa4OperacoesStatus" role="status"></p><div id="etapa4OperacoesResultado" style="max-height:250px;overflow:auto"></div>
+</section>
 <div id="conferenciaParipassuIntegrada" style="margin:14px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc">
 <label for="arquivoParipassuOperacao">Conferência Estoque Embalado × PariPassu</label>
 <input id="arquivoParipassuOperacao" type="file" accept=".xlsx,.xls" style="margin:8px 0">
@@ -2740,5 +2749,22 @@ btn?.addEventListener('click',async()=>{
 });
 </script>
 <script type="module" src="./integracao/estoques-firebase-ui.mjs"></script>
+<script type="module">
+import {prepararBaixa,prepararAjuste} from './integracao/operacoes-estoque.mjs';
+document.getElementById('etapa4Preparar')?.addEventListener('click',()=>{
+ const status=document.getElementById('etapa4OperacoesStatus'),saida=document.getElementById('etapa4OperacoesResultado');saida.replaceChildren();
+ try{
+  const e=window.__etapa4?.embalado;if(!e?.length)throw Error('Carregue primeiro o estoque compartilhado do Firebase.');
+  const modo=document.getElementById('etapa4Modo').value,linhas=document.getElementById('etapa4Movimentos').value.trim().split(/\\r?\\n/).filter(Boolean);
+  if(!linhas.length)throw Error('Informe os registros.');
+  const registros=linhas.map((linha,i)=>{const a=linha.split(';').map(x=>x.trim());if(a.length!==(modo==='baixa'?4:3))throw Error('Linha '+(i+1)+' deve ter '+(modo==='baixa'?4:3)+' campos.');const n=Number(a.at(-1));if(!Number.isSafeInteger(n)||n<0)throw Error('Quantidade inválida na linha '+(i+1));return modo==='baixa'?{id:a[0],sku:a[1],lote:a[2],caixas:n}:{sku:a[0],lote:a[1],caixas:n}});
+  const resultado=modo==='baixa'?prepararBaixa(e,registros):prepararAjuste(e,registros);
+  const ocorrencias=modo==='baixa'?[...resultado.aplicados.map(x=>({...x,situacao:'Preparada'})),...resultado.pendencias.map(x=>({...x,situacao:x.motivo}))]:resultado.alteracoes.map(x=>({...x,situacao:'Ajuste preparado',caixas:x.fisico}));
+  const tab=document.createElement('table'),body=tab.createTBody();
+  for(const x of ocorrencias){const tr=body.insertRow();[x.sku,x.lote,x.caixas,x.situacao].forEach(v=>{const td=tr.insertCell();td.textContent=String(v??'')})}
+  saida.appendChild(tab);status.textContent='Prévia concluída: '+ocorrencias.length+' registros. Nenhum saldo oficial ou compartilhado foi alterado.';
+ }catch(e){status.textContent='Operação não preparada: '+e.message;}
+});
+</script>
 </body>
 </html>
