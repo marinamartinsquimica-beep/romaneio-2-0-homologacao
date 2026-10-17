@@ -4,13 +4,13 @@ export function extrairParipassu(linhas){
  const cab=linhas.findIndex(l=>l.some(v=>normalizar(v)==='TIPO PRODUTO')&&l.some(v=>normalizar(v)==='QUANTIDADE')&&l.some(v=>normalizar(v)==='LOTE'));
  if(cab<0)throw Error('Cabeçalho PariPassu não encontrado: Tipo Produto, Lote e Quantidade.');
  const h=linhas[cab].map(normalizar),iProduto=h.indexOf('TIPO PRODUTO'),iLote=h.indexOf('LOTE'),iOvos=h.indexOf('QUANTIDADE'),iRastro=h.indexOf('CODIGO DE RASTREAMENTO');
- const mapa=new Map(),rastros=new Map(),conflitos=[];let industriais=0,semSku=0,linhasValidas=0,fracionadas=0,duplicados=0;
+ const mapa=new Map(),rastros=new Map(),conflitos=[],naoIdentificados=[];let industriais=0,semSku=0,linhasValidas=0,fracionadas=0,duplicados=0;
  for(const linha of linhas.slice(cab+1)){
   if(linha.every(v=>String(v??'').trim()===''))continue;
   const produto=String(linha[iProduto]??'').trim(),lote=String(linha[iLote]??'').trim();
   if(/INDUSTRI/i.test(normalizar(produto))){industriais++;continue;}
   const skuMatch=produto.match(/^(\d+)\s*-/),ovosCaixaMatch=produto.match(/\(\s*(\d+)\s*\)/);
-  if(!skuMatch||!ovosCaixaMatch||Number(ovosCaixaMatch[1])<=0){semSku++;continue;}
+  if(!skuMatch||!ovosCaixaMatch||Number(ovosCaixaMatch[1])<=0){semSku++;if(naoIdentificados.length<5)naoIdentificados.push(produto);continue;}
   if(!lote)throw Error('Lote ausente em produto '+skuMatch[1]+'.');
   const bruto=linha[iOvos],ovos=Number(String(bruto??'').trim().replace(',','.'));
   if(String(bruto??'').trim()===''||!Number.isSafeInteger(ovos)||ovos<0)throw Error('Quantidade de ovos inválida no SKU '+skuMatch[1]+' e lote '+lote+'.');
@@ -39,7 +39,7 @@ export function extrairParipassu(linhas){
   }else mapa.set(chave,{sku,lote,ovos,ovosPorCaixa});
   linhasValidas++;
  }
- if(semSku)throw Error(semSku+' linhas sem SKU ou ovos/caixa reconhecidos. Publicação bloqueada para revisão.');
+ if(semSku)throw Error(semSku+' produtos sem SKU ou ovos/caixa identificados. Exemplos: '+naoIdentificados.join(' | ')+'. Nenhuma publicação realizada.');
  if(!mapa.size)throw Error('Nenhum produto embalado reconhecido no PariPassu.');
  const itens=[...mapa.values()].map(x=>{
   if(x.ovos%x.ovosPorCaixa!==0)fracionadas++;
