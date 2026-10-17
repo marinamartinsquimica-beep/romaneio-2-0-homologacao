@@ -164,6 +164,18 @@ $('preverRecebimento').onclick=async()=>{
   let iguais=0,faltam=0,sobram=0;
   for(const [k,n] of ativos){const l=locais.get(k)||0;iguais+=Math.min(n,l);faltam+=Math.max(0,n-l);locais.delete(k);}
   for(const n of locais.values())sobram+=n;
+  const resumo=x=>String(x?.palete??'?')+' | '+String(x?.destino??'')+' | '+String(x?.sku??'')+' | '+String(x?.loteCompleto??'')+' | '+String(x?.caixas??'')+' cx';
+  const diferencasRemotas=[],diferencasLocais=[];
+  const gruposLocais=new Map();
+  for(const e of entradas){const k=chave(e),g=gruposLocais.get(k)||[];g.push(e);gruposLocais.set(k,g);}
+  for(const [k,n] of ativos){const locaisGrupo=gruposLocais.get(k)||[];if(n>locaisGrupo.length){
+   const amostra=ordenados.filter(d=>chave(d.item)===k).at(-1)?.item;
+   diferencasRemotas.push((n-locaisGrupo.length)+' × '+resumo(amostra));
+  }}
+  const gruposRemotos=ativos;
+  for(const [k,g] of gruposLocais){const diferenca=g.length-(gruposRemotos.get(k)||0);if(diferenca>0)diferencasLocais.push(diferenca+' × '+resumo(g[0]));}
+  const idsLocais=entradas.filter(e=>e.registroId).length;
+  const idsRemotos=ordenados.filter(d=>d.item?.registroId).length;
   const linhas=[
    'RECONCILIAÇÃO HISTÓRICA — SOMENTE LEITURA',
    'Operações consultadas: '+ordenados.length+' (janela: '+snap.size+'/50)',
@@ -172,6 +184,9 @@ $('preverRecebimento').onclick=async()=>{
    'Equivalentes locais: '+iguais,
    'Ativas remotas ausentes localmente: '+faltam,
    'Entradas locais não equivalentes: '+sobram,
+   'Identidades presentes: '+idsLocais+'/'+entradas.length+' locais; '+idsRemotos+'/'+ordenados.length+' operações remotas',
+   ...(diferencasRemotas.length?['REMOTO NÃO EQUIVALENTE (até 8):',...diferencasRemotas.slice(0,8)]:[]),
+   ...(diferencasLocais.length?['LOCAL NÃO EQUIVALENTE (até 8):',...diferencasLocais.slice(0,8)]:[]),
    'Inconsistências de sequência: '+falhas.length,
    'Operações ainda na fila local: '+ordenados.filter(d=>pendentes.some(p=>p.id===d.id)).length,
    ...(falhas.length?['Exemplos: '+falhas.slice(0,3).join('; ')]:[]),
