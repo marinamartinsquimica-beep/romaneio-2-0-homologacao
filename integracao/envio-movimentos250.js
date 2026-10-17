@@ -9,7 +9,7 @@ import {criarSincronizadorFila} from './sincronizador-fila.js';
 const config={apiKey:'AIzaSyAtlG-oys01gqgCdiANbzuzx9Mh9SiMRQo',authDomain:'romaneio-2-0-laboratorio.firebaseapp.com',projectId:'romaneio-2-0-laboratorio',storageBucket:'romaneio-2-0-laboratorio.firebasestorage.app',messagingSenderId:'343680211941',appId:'1:343680211941:web:8ad689db2c09447c2ded0c'};
 const app=getApps().length?getApp():initializeApp(config),auth=getAuth(app),db=getFirestore(app);
 const CHAVE='romaneio2_movimentos_pendentes_v1';
-const habilitado=false; // Liberar somente após regras, testes e aprovação explícita.
+const habilitado=true; // Envio operacional autorizado; nenhuma baixa de estoque.
 function ler(){const f=JSON.parse(localStorage.getItem(CHAVE)||'[]');if(!Array.isArray(f))throw Error('Fila local inválida');return f;}
 function gravar(f){localStorage.setItem(CHAVE,JSON.stringify(f));}
 const erros=[];
