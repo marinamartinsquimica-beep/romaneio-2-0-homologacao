@@ -50,6 +50,43 @@ async function gravarTeste(reenvio){
  }catch(e){$('testeResultado').textContent='Falha: '+(e.code||e.message||String(e))+'\nO teste pode ser repetido sem criar outro ID.';}
  finally{testeOcupado=false;botao.textContent='GRAVAR TESTE NO FIREBASE';repetir.textContent='REENVIAR MESMO TESTE';botao.disabled=!auth.currentUser;repetir.disabled=!auth.currentUser||!testeAtual;}
 }
+
+const FILA_TESTE_250='romaneio250_fila_offline_ficticia';
+const lerTesteOffline=()=>{const v=JSON.parse(localStorage.getItem(FILA_TESTE_250)||'[]');if(!Array.isArray(v))throw Error('Fila fictícia inválida');return v;};
+const escreverTesteOffline=f=>localStorage.setItem(FILA_TESTE_250,JSON.stringify(f));
+$('prepararOffline').onclick=()=>{
+ try{
+  const u=auth.currentUser;if(!u)throw Error('Faça login antes de preparar o teste');
+  const fila=lerTesteOffline();
+  fila.push({id:'offline_'+crypto.randomUUID().replaceAll('-',''),autorUid:u.uid,dispositivoId:'laboratorio250',tipo:'inclusao',item:{sku:'TESTE-OFFLINE',loteCompleto:'LAB-001',caixas:13},antes:null,criadoEm:new Date().toISOString()});
+  escreverTesteOffline(fila);
+  $('saidaOffline').textContent='SALVO LOCALMENTE. Pendentes fictícios: '+fila.length+'. Nenhuma transmissão realizada.';
+ }catch(e){$('saidaOffline').textContent='Falha: '+e.message;}
+};
+$('enviarOffline').onclick=async()=>{
+ const b=$('enviarOffline');b.disabled=true;b.textContent='SINCRONIZANDO…';
+ try{
+  await auth.authStateReady();
+  if(!auth.currentUser)throw Error('Faça login primeiro');
+  if(!navigator.onLine)throw Error('Sem internet; pendências preservadas');
+  const fila=lerTesteOffline();let confirmados=0;
+  for(const op of fila){
+   if(op.autorUid!==auth.currentUser.uid)throw Error('Conta divergente; fila preservada');
+   const ref=doc(db,'rom_v250_contas',op.autorUid,'movimentos',op.id);
+   await runTransaction(db,async tx=>{
+    const anterior=await tx.get(ref);
+    if(anterior.exists()){
+     const d=anterior.data();
+     if(d.id!==op.id||d.autorUid!==op.autorUid||d.item?.sku!==op.item.sku||d.item?.caixas!==op.item.caixas)throw Error('Conflito de ID');
+    }else tx.set(ref,op);
+   });
+   escreverTesteOffline(lerTesteOffline().filter(x=>x.id!==op.id));
+   confirmados++;
+  }
+  $('saidaOffline').textContent='CONFIRMADOS: '+confirmados+'. PENDENTES FICTÍCIOS: '+lerTesteOffline().length+'. Fila operacional intacta.';
+ }catch(e){$('saidaOffline').textContent='Falha: '+(e.code||e.message)+'. Pendentes fictícios preservados: '+lerTesteOffline().length;}
+ finally{b.disabled=false;b.textContent='SINCRONIZAR TESTE';}
+};
 $('testeGravar').onclick=()=>gravarTeste(false);
 $('testeReenviar').onclick=()=>gravarTeste(true);
 status();
