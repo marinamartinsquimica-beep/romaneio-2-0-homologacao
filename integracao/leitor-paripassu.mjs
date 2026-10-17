@@ -15,6 +15,7 @@ export function extrairParipassu(linhas){
   const bruto=linha[iOvos],ovos=Number(String(bruto??'').trim().replace(',','.'));
   if(String(bruto??'').trim()===''||!Number.isSafeInteger(ovos)||ovos<0)throw Error('Quantidade de ovos inválida no SKU '+skuMatch[1]+' e lote '+lote+'.');
   const sku=skuMatch[1],ovosPorCaixa=Number(ovosCaixaMatch[1]);
+  if(!Number.isSafeInteger(ovosPorCaixa)||ovosPorCaixa<=0)throw Error('Capacidade inválida: '+produto);
   const chave=JSON.stringify([sku,lote.toUpperCase()]),anterior=mapa.get(chave);
   if(anterior){
    if(anterior.ovosPorCaixa!==ovosPorCaixa)throw Error('Embalagens incompatíveis para SKU '+sku+' e lote '+lote+'.');
