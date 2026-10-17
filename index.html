@@ -106,7 +106,17 @@ button{border-radius:13px;font-family:inherit}.btn-primary{background:#254D69;bo
   <p style="margin:8px 0;color:#475569">Importe uma cópia atualizada do estoque para conferir as pendências. Correções do estoque são feitas diretamente no SharePoint. Esta importação é somente leitura e não altera o arquivo.</p>
   <label for="arquivoEstoqueTeste" style="display:block;margin:10px 0">Selecionar planilha de estoque (.xlsx)</label>
   <input id="arquivoEstoqueTeste" type="file" accept=".xlsx,.xls" onchange="importarEstoqueTeste(event)" style="max-width:100%;margin-bottom:10px">
-  <div id="conferenciaParipassuIntegrada" style="margin:14px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc">
+  <section id="etapa4Firebase" style="padding:14px;margin:12px 0;border:1px solid #a7b8cd;border-radius:12px;background:#eef6ff">
+<h3>Estoques compartilhados — Firebase</h3>
+<p style="color:#334155">Os arquivos são publicados como consulta compartilhada. Baixas e ajustes do estoque oficial exigem confirmação e gravação no SharePoint; esta ação não altera o arquivo oficial.</p>
+<label for="etapa4Tipo">Estoque</label><select id="etapa4Tipo"><option value="embalado">Estoque Embalado</option><option value="paripassu">Estoque PariPassu</option></select>
+<label for="etapa4Arquivo">Planilha atualizada</label><input type="file" id="etapa4Arquivo" accept=".xlsx,.xls">
+<button type="button" id="etapa4Publicar">PUBLICAR ESTOQUE NO FIREBASE</button>
+<p id="etapa4FirebaseStatus" role="status">Aguardando conexão autenticada.</p>
+<p id="etapa4Resumo">Aguardando os dois estoques compartilhados.</p>
+<ul id="etapa4Pendencias" style="max-height:220px;overflow:auto;color:#334155"></ul>
+</section>
+<div id="conferenciaParipassuIntegrada" style="margin:14px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc">
 <label for="arquivoParipassuOperacao">Conferência Estoque Embalado × PariPassu</label>
 <input id="arquivoParipassuOperacao" type="file" accept=".xlsx,.xls" style="margin:8px 0">
 <button type="button" id="btnConferirParipassu" style="width:auto">Conferir estoques</button>
@@ -2729,5 +2739,6 @@ btn?.addEventListener('click',async()=>{
  }catch(e){resumo.textContent='Conferência não realizada: '+e.message;}finally{btn.disabled=false;}
 });
 </script>
+<script type="module" src="./integracao/estoques-firebase-ui.mjs"></script>
 </body>
 </html>
