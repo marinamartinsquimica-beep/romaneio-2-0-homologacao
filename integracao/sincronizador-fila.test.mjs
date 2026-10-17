@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {criarSincronizadorFila} from './sincronizador-fila.js';
+let fila=[{id:'a12345678',item:{cx:13}},{id:'b12345678',item:{cx:5}}],avisos=[];
+const sync=criarSincronizadorFila({ler:()=>structuredClone(fila),gravar:f=>{fila=f},avisar:e=>avisos.push(e),publicador:{publicar:async()=>{fila[0].item.cx=14;fila.push({id:'c12345678',item:{cx:8}});return {confirmacoes:[{id:'a12345678',confirmado:true},{id:'b12345678',confirmado:true}]}}}});
+const r=await sync.executar();
+assert.equal(r.confirmados,1);
+assert.deepEqual(fila.map(x=>x.id),['a12345678','c12345678']);
+assert.equal(fila[0].item.cx,14);
+assert.equal(avisos.length,1);
+console.log('Fila: alterações simultâneas e confirmação parcial preservadas');
