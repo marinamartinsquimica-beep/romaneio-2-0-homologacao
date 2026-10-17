@@ -1,4 +1,4 @@
-const CACHE_NAME = "romaneio-2-0-cache-v250-r6";
+const CACHE_NAME = "romaneio-2-0-cache-v250-r7";
 
 const FILES_TO_CACHE = [
   "./",
@@ -7,6 +7,8 @@ const FILES_TO_CACHE = [
   "./export-utils.js",
   "./jsQR.js",
   "./vendor/zxing.min.js",
+  "./vendor/jszip.min.js",
+  "./integracao/excel-modelo-etapa4.mjs",
   "./vendor/LICENSE-zxing.txt",
   "./qr-parser.js",
   "./manifest.json",
