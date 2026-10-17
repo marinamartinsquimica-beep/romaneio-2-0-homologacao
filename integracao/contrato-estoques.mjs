@@ -10,11 +10,11 @@ export function validarEstoqueOficial(dados, tipoEsperado) {
  const chaves = new Set();
  const itens = dados.itens.map((linha, indice) => {
   const sku=texto(linha?.sku), lote=texto(linha?.lote), saldo=numero(linha?.saldo);
-  if (!sku || !lote || !Number.isSafeInteger(saldo) || saldo < 0) throw Error('SKU, lote ou saldo inválido na linha '+(indice+1)+'.');
+  if (!sku || !lote || !Number.isFinite(saldo) || saldo < 0) throw Error('SKU, lote ou saldo inválido na linha '+(indice+1)+'.');
   const chave=JSON.stringify([sku.toUpperCase(),lote.toUpperCase()]);
   if(chaves.has(chave)) throw Error('SKU e lote duplicados na linha '+(indice+1)+'. Corrija ou consolide na origem.');
   chaves.add(chave);
-  return Object.freeze({sku,lote,saldo,postura:texto(linha?.postura)});
+  return Object.freeze({sku,lote,saldo,ovos:linha?.ovos===undefined?null:Number(linha.ovos),ovosPorCaixa:linha?.ovosPorCaixa===undefined?null:Number(linha.ovosPorCaixa),postura:texto(linha?.postura)});
  });
  return Object.freeze({tipo:tipoEsperado,nome:texto(dados.nome),versao:texto(dados.versao),itens:Object.freeze(itens)});
 }
