@@ -312,8 +312,13 @@ $('prepararPublicacaoLocal').onclick=async()=>{
    if(!e.registroId||!/^[a-zA-Z0-9_-]{8,160}$/.test(e.registroId))throw Error('Registro sem identidade estável: abra e salve o Romaneio antes de publicar');
    if(!e.sku||!e.loteCompleto||!Number.isInteger(Number(e.caixas))||Number(e.caixas)<=0)throw Error('Registro inválido: '+String(e.registroId));
   }
-  const dispositivoId=localStorage.getItem('romaneio2_dispositivo_v1');
-  if(!dispositivoId)throw Error('Identidade do dispositivo ausente. Abra o Romaneio antes de publicar');
+  let dispositivoId=localStorage.getItem('romaneio2_dispositivo_v1');
+  if(!dispositivoId){
+   if(typeof crypto.randomUUID==='function')dispositivoId=crypto.randomUUID();
+   else if(typeof crypto.getRandomValues==='function'){const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);dispositivoId=Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');}
+   else throw Error('Identificador seguro indisponível neste navegador');
+   localStorage.setItem('romaneio2_dispositivo_v1',dispositivoId);
+  }
   const criados=faltantes.map(e=>({id:'seed_'+e.registroId,dispositivoId,tipo:'inclusao',item:e,registroId:e.registroId,criadoEm:new Date().toISOString(),estado:'pendente'}));
   if(criados.some(op=>!validarOperacional(op)))throw Error('Algumas entradas não atendem ao formato de envio; nenhuma foi preparada');
   if(localStorage.getItem('entradas')!==origem||localStorage.getItem(CHAVE_OPERACIONAL)!==filaOrigem)throw Error('Dados mudaram durante a consulta; tente novamente');
