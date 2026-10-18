@@ -2863,7 +2863,7 @@ function operadorSelecionarAba(aba){
  document.getElementById('opAbaImportacao').classList.toggle('hidden',!importacao);
  document.getElementById('opAbaMovimentos').classList.toggle('hidden',!movimentos);
  document.getElementById('opAbaParipassu').classList.toggle('hidden',!paripassu);
- for(const [id,active] of [['opTabVisao',!estoque&&!importacao&&!movimentos],['opTabEstoque',estoque],['opTabImportacao',importacao],['opTabMovimentos',movimentos],['opTabParipassu',paripassu]]){
+ for(const [id,active] of [['opTabVisao',aba==='visao'],['opTabEstoque',estoque],['opTabImportacao',importacao],['opTabMovimentos',movimentos],['opTabParipassu',paripassu]]){
    const btn=document.getElementById(id);btn.classList.toggle('active',active);btn.setAttribute('aria-selected',String(active));
  }
  if(estoque){renderizarEstoqueCompletoTeste();renderizarPendenciasConferenciaEstoque();}
