@@ -5,7 +5,7 @@
 A versão operacional 2.0.57 continua na branch main. Este bloco prepara:
 - Administrador e Operador como membros de um AMBIENTE único, independente do UID de quem fez login.
 - Documento `romaneio_ambientes/{ambienteId}/membros/{uid}` com `perfil` e `ativo`.
-- Excel completo no Storage em arquivo imutável por versão.
+- Excel completo no Storage em arquivo imutável por versão. Administrador e Operador podem publicar/substituir as planilhas oficiais após validação; apenas Administrador gerencia usuários.
 - Documento `romaneio_ambientes/{ambienteId}/excel_oficiais/{tipo}` com `vigente` e `anterior`.
 - Sem sobrescrever dados locais, estoque oficial legado ou movimentos no Firestore durante a migração.
 
