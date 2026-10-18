@@ -2885,6 +2885,7 @@ async function sincronizarRomaneioCelular(){
   if(!navigator.onLine)throw Error('Sem internet. Os registros estão preservados para o próximo envio.');
   const {sincronizarMovimentos250}=await import('./integracao/envio-movimentos250.js');
   await sincronizarMovimentos250();
+  localStorage.setItem('romaneio2_solicitar_sincronizacao_v1',String(Date.now()));
   const qtd=lerFilaMovimentos().length;
   atualizarIndicadorFilaMovimentos();
   if(qtd)throw Error(qtd+' movimentação(ões) ainda pendente(s). Nada foi descartado.');
@@ -2895,7 +2896,7 @@ async function sincronizarRomaneioCelular(){
   console.warn('Sincronização preservada:',e);
  }finally{if(botao)botao.disabled=false;}
 }
-function operadorSincronizarAgora(){operadorSelecionarAba('importacao');document.getElementById('etapa4Arquivo')?.focus();}
+async function operadorSincronizarAgora(){await sincronizarRomaneioCelular();localStorage.setItem('romaneio2_solicitar_sincronizacao_v1',String(Date.now()));}
 document.getElementById('tabTotal')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
 document.getElementById('tabCaminhao')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
 window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(event.matches&&document.getElementById('painelOperadorDesktop').classList.contains('active'))abrirAba('total');});
@@ -3095,7 +3096,5 @@ document.getElementById('etapa4Preparar')?.addEventListener('click',()=>{
  }catch(e){status.textContent='Operação não preparada: '+e.message;}
 });
 </script>
-<!-- Agente de sincronização da homologação: sem operações manuais. -->
-<iframe src="integracao/central-conexao.html?agente=1" title="Sincronização automática" aria-hidden="true" tabindex="-1" style="position:absolute;width:0;height:0;border:0;visibility:hidden" loading="eager"></iframe>
 </body>
 </html>
