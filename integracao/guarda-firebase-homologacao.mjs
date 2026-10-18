@@ -1,6 +1,6 @@
 // Guardião para a compilação de HOMOLOGAÇÃO.
 // Sem projeto Firebase de teste explícito, nenhuma operação em nuvem é permitida.
-export const FIREBASE_HOMOLOGACAO_ID = ''; // preencher somente com ID do projeto de testes criado no console.
+export const FIREBASE_HOMOLOGACAO_ID = 'romaneio-2-0-homologacao'; // preencher somente com ID do projeto de testes criado no console.
 export function exigirFirebaseHomologacao(config) {
  const esperado=FIREBASE_HOMOLOGACAO_ID.trim();
  if (!esperado || !/^[a-z][a-z0-9-]{5,64}$/.test(esperado))
