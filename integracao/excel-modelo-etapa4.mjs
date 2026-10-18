@@ -25,7 +25,7 @@ async function localizar(zip,nome){
  const id=sheet.getAttributeNS(R,'id')||sheet.getAttribute('r:id');
  const route=[...rel.getElementsByTagNameNS(P,'Relationship')].find(x=>x.getAttribute('Id')===id)?.getAttribute('Target');
  if(!route)throw Error('Relação da aba '+nome+' não encontrada.');
- const path=route.startsWith('/')?route.slice(1):'xl/'+route.replace(/^\\.?\\//,'');
+ const path=route.startsWith('/')?route.slice(1):'xl/'+route.replace(/^\.\//,'');
  return path.replace(/\\/g,'/');
 }
 export async function gerarExcelModeloEstoque({arquivo,operacao,estoqueOriginal,resultado}){
@@ -36,7 +36,7 @@ export async function gerarExcelModeloEstoque({arquivo,operacao,estoqueOriginal,
  const sheet=book.Sheets[book.SheetNames.find(n=>norm(n)==='ESTOQUE')];
  if(!sheet)throw Error('Aba Estoque não encontrada no modelo.');
  const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:true});
- if(['SKU','LOTE COMPLETO','CAIXAS ENTRADA','SAIDAS','SALDO'].some(h=>!rows[2]?.some(x=>norm(x).normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')===h)))throw Error('Estrutura do Estoque não corresponde ao modelo aprovado.');
+ if(['SKU','LOTE COMPLETO','CAIXAS ENTRADA','SAIDAS','SALDO'].some(h=>!rows[2]?.some(x=>norm(x).normalize('NFD').replace(/[\u0300-\u036f]/g,'')===h)))throw Error('Estrutura do Estoque não corresponde ao modelo aprovado.');
  const entries=new Map(),sums=new Map();
  for(let i=3;i<rows.length;i++){const r=rows[i],sku=String(r[0]??'').trim(),lote=String(r[3]??'').trim();if(!sku||!lote)continue;const saldo=numero(r[9]),entrada=numero(r[7]),saida=numero(r[8]);if(entrada-saida!==saldo)throw Error('Fórmula SALDO divergente na linha '+(i+1)+'. Abra e salve o arquivo no Excel antes de continuar.');const k=key(sku,lote),a=entries.get(k)||[];a.push({row:i+1,sku,lote,produto:String(r[1]??''),saldo,entrada,saida});entries.set(k,a);sums.set(k,(sums.get(k)||0)+saldo)}
  if(!Array.isArray(estoqueOriginal)||!estoqueOriginal.length)throw Error('Estoque de referência ausente.');
