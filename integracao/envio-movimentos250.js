@@ -1,3 +1,4 @@
+import {exigirFirebaseHomologacao} from './guarda-firebase-homologacao.mjs';
 import {resolverAmbienteUsuario} from './ambiente-compartilhado.mjs';
 /* 2.0.50: integração de envio sob comando explícito, desabilitada até homologação.
  * Não usa estoque oficial nem substitui entradas entre aparelhos.
@@ -8,6 +9,7 @@ import {getFirestore,doc,runTransaction} from 'https://www.gstatic.com/firebasej
 import {criarPublicadorMovimentos} from './publicador-firestore.js';
 import {criarSincronizadorFila} from './sincronizador-fila.js';
 const config={apiKey:'AIzaSyAtlG-oys01gqgCdiANbzuzx9Mh9SiMRQo',authDomain:'romaneio-2-0-laboratorio.firebaseapp.com',projectId:'romaneio-2-0-laboratorio',storageBucket:'romaneio-2-0-laboratorio.firebasestorage.app',messagingSenderId:'343680211941',appId:'1:343680211941:web:8ad689db2c09447c2ded0c'};
+exigirFirebaseHomologacao(config);
 const app=getApps().length?getApp():initializeApp(config),auth=getAuth(app),db=getFirestore(app);
 const CHAVE='romaneio2_movimentos_pendentes_v1';
 let ambienteEnvio=null;
