@@ -41,17 +41,15 @@ function observar(uid){
     if(painelCount)painelCount.textContent=String(r.pendencias.length);
     const visao=$('etapa4ResumoVisao');if(visao){visao.textContent=r.pendencias.length?'PariPassu: '+r.pendencias.length+' pendência(s). Consulte CONFERÊNCIA PARIPASSU no menu lateral.':'PariPassu: '+r.conformes+' lote(s) conferido(s), sem pendências.';visao.style.borderLeftColor=r.pendencias.length?'#f97316':'#5CDCF2';}
     if(painelMsg)painelMsg.textContent=r.pendencias.length?'Verifique no PariPassu, corrija e importe a nova planilha. Não bloqueia o romaneio.':'Conferência concluída: '+r.conformes+' lote(s) OK no PariPassu.';
-    if(painelLista){
-      painelLista.replaceChildren();
-      for(const x of r.pendencias){
-        const linha=document.createElement('div');linha.className='etapa4-pari-registro';
-        const id=document.createElement('strong');id.textContent=x.sku+' / '+x.lote;
-        const situacao=document.createElement('span');situacao.textContent=x.tipo==='ausente_paripassu'?'Não localizado no PariPassu':'Quantidade insuficiente';
-        const caixas=document.createElement('span');caixas.textContent='Embalado: '+Number(x.embalado).toLocaleString('pt-BR',{maximumFractionDigits:3})+' CX';
-        const faltam=document.createElement('strong');faltam.textContent='Faltam '+Number(x.diferenca).toLocaleString('pt-BR',{maximumFractionDigits:3})+' CX';
-        linha.append(id,situacao,caixas,faltam);painelLista.append(linha);
-      }
-      if(!r.pendencias.length){const p=document.createElement('p');p.textContent='Nenhuma pendência. Todos os lotes do Embalado estão atendidos no PariPassu.';p.style.padding='14px 0';painelLista.append(p)}
+    if(painelLista){painelLista.replaceChildren();
+      const table=document.createElement('table');table.className='etapa4-pari-tabela';
+      const thead=table.createTHead().insertRow();
+      for(const label of ['SKU','Lote completo','Situação','Embalado (CX)','PariPassu (CX)','Faltam (CX)']){const th=document.createElement('th');th.textContent=label;thead.append(th)}
+      const body=table.createTBody();
+      const fmt=x=>Number(x).toLocaleString('pt-BR',{maximumFractionDigits:3});
+      for(const x of r.pendencias){const tr=body.insertRow();const valores=[x.sku,x.lote,x.tipo==='ausente_paripassu'?'Ausente':'Saldo inferior',fmt(x.embalado),fmt(x.paripassu),fmt(x.diferenca)];for(const v of valores){const td=tr.insertCell();td.textContent=String(v)}}
+      if(r.pendencias.length)painelLista.append(table);
+      else{const msg=document.createElement('p');msg.textContent='Sem pendências. Todos os lotes do Embalado estão atendidos no PariPassu.';msg.style.padding='15px';painelLista.append(msg)}
     }
     if(ok){ok.replaceChildren();const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='OK no PariPassu ('+r.conformes+') — clique para expandir';details.appendChild(summary);const lista=document.createElement('ul');for(const x of r.conformesItens){const li=document.createElement('li');li.textContent=x.sku+' / '+x.lote+' / '+(x.postura||'sem postura')+' — Embalado '+x.saldo+' caixas / PariPassu '+x.paripassu+' caixas — OK';lista.appendChild(li)}details.appendChild(lista);ok.appendChild(details)}
 
