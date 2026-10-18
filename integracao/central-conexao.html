@@ -820,8 +820,8 @@ async function sincronizarExpedicoesCompartilhadas(){
  const bruto=localStorage.getItem(chave),locais=JSON.parse(bruto||'[]');
  if(!Array.isArray(locais))return;
  const raiz=raizOperacional(auth.currentUser.uid);
- const ref=collection(db,...raiz,'expedicoes_pendentes');
- const snap=await getDocs(query(ref,limit(500)));
+ const ref=collection(db,...raiz,'expedicoes');
+ const snap=await getDocs(query(ref,limit(50)));
  if(snap.metadata.fromCache)return;
  const docs=new Map(snap.docs.map(d=>[d.id,d.data()]));
  const identificador=x=>String(x.movimentoExclusaoId||'');
@@ -832,14 +832,15 @@ async function sincronizarExpedicoesCompartilhadas(){
   const k=identificador(x)||'legado_'+hash(base(x)),id='exp_'+hash(k)+'_'+k.length;
   if(docs.has(id))continue;
   if(!ambienteOperacional?.permissoes?.usuarios)continue;
-  const data={...x,origemId:k,estado:x.estado==='BAIXA_CONCLUIDA'?'BAIXA_CONCLUIDA':'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'};
-  await runTransaction(db,async tx=>{const d=doc(db,...raiz,'expedicoes_pendentes',id);if(!(await tx.get(d)).exists())tx.set(d,data)});
+  const data={...x,origemId:k,estado:'PENDENTE_BAIXA',criadoEm:x.excluidoEm||new Date().toISOString(),autorUid:auth.currentUser.uid};
+  await runTransaction(db,async tx=>{const d=doc(db,...raiz,'expedicoes',id);if(!(await tx.get(d)).exists())tx.set(d,data)});
   docs.set(id,data);
  }
  const unidas=new Map(locais.map(x=>[identificador(x)||'legado_'+hash(base(x)),x]));
  for(const x of docs.values()){
   const k=String(x.origemId||identificador(x)||'legado_'+hash(base(x))),ant=unidas.get(k);
-  if(!ant||x.estado==='BAIXA_CONCLUIDA')unidas.set(k,x);
+  const recebido={...x,estado:x.estado==='BAIXA_CONCLUIDA'?'BAIXA_CONCLUIDA':'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'};
+  if(!ant||x.estado==='BAIXA_CONCLUIDA')unidas.set(k,recebido);
  }
  const final=[...unidas.values()];
  if(localStorage.getItem(chave)===bruto&&JSON.stringify(final)!==JSON.stringify(locais))localStorage.setItem(chave,JSON.stringify(final));
