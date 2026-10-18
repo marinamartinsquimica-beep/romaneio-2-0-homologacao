@@ -523,7 +523,7 @@ async function aplicarUniaoSeguraOperacional(){
    }
    if(ultimo.tipo==='exclusao'){
     exclusoesArquivadas.push({...atual,excluidoEm:ultimo.criadoEm||new Date().toISOString(),movimentoExclusaoId:ultimo.id,estado:'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'});
-    resultado.splice(indices[0].i,1);
+    // O computador mantém a expedição para Excel/baixa; somente o celular retira a entrada.
     exclusoesRecebidas++;
    }else if(ultimo.tipo==='edicao'){
     resultado[indices[0].i]={...ultimo.item,registroId:id};
