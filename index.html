@@ -1915,6 +1915,10 @@ function salvarLocalStorage() {
     // 2.0.50: evento local, sem envio remoto e sem bloquear salvamento offline.
         registrarCopiaSegurancaOffline(dados);
     registrarMovimentosLocais(dados);
+    // Envia a fila durável em segundo plano: cada operação só sai após confirmação do Firebase.
+    if (navigator.onLine) import('./integracao/envio-movimentos250.js')
+      .then(m=>m.sincronizarMovimentos250())
+      .catch(e=>console.warn('Movimentações preservadas para próximo envio:',e));
     try { window.dispatchEvent(new CustomEvent("romaneio:entradas-salvas", {detail:{quantidade:dados.length}})); } catch(e) { console.warn("Evento de sincronização indisponível",e); }
     const paletesAtuais = new Set(dados.map(item => String(item.palete)));
     const caminhoes = lerCaminhoes();
