@@ -141,10 +141,10 @@ $('consultarCompartilhados').onclick=async()=>{
  const b=$('consultarCompartilhados'),out=$('resultadoCompartilhados');b.disabled=true;b.textContent='CONSULTANDO…';out.textContent='Consultando registros remotos…';
  try{
   await auth.authStateReady();const u=auth.currentUser;if(!u)throw Error('Autenticação necessária');if(!navigator.onLine)throw Error('Sem internet');
-  const q=query(collection(db,...raizOperacional(u.uid),'movimentos'),orderBy('criadoEm','desc'),limit(50));
+  const q=query(collection(db,...raizOperacional(u.uid),'movimentos'),orderBy('criadoEm','desc'),limit(500));
   const snap=await getDocs(q);const docs=snap.docs.map(d=>({id:d.id,...d.data()}));
   const porTipo={inclusao:0,edicao:0,exclusao:0};for(const d of docs)if(Object.hasOwn(porTipo,d.tipo))porTipo[d.tipo]++;
-  out.textContent='LEITURA CONFIRMADA: '+docs.length+' registros recentes (máximo 50). Inclusões: '+porTipo.inclusao+' | Edições: '+porTipo.edicao+' | Exclusões: '+porTipo.exclusao+'\\nÚltimos IDs: '+docs.slice(0,5).map(x=>x.id).join(', ')+'\\nNenhum dado local alterado.';
+  out.textContent='LEITURA CONFIRMADA: '+docs.length+' registros recentes (janela de 500). Inclusões: '+porTipo.inclusao+' | Edições: '+porTipo.edicao+' | Exclusões: '+porTipo.exclusao+'\\nÚltimos IDs: '+docs.slice(0,5).map(x=>x.id).join(', ')+'\\nNenhum dado local alterado.';
  }catch(e){out.textContent='CONSULTA NÃO CONCLUÍDA: '+(e.code||e.message||String(e))+'.\\nSe permission-denied, a regra de listagem ainda não foi autorizada. Não altere as regras sem nossa validação.';}
  finally{b.disabled=false;b.textContent='CONSULTAR MOVIMENTAÇÕES NO FIREBASE';}
 };
@@ -163,7 +163,7 @@ $('iniciarTempoReal').onclick=async()=>{
   if(!u)throw Error('Faça login na conta operacional');
   if(!navigator.onLine)throw Error('Sem internet');
   uidTempoReal=u.uid;
-  const q=query(collection(db,...raizOperacional(u.uid),'movimentos'),orderBy('criadoEm','desc'),limit(50));
+  const q=query(collection(db,...raizOperacional(u.uid),'movimentos'),orderBy('criadoEm','desc'),limit(500));
   $('resultadoTempoReal').textContent='Conectando à atualização automática…';
   cancelarTempoReal=onSnapshot(q,snap=>{
    if(auth.currentUser?.uid!==uidTempoReal){pararTempoReal('Conta alterada; acompanhamento interrompido.');return;}
@@ -286,7 +286,7 @@ $('diagnosticarOfflineReal').onclick=async()=>{
  try{
   await auth.authStateReady();const u=auth.currentUser;if(!u)throw Error('Faça login na conta operacional');
   if(!navigator.onLine)throw Error('Sem conexão');
-  const q=query(collection(db,...raizOperacional(u.uid),'movimentos'),orderBy('criadoEm','desc'),limit(50));
+  const q=query(collection(db,...raizOperacional(u.uid),'movimentos'),orderBy('criadoEm','desc'),limit(500));
   const snap=await getDocs(q);if(snap.metadata.fromCache)throw Error('Consulta veio do cache');
   const norm=x=>String(x||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   const bruto=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -714,7 +714,7 @@ function observarMovimentosAutomaticos(u){
  if(cancelarMudancasRemotas){cancelarMudancasRemotas();cancelarMudancasRemotas=null;}
  contaObservada=u?.uid||null;ultimaAssinaturaRemota=null;
  if(!u)return;
- const q=query(collection(db,...raizOperacional(u.uid),'movimentos'),orderBy('criadoEm','desc'),limit(50));
+ const q=query(collection(db,...raizOperacional(u.uid),'movimentos'),orderBy('criadoEm','desc'),limit(500));
  cancelarMudancasRemotas=onSnapshot(q,snap=>{
   if(snap.metadata.fromCache)return;
   registrarExclusoesRecebidas(snap);
@@ -768,17 +768,17 @@ async function gravarTeste(reenvio){
  finally{testeOcupado=false;botao.textContent='GRAVAR TESTE NO FIREBASE';repetir.textContent='REENVIAR MESMO TESTE';botao.disabled=!auth.currentUser;repetir.disabled=!auth.currentUser||!testeAtual;}
 }
 
-async function lerHistoricoMovimentosCompleto(uid,{maximo=2000}={}){
+async function lerHistoricoMovimentosCompleto(uid){
  const registros=[],vistos=new Set(),ref=collection(db,...raizOperacional(uid),'movimentos');let ultimo=null;
- for(let pagina=0;pagina<Math.ceil(maximo/50);pagina++){
-  const partes=[ref,orderBy('criadoEm','desc'),...(ultimo?[startAfter(ultimo)]:[]),limit(50)];
+ while(true){
+  const partes=[ref,orderBy('criadoEm','desc'),...(ultimo?[startAfter(ultimo)]:[]),limit(500)];
   const snap=await getDocs(query(...partes));
   if(snap.metadata.fromCache)throw Error('Histórico remoto somente em cache; dados locais preservados.');
   for(const docSnap of snap.docs){if(vistos.has(docSnap.id))throw Error('Identificador duplicado no histórico remoto');vistos.add(docSnap.id);registros.push(docSnap);}
-  if(snap.size<50)return {docs:registros,size:registros.length,metadata:{fromCache:false}};
+  if(snap.size<500)return {docs:registros,size:registros.length,metadata:{fromCache:false}};
   ultimo=snap.docs[snap.docs.length-1];
  }
- throw Error('Histórico remoto excede '+maximo+' operações; conciliação bloqueada, sem alterações.');
+
 }
 const FILA_TESTE_250='romaneio250_fila_offline_ficticia';
 const lerTesteOffline=()=>{const v=JSON.parse(localStorage.getItem(FILA_TESTE_250)||'[]');if(!Array.isArray(v))throw Error('Fila fictícia inválida');return v;};
