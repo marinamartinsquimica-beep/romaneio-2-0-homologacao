@@ -7,14 +7,14 @@ service firebase.storage {
     firestore.exists(/databases/(default)/documents/romaneio_ambientes/$(ambiente)/membros/$(request.auth.uid)) &&
     firestore.get(/databases/(default)/documents/romaneio_ambientes/$(ambiente)/membros/$(request.auth.uid)).data.ativo == true;
   }
-  function admin(ambiente){
+  function publisher(ambiente){
    return member(ambiente) &&
-    firestore.get(/databases/(default)/documents/romaneio_ambientes/$(ambiente)/membros/$(request.auth.uid)).data.perfil == 'administrador';
+    firestore.get(/databases/(default)/documents/romaneio_ambientes/$(ambiente)/membros/$(request.auth.uid)).data.perfil in ['administrador', 'operador'];
   }
   match /romaneio_ambientes/{ambiente}/excel/{tipo}/{arquivo} {
    allow read: if member(ambiente) && (tipo == 'embalado' || tipo == 'paripassu');
-   // Cada versão de Excel é imutável: somente administrador publica.
-   allow create: if admin(ambiente) &&
+   // Cada versão de Excel é imutável: administrador e operador podem publicar.
+   allow create: if publisher(ambiente) &&
      (tipo == 'embalado' || tipo == 'paripassu') &&
      arquivo.matches('[A-Za-z0-9_-]+\\.xlsx') &&
      request.resource.size > 0 && request.resource.size <= 20 * 1024 * 1024 &&
