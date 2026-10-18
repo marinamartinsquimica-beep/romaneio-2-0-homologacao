@@ -28,8 +28,9 @@ jobs:
           node --check integracao/publicacao-estoques.mjs
           node --check integracao/ambiente-compartilhado.mjs
           node --check integracao/migracao-historico.mjs
+          node --check integracao/validar-corte-migracao.mjs
           node --check integracao/perfis-usuarios.mjs
           node --check integracao/envio-movimentos250.js
           node testes/verificar-sintaxe-html.mjs
       - name: Executar testes de estoque e perfis
-        run: node --test integracao/*.test.mjs testes/perfis-usuarios.test.mjs testes/estoque-ambiente-compartilhado.test.mjs testes/migracao-historico.test.mjs
+        run: node --test integracao/*.test.mjs testes/perfis-usuarios.test.mjs testes/estoque-ambiente-compartilhado.test.mjs testes/migracao-historico.test.mjs testes/validar-corte-migracao.test.mjs
