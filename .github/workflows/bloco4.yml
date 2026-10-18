@@ -19,6 +19,8 @@ jobs:
       - name: Verificar sintaxe da integração
         run: |
           node --check integracao/excel-modelo-etapa4.mjs
+          node --check integracao/baixa-modelo-aprovado.mjs
+          node --check integracao/modelo-estoque-persistente.mjs
           node --check integracao/operacoes-estoque.mjs
           node --check integracao/estoques-firebase-ui.mjs
           node --check integracao/publicacao-estoques.mjs
