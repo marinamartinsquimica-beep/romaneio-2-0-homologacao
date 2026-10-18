@@ -205,7 +205,16 @@ $('preverRecebimento').onclick=async()=>{
    if(!d.item||typeof d.item!=='object'){falhas.push(d.id+': item inválido');continue;}
    if(d.tipo==='inclusao'){incluir(d.item);inclusoes++;}
    else if(d.tipo==='exclusao'){if(retirar(d.item,d.id))exclusoes++;}
-   else if(d.tipo==='edicao'){if(!d.antes)falhas.push(d.id+': edição sem estado anterior');else if(retirar(d.antes,d.id)){incluir(d.item);edicoes++;}}
+   else if(d.tipo==='edicao'){
+    if(!d.antes){falhas.push(d.id+': edição sem estado anterior');continue;}
+    const k=chave(d.antes);
+    if(!(ativos.get(k)>0)){
+      const candidatos=entradas.filter(e=>chave(e)===k
+        && (!d.antes.registroId||String(e.registroId||'')===String(d.antes.registroId)));
+      if(candidatos.length===1)incluir(d.antes);
+    }
+    if(retirar(d.antes,d.id)){incluir(d.item);edicoes++;}
+   }
    else falhas.push(d.id+': tipo desconhecido');
   }
   const locais=new Map();
