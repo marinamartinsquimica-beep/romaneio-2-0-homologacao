@@ -471,6 +471,14 @@ async function aplicarUniaoSeguraOperacional(){
    else if(mov.tipo==='exclusao')retirar(mov.item,mov.id);
    else if(mov.tipo==='edicao'){
     if(!mov.antes){falhas.push(mov.id+': estado anterior ausente');continue;}
+    // Uma edição pode ser o primeiro evento remoto quando o registro já existia no aparelho.
+    // Recuperar o estado anterior somente se houver correspondência local inequívoca.
+    const grupoAnterior=grupos.get(chave(mov.antes));
+    if(!grupoAnterior?.length){
+      const candidatos=entradas.filter(x=>chave(x)===chave(mov.antes)
+        && (!mov.antes.registroId || String(x.registroId||'')===String(mov.antes.registroId)));
+      if(candidatos.length===1)adicionar(mov.antes,'estado-local-confirmado');
+    }
     const anterior=retirar(mov.antes,mov.id);if(anterior)adicionar(mov.item,anterior.origem);
    }else falhas.push(mov.id+': tipo desconhecido');
   }
