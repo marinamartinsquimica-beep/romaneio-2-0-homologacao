@@ -589,7 +589,10 @@ async function aplicarUniaoSeguraOperacional(){
     const esperado=estadosConhecidos[estadosConhecidos.length-1]||inicio;
     const campos=['data','sku','destino','palete','loteCompleto','lote','postura','caixas','observacoes'];
     const diferentes=campos.filter(c=>String(atual?.[c]??'')!==String(esperado?.[c]??''));
-    conflitosRecebidos.push(id+': estado local divergente; campos diferentes: '+(diferentes.join(', ')||'formatação/identidade')+'; eventos: '+eventos.map(e=>e.tipo).join(' > '));
+    const quantidades=eventos.flatMap(e=>[e.antes?.caixas,e.item?.caixas]).filter(v=>v!==undefined&&v!==null);
+    const detalhesCaixas=diferentes.includes('caixas')?'; caixas local='+String(atual?.caixas??'?')+'; remoto mais recente='+String(ultimo.item?.caixas??'?')+'; sequência='+quantidades.join('→'):'';
+
+    conflitosRecebidos.push(id+': estado local divergente; campos diferentes: '+(diferentes.join(', ')||'formatação/identidade')+detalhesCaixas+'; eventos: '+eventos.map(e=>e.tipo).join(' > '));
     continue;
    }
    if(ultimo.tipo==='exclusao'){
