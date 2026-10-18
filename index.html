@@ -226,6 +226,26 @@ body.modo-operador .topbar .brand h1{font-size:21px!important}
  #painelOperadorDesktop #opVisaoGeral>.operator-workspace{flex:1;align-items:stretch}
  #painelOperadorDesktop #opVisaoGeral .operator-box{height:100%}
 }
+
+/* Conferência PariPassu: um só quadro de pendências, lista OK recolhível. */
+#opAbaParipassu>.card{display:flex;flex-direction:column;gap:14px}
+#opAbaParipassu>.card>h2{margin-bottom:0!important}
+#opAbaParipassu .etapa4-pari-painel{background:#fff;border:1px solid #dde3e8;border-radius:8px;padding:0;box-shadow:none;overflow:hidden}
+#opAbaParipassu .etapa4-pari-cabecalho{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px 18px;background:#f7f9fa;border-bottom:1px solid #dde3e8}
+#opAbaParipassu .etapa4-pari-cabecalho h3{margin:0 0 5px!important;font-size:16px!important}
+#opAbaParipassu .etapa4-pari-cabecalho p{margin:0;color:#48647a;font-size:13px}
+#opAbaParipassu .etapa4-pari-contador{font-size:23px;color:#254d69;min-width:40px;text-align:right;white-space:nowrap}
+#opAbaParipassu .etapa4-pari-lista{padding:0 18px;max-height:55vh;overflow:auto}
+#opAbaParipassu .etapa4-pari-registro{display:grid;grid-template-columns:minmax(130px,1fr) minmax(110px,1fr) minmax(120px,1fr) auto;gap:10px;align-items:center;padding:13px 0;border-bottom:1px solid #dde3e8;font-size:13px}
+#opAbaParipassu .etapa4-pari-registro:last-child{border-bottom:0}
+#opAbaParipassu .etapa4-pari-registro strong{font-size:14px}
+#opAbaParipassu .etapa4-pari-resumo{font-size:13px;color:#4a5560;margin:0;padding:10px 14px;border:1px solid #dde3e8;border-radius:6px}
+#opAbaParipassu #etapa4Conformes{margin:0}
+#opAbaParipassu #etapa4Conformes details{padding:0!important;overflow:hidden}
+#opAbaParipassu #etapa4Conformes summary{padding:15px 18px!important;background:#f7f9fa;list-style-position:inside}
+#opAbaParipassu #etapa4Conformes ul{list-style:none;margin:0;padding:4px 18px;max-height:38vh;overflow:auto}
+#opAbaParipassu #etapa4Conformes li{padding:10px 0}
+@media(max-width:750px){#opAbaParipassu .etapa4-pari-registro{grid-template-columns:1fr 1fr}#opAbaParipassu .etapa4-pari-cabecalho{padding:12px}}
 </style>
 </head>
 <body>
@@ -250,8 +270,10 @@ body.modo-operador .topbar .brand h1{font-size:21px!important}
 <p id="etapa4FirebaseStatus" role="status">Aguardando conexão autenticada.</p>
 
 </section>
-<button id="etapa4AtivarNotificacoes" type="button">ATIVAR AVISOS NO NAVEGADOR</button><p id="etapa4AvisosStatus" role="status">Avisos visuais sempre ativos; notificações do navegador são opcionais.</p></section></div><div id="opAbaParipassu" role="tabpanel" class="hidden"><section class="card" style="padding:18px;margin:14px 0"><h2>Conferência Embalado × PariPassu</h2><section id="etapa4PainelPendencias" class="operator-pending" style="margin:12px 0" aria-live="polite"><h3>CONFERÊNCIA EMBALADO × PARIPASSU — <span id="etapa4PainelContador">Aguardando</span></h3><p id="etapa4PainelMensagem">Publique os dois estoques na aba IMPORTAR PLANILHAS para conferir automaticamente.</p><div id="etapa4PainelLista"></div></section><p id="etapa4Resumo">Aguardando os dois estoques compartilhados.</p>
-<ul id="etapa4Pendencias" hidden aria-hidden="true"></ul><div id="etapa4Conformes" role="status" aria-live="polite"></div><div id="etapa4Aviso" role="alert" aria-live="assertive" style="display:none;border:2px solid #c2410c;background:#fff2e8;padding:12px;margin:12px 0"></div></section></div><div id="opAbaMovimentos" role="tabpanel" class="hidden"><section class="card" style="padding:18px;margin:14px 0"><h2>Baixa e ajuste</h2><section id="etapa4Operacoes" style="margin:12px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc">
+<p id="etapa4AvisosStatus" role="status">Avisos de divergência aparecem no próprio Romaneio 2.0.</p></section></div><div id="opAbaParipassu" role="tabpanel" class="hidden"><section class="card" style="padding:18px;margin:14px 0"><h2>Conferência Embalado × PariPassu</h2><section id="etapa4PainelPendencias" class="etapa4-pari-painel" aria-live="polite">
+<div class="etapa4-pari-cabecalho"><div><h3>Pendências de estoque</h3><p id="etapa4PainelMensagem">Aguardando conferência automática dos estoques.</p></div><strong class="etapa4-pari-contador" id="etapa4PainelContador">—</strong></div>
+<div id="etapa4PainelLista" class="etapa4-pari-lista"></div></section><p id="etapa4Resumo" class="etapa4-pari-resumo">Aguardando os dois estoques compartilhados.</p>
+<ul id="etapa4Pendencias" hidden aria-hidden="true"></ul><div id="etapa4Conformes" role="status" aria-live="polite"></div><div id="etapa4Aviso" hidden aria-hidden="true"></div></section></div><div id="opAbaMovimentos" role="tabpanel" class="hidden"><section class="card" style="padding:18px;margin:14px 0"><h2>Baixa e ajuste</h2><section id="etapa4Operacoes" style="margin:12px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc">
 <h3>Baixa e ajuste — prévia segura</h3>
 <p style="color:#334155">As operações abaixo preparam a conferência sem alterar o Firebase nem a planilha oficial. Confirmação de baixa ou ajuste oficial permanece indisponível até integração autenticada com o arquivo.</p>
 <label for="etapa4Modo">Operação</label><select id="etapa4Modo"><option value="baixa">Baixa de expedição</option><option value="ajuste">Ajuste por contagem física</option></select>
