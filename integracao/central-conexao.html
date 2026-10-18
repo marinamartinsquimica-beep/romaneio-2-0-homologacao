@@ -304,10 +304,7 @@ $('prepararUniaoSegura').onclick=async()=>{
   const fila=JSON.parse(localStorage.getItem('romaneio2_movimentos_pendentes_v1')||'[]');
   if(!Array.isArray(entradas)||!Array.isArray(fila))throw Error('Dados locais inválidos');
   if(fila.length)throw Error('Há '+fila.length+' movimentações pendentes. A união deve aguardar');
-  const q=query(collection(db,'rom_v250_contas',auth.currentUser.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
-  const snap=await getDocs(q);
-  if(snap.metadata.fromCache)throw Error('Consulta retornou somente dados em cache');
-  if(snap.size===50)throw Error('Histórico pode estar incompleto: limite de 50 registros');
+  const snap=await lerHistoricoMovimentosCompleto(auth.currentUser.uid);
   const movimentos=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
   const chave=x=>JSON.stringify([x?.data,x?.sku,x?.destino,x?.palete,x?.loteCompleto,x?.lote,x?.postura,x?.caixas,x?.observacoes]);
   const contagem=new Map(),problemas=[];
