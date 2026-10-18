@@ -2060,7 +2060,7 @@ function salvarEntrada() {
     if (!novoRegistro) {
         exibirPaginaInicial();
         document.getElementById("formEntrada")?.classList.add("hidden");
-        document.querySelectorAll(".eme-aviso-overlay:not([data-tipo=paripassu])").forEach(aviso => aviso.remove());
+        document.querySelectorAll(".eme-aviso-overlay:not([data-tipo=paripassu])").forEach(aviso => { if(aviso.dataset.confirmado!=="1") return; aviso.remove(); });
     } else {
         limparCampos();
     }
@@ -2968,7 +2968,8 @@ document.getElementById('etapa4Exportar')?.addEventListener('click',async()=>{
    const table=document.createElement('table');const head=table.createTHead().insertRow();
    ['SKU','Lote','Solicitadas','Saldo antes','Saídas antes','Saídas depois','Saldo depois','Baixadas','Não baixadas','Situação'].forEach(t=>{const th=document.createElement('th');th.textContent=t;head.appendChild(th)});
    for(const d of res.detalhes){const row=table.createTBody().insertRow();[d.sku,d.lote,d.cx,d.saldoAntes,d.saidasAntes,d.saidasDepois,d.saldoDepois,d.baixado,d.naoBaixado,d.status].forEach(x=>{const td=row.insertCell();td.textContent=String(x??'')})}
-   painel.replaceChildren(table);
+   const cards=painel.querySelector('.etapa4-resumo-baixa');
+   painel.replaceChildren();if(cards)painel.append(cards);painel.append(table);
   }
   status.textContent=res.operacao==='baixa'?'Excel gerado: '+res.baixadas+' caixa(s) baixadas; '+res.removidas+' linha(s) zeradas removidas; '+res.naoBaixadas+' caixa(s) não baixadas. Estoque: '+res.estoqueAntes+' → '+res.estoqueDepois+' caixas. Confira o Excel antes de publicar no Firebase.':'Excel de ajuste gerado com '+res.registros+' registros no histórico. Confira antes de publicar no Firebase.';
  }catch(e){status.textContent='Excel não gerado: '+e.message;}
