@@ -2944,7 +2944,9 @@ window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(even
   }
   aviso.style.borderLeftColor=erro?'#ffcf45':'#5CDCF2';
   aviso.textContent=mensagem;aviso.hidden=false;
-  clearTimeout(avisoTimer);avisoTimer=setTimeout(()=>aviso.hidden=true,6000);
+  clearTimeout(avisoTimer);
+  // Conflitos exigem conferência: aviso permanece até resolução explícita.
+  if(!erro)avisoTimer=setTimeout(()=>aviso.hidden=true,6000);
  }
  window.addEventListener('message',event=>{
   if(event.origin!==location.origin||event.data?.origem!=='romaneio-sync')return;
