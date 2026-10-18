@@ -564,7 +564,10 @@ async function aplicarUniaoSeguraOperacional(){
     indices=resultado.map((item,i)=>({item,i})).filter(x=>identidade(x.item)===alvo);
    }
    if(indices.length!==1){
-    conflitosRecebidos.push(id+': registro remoto sem correspondente local único ('+indices.length+' encontrados); edição não aplicada');
+    // Exclusão de item que nunca existiu neste aparelho não deve criar palete
+    // nem bloquear as demais movimentações. O evento permanece no histórico.
+    if(indices.length===0&&ultimo.tipo==='exclusao'&&primeiro.tipo==='inclusao')continue;
+    conflitosRecebidos.push(id+': registro remoto sem correspondente local único ('+indices.length+' encontrados); evento '+ultimo.tipo+' não aplicado');
     continue;
    }
    const atual=indices[0].item;
