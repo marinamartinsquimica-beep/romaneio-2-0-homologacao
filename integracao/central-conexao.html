@@ -186,7 +186,7 @@ $('preverRecebimento').onclick=async()=>{
   await auth.authStateReady();
   const u=auth.currentUser;if(!u)throw Error('Autenticação necessária');
   const snap=await lerHistoricoMovimentosCompleto(u.uid);
-  const operacionais=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
+  const operacionais=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_'));
   const entradas=JSON.parse(localStorage.getItem('entradas')||'[]');
   const pendentes=JSON.parse(localStorage.getItem('romaneio2_movimentos_pendentes_v1')||'[]');
   if(!Array.isArray(entradas)||!Array.isArray(pendentes))throw Error('Dados locais inválidos');
