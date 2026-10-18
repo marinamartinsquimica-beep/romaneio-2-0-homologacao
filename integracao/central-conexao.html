@@ -13,8 +13,8 @@ const config={apiKey:'AIzaSyCCy5uY1eAFQE9Vhykr7xNNayDtk_B-Hy4',authDomain:'roman
 exigirFirebaseHomologacao(config);
 const app=getApps().length?getApp():initializeApp(config),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 let ambienteOperacional=null,escopoOperacionalPronto=false;
-const raizOperacional=(uid)=>ambienteOperacional?.uid===uid?['romaneio_ambientes',ambienteOperacional.ambienteId]:['rom_v250_contas',uid];
-async function atualizarAmbienteOperacional(usuario){ambienteOperacional=null;escopoOperacionalPronto=false;if(!usuario)return;try{const {resolverAmbienteUsuario}=await import('./ambiente-compartilhado.mjs');const v=await resolverAmbienteUsuario({db,uid:usuario.uid});if(auth.currentUser?.uid===usuario.uid){ambienteOperacional={...v,uid:usuario.uid};escopoOperacionalPronto=true;}}catch(e){if(e?.code!=='romaneio/sem-vinculo')throw e;escopoOperacionalPronto=true;}}
+const raizOperacional=(uid)=>{if(!escopoOperacionalPronto||ambienteOperacional?.uid!==uid)throw Error('Homologação bloqueada: usuário sem vínculo compartilhado liberado.');return ['romaneio_ambientes',ambienteOperacional.ambienteId];};
+async function atualizarAmbienteOperacional(usuario){ambienteOperacional=null;escopoOperacionalPronto=false;if(!usuario)return;try{const {resolverAmbienteUsuario}=await import('./ambiente-compartilhado.mjs');const v=await resolverAmbienteUsuario({db,uid:usuario.uid});if(auth.currentUser?.uid===usuario.uid){ambienteOperacional={...v,uid:usuario.uid};escopoOperacionalPronto=true;}}catch(e){throw e;}}
 
 let testeAtual=null;
 let testeOcupado=false;
