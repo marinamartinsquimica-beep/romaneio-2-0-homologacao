@@ -717,7 +717,7 @@ async function cicloAutomatico(){
  }finally{cicloEmAndamento=false;}
 }
 window.addEventListener('online',()=>{void cicloAutomatico();});
-window.addEventListener('storage',e=>{if(e.key===CHAVE_OPERACIONAL)void cicloAutomatico();});
+window.addEventListener('storage',e=>{if(e.key===CHAVE_OPERACIONAL||e.key==='romaneio2_solicitar_sincronizacao_v1')void cicloAutomatico();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void cicloAutomatico();});
 // Recebimento acionado por eventos Firestore, sem exigir mudança de tela.
 let cancelarMudancasRemotas=null,contaObservada=null,ultimaAssinaturaRemota=null;
