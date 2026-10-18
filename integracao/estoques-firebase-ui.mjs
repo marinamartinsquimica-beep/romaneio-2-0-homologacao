@@ -24,7 +24,24 @@ async function importar(file,tipo){
  if(tipo==='embalado')return lerEmbalado(linhas);
  const {extrairParipassu}=await import('./leitor-paripassu.mjs');return extrairParipassu(linhas).itens;
 }
-function mostrarAvisoParipassu(qtd){if(document.querySelector('.eme-aviso-overlay[data-tipo="paripassu"]'))return;const overlay=document.createElement('div');overlay.className='eme-aviso-overlay';overlay.dataset.tipo='paripassu';const card=document.createElement('section');card.className='eme-aviso-card';card.setAttribute('role','alertdialog');card.setAttribute('aria-modal','true');const title=document.createElement('h2');title.className='eme-aviso-topo';title.textContent='Pendências na conferência PariPassu';const text=document.createElement('p');text.className='eme-aviso-sub';text.textContent=qtd+' pendência(s). A operação não foi bloqueada. Confira a aba CONFERÊNCIA PARIPASSU.';const btn=document.createElement('button');btn.className='eme-aviso-ok';btn.type='button';btn.textContent='ENTENDI';btn.onclick=()=>overlay.remove();card.append(title,text,btn);overlay.append(card);document.body.append(overlay)}
+let avisoPariAtual=null,assinaturaPariAtual='';
+function mostrarAvisoParipassu(qtd,assinatura){
+ const atual=document.querySelector('.eme-aviso-overlay[data-tipo="paripassu"]');
+ if(atual)return;
+ if(sessionStorage.getItem('romaneio2-paripassu-ack')===assinatura)return;
+ const overlay=document.createElement('div');overlay.className='eme-aviso-overlay';overlay.dataset.tipo='paripassu';
+ const card=document.createElement('section');card.className='eme-aviso-card';card.setAttribute('role','alertdialog');card.setAttribute('aria-modal','true');
+ const title=document.createElement('h2');title.className='eme-aviso-topo';title.textContent='Pendências na conferência PariPassu';
+ const descricao=document.createElement('p');descricao.className='eme-aviso-sub';descricao.textContent=qtd+' pendência(s). Confira a aba CONFERÊNCIA PARIPASSU. O romaneio não foi bloqueado.';
+ const btn=document.createElement('button');btn.className='eme-aviso-ok';btn.type='button';btn.textContent='OK, ENTENDI';
+ btn.addEventListener('click',()=>{sessionStorage.setItem('romaneio2-paripassu-ack',assinatura);avisoPariAtual=null;overlay.remove()});
+ card.append(title,descricao,btn);overlay.append(card);document.body.append(overlay);avisoPariAtual=overlay;assinaturaPariAtual=assinatura;btn.focus();
+}
+const vigiarAviso=new MutationObserver(()=>{
+ if(avisoPariAtual&&!avisoPariAtual.isConnected&&assinaturaPariAtual&&sessionStorage.getItem('romaneio2-paripassu-ack')!==assinaturaPariAtual)document.body.append(avisoPariAtual);
+});
+vigiarAviso.observe(document.body,{childList:true});
+
 function renderizarDestinosExcluidos(registros=[]){
  window.__destinosExcluidosRemotos=registros.filter(x=>x.tipo==='exclusao'&&x.item?.destino);
  window.atualizarDestinosBaixa?.();
@@ -85,8 +102,8 @@ function observar(uid){
 
     if(alerta){alerta.hidden=true;alerta.style.display='none';
       const chave='romaneio2-etapa4-alerta-'+uid,assinatura=r.pendencias.map(x=>[x.sku,x.lote,x.tipo,x.diferenca].join('|')).join(';');
-      if(r.pendencias.length&&assinatura!==sessionStorage.getItem(chave)){sessionStorage.setItem(chave,assinatura);mostrarAvisoParipassu(r.pendencias.length);}
-      if(!r.pendencias.length)sessionStorage.removeItem(chave);
+      if(r.pendencias.length)mostrarAvisoParipassu(r.pendencias.length,assinatura);
+      if(!r.pendencias.length){sessionStorage.removeItem(chave);avisoPariAtual=null;assinaturaPariAtual='';document.querySelector('.eme-aviso-overlay[data-tipo="paripassu"]')?.remove();}
     }
    }else{if($('etapa4Resumo'))$('etapa4Resumo').textContent='Aguardando importar os dois estoques.';}
 
