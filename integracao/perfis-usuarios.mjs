@@ -14,3 +14,12 @@ export function exigirPermissao(membro,acao){
  if(!p||p[acao]!==true)throw Error('Acesso não permitido ao usuário para: '+acao);
  return p;
 }
+
+/** Apenas ambientes efetivamente provisionados podem compartilhar dados. */
+export function identificarEscopoCompartilhado(ambiente){
+ const id=String(ambiente?.ambienteId||'');
+ if(!/^[A-Za-z0-9_-]{6,128}$/.test(id))throw Error('Ambiente compartilhado não configurado.');
+ const perfil=permissoesDoUsuario({perfil:ambiente?.perfil,ativo:ambiente?.ativo===true});
+ if(!perfil)throw Error('Acesso ao ambiente não autorizado.');
+ return {ambienteId:id,perfil:perfil.perfil,permissoes:perfil};
+}
