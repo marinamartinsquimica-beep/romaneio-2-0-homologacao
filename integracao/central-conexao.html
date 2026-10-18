@@ -500,7 +500,17 @@ async function aplicarUniaoSeguraOperacional(){
   const criarId=()=>{if(!crypto?.randomUUID)throw Error('Identificador seguro indisponível');let id;do{id=crypto.randomUUID();}while(novosIds.has(id));novosIds.add(id);return id;};
   const localComIds=entradas.map(x=>({...x,registroId:x.registroId||criarId()}));
   const idsLocaisExistentes=new Set(entradas.map(x=>String(x.registroId||'')).filter(Boolean));
-  const extrasSemDuplicar=extras.filter(x=>!x.item.registroId||!idsLocaisExistentes.has(String(x.item.registroId)));
+  // Edições com estado anterior presente no aparelho devem atualizar a entrada,
+// jamais criar um segundo palete com o estado novo.
+  const edicoesComBaseLocal=new Set();
+  for(const mov of movs){
+   if(mov.tipo!=='edicao'||!mov.antes||!mov.item)continue;
+   const candidatos=entradas.filter(e=>String(e.registroId||'')===String(mov.antes.registroId||'')
+      && chave(e)===chave(mov.antes));
+   if(candidatos.length===1&&mov.item.registroId)edicoesComBaseLocal.add(String(mov.item.registroId));
+  }
+  const extrasSemDuplicar=extras.filter(x=>(!x.item.registroId||!idsLocaisExistentes.has(String(x.item.registroId)))
+    && !edicoesComBaseLocal.has(String(x.item.registroId||'')));
   const novos=extrasSemDuplicar.map(x=>({...x.item,registroId:novosIds.has(x.item.registroId)?criarId():(x.item.registroId||criarId())}));
   // Reproduz edições/exclusões remotas sobre entradas locais apenas quando
   // o estado anterior é idêntico. Nunca remove registros locais divergentes.
