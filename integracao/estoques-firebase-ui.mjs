@@ -51,7 +51,19 @@ function observar(uid){
       if(r.pendencias.length)painelLista.append(table);
       else{const msg=document.createElement('p');msg.textContent='Sem pendências. Todos os lotes do Embalado estão atendidos no PariPassu.';msg.style.padding='15px';painelLista.append(msg)}
     }
-    if(ok){ok.replaceChildren();const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='OK no PariPassu ('+r.conformes+') — clique para expandir';details.appendChild(summary);const lista=document.createElement('ul');for(const x of r.conformesItens){const li=document.createElement('li');li.textContent=x.sku+' / '+x.lote+' / '+(x.postura||'sem postura')+' — Embalado '+x.saldo+' caixas / PariPassu '+x.paripassu+' caixas — OK';lista.appendChild(li)}details.appendChild(lista);ok.appendChild(details)}
+    if(ok){
+      ok.replaceChildren();
+      const details=document.createElement('details'),summary=document.createElement('summary');
+      summary.textContent='OK no PariPassu ('+r.conformes+') — clique para expandir';
+      details.appendChild(summary);
+      const wrap=document.createElement('div');wrap.className='etapa4-pari-lista';
+      const table=document.createElement('table');table.className='etapa4-pari-tabela';
+      const tr=table.createTHead().insertRow();
+      for(const label of ['SKU','Lote completo','Situação','Embalado (CX)','PariPassu (CX)','Diferença (CX)']){const th=document.createElement('th');th.textContent=label;tr.appendChild(th)}
+      const body=table.createTBody();const fmt=n=>Number(n).toLocaleString('pt-BR',{maximumFractionDigits:3});
+      for(const x of r.conformesItens){const row=body.insertRow();for(const value of [x.sku,x.lote,'OK',fmt(x.saldo),fmt(x.paripassu),fmt(Math.max(0,x.saldo-x.paripassu))]){const td=row.insertCell();td.textContent=String(value)}}
+      wrap.append(table);details.append(wrap);ok.append(details);
+    }
 
     if(alerta){alerta.hidden=true;alerta.style.display='none';
       const chave='romaneio2-etapa4-alerta-'+uid,assinatura=r.pendencias.map(x=>[x.sku,x.lote,x.tipo,x.diferenca].join('|')).join(';');
