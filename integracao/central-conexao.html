@@ -813,6 +813,36 @@ window.addEventListener('storage',e=>{if(e.key===CHAVE_OPERACIONAL||e.key==='rom
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void cicloAutomatico();});
 // Recebimento acionado por eventos Firestore, sem exigir mudança de tela.
 let cancelarMudancasRemotas=null,contaObservada=null,ultimaAssinaturaRemota=null;
+async function sincronizarExpedicoesCompartilhadas(){
+ if(!auth.currentUser||!escopoOperacionalPronto||!navigator.onLine)return;
+ const chave='romaneio2_expedicoes_excluidas_pendentes_v1';
+ const bruto=localStorage.getItem(chave),locais=JSON.parse(bruto||'[]');
+ if(!Array.isArray(locais))return;
+ const raiz=raizOperacional(auth.currentUser.uid);
+ const ref=collection(db,...raiz,'expedicoes_pendentes');
+ const snap=await getDocs(query(ref,limit(500)));
+ if(snap.metadata.fromCache)return;
+ const docs=new Map(snap.docs.map(d=>[d.id,d.data()]));
+ const identificador=x=>String(x.movimentoExclusaoId||'');
+ const base=x=>[x.destino,x.palete,x.sku,x.loteCompleto,x.lote,x.postura].map(v=>String(v??'').trim().toUpperCase()).join('|');
+ const hash=x=>{let h=2166136261;for(const c of x)h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;return h.toString(16)};
+ for(const x of locais){
+  if(!x.destino)continue;
+  const k=identificador(x)||'legado_'+hash(base(x)),id='exp_'+hash(k)+'_'+k.length;
+  if(docs.has(id))continue;
+  if(!ambienteOperacional?.permissoes?.usuarios)continue;
+  const data={...x,origemId:k,estado:x.estado==='BAIXA_CONCLUIDA'?'BAIXA_CONCLUIDA':'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'};
+  await runTransaction(db,async tx=>{const d=doc(db,...raiz,'expedicoes_pendentes',id);if(!(await tx.get(d)).exists())tx.set(d,data)});
+  docs.set(id,data);
+ }
+ const unidas=new Map(locais.map(x=>[identificador(x)||'legado_'+hash(base(x)),x]));
+ for(const x of docs.values()){
+  const k=String(x.origemId||identificador(x)||'legado_'+hash(base(x))),ant=unidas.get(k);
+  if(!ant||x.estado==='BAIXA_CONCLUIDA')unidas.set(k,x);
+ }
+ const final=[...unidas.values()];
+ if(localStorage.getItem(chave)===bruto&&JSON.stringify(final)!==JSON.stringify(locais))localStorage.setItem(chave,JSON.stringify(final));
+}
 function registrarExclusoesRecebidas(snap){
  const chaveArquivo='romaneio2_expedicoes_excluidas_pendentes_v1';
  const arquivo=JSON.parse(localStorage.getItem(chaveArquivo)||'[]');
