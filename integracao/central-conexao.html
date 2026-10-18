@@ -554,8 +554,19 @@ async function aplicarUniaoSeguraOperacional(){
   for(const [id,eventos] of trajetorias){
    const primeiro=eventos[0],ultimo=eventos[eventos.length-1];
    const inicio=primeiro.tipo==='inclusao'?primeiro.item:(primeiro.antes||primeiro.item);
-   const indices=resultado.map((item,i)=>({item,i})).filter(x=>String(x.item.registroId||'')===id);
-   if(indices.length!==1)continue;
+   let indices=resultado.map((item,i)=>({item,i})).filter(x=>String(x.item.registroId||'')===id);
+   if(indices.length===0){
+    // Registros legados podem ter IDs locais distintos do celular.
+    // Só correlacionar uma única entrada pela identidade física estável.
+    const identidade=x=>[x?.destino,x?.palete,x?.sku,x?.loteCompleto,x?.lote,x?.postura]
+      .map(v=>String(v??'').trim().toUpperCase()).join('|');
+    const alvo=identidade(ultimo.item||inicio);
+    indices=resultado.map((item,i)=>({item,i})).filter(x=>identidade(x.item)===alvo);
+   }
+   if(indices.length!==1){
+    conflitosRecebidos.push(id+': registro remoto sem correspondente local único ('+indices.length+' encontrados); edição não aplicada');
+    continue;
+   }
    const atual=indices[0].item;
    if(ultimo.tipo!=='exclusao'&&chave(atual)===chave(ultimo.item))continue;
    // Aceita qualquer estado comprovado da trajetória remota, não apenas
