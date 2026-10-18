@@ -38,13 +38,24 @@ function observar(uid){
     if(el)el.textContent=r.conferidos+' lotes do Embalado | '+r.conformes+' OK no PariPassu | '+r.pendencias.length+' pendências. Conferência automática.';
     if(out){out.replaceChildren();for(const x of r.pendencias){const li=document.createElement('li');li.textContent=x.sku+' / '+x.lote+' / '+(x.postura||'sem postura')+' — '+(x.tipo==='ausente_paripassu'?'NÃO LOCALIZADO NO PARIPASSU':'DIVERGÊNCIA DE CAIXAS')+' | Embalado '+x.embalado+' | PariPassu '+x.paripassu;out.appendChild(li)}}
     const painelCount=$('etapa4PainelContador'),painelMsg=$('etapa4PainelMensagem'),painelLista=$('etapa4PainelLista');
-    if(painelCount)painelCount.textContent=String(r.pendencias.length)+' pendência(s)';
+    if(painelCount)painelCount.textContent=String(r.pendencias.length);
     const visao=$('etapa4ResumoVisao');if(visao){visao.textContent=r.pendencias.length?'PariPassu: '+r.pendencias.length+' pendência(s). Consulte CONFERÊNCIA PARIPASSU no menu lateral.':'PariPassu: '+r.conformes+' lote(s) conferido(s), sem pendências.';visao.style.borderLeftColor=r.pendencias.length?'#f97316':'#5CDCF2';}
     if(painelMsg)painelMsg.textContent=r.pendencias.length?'Verifique no PariPassu, corrija e importe a nova planilha. Não bloqueia o romaneio.':'Conferência concluída: '+r.conformes+' lote(s) OK no PariPassu.';
-    if(painelLista){painelLista.replaceChildren();for(const x of r.pendencias){const p=document.createElement('p');p.textContent=x.sku+' / '+x.lote+' — '+(x.tipo==='ausente_paripassu'?'AUSENTE':'DIVERGÊNCIA')+' | '+x.embalado+' caixas Embalado / '+x.paripassu+' PariPassu';painelLista.appendChild(p)}}
+    if(painelLista){
+      painelLista.replaceChildren();
+      for(const x of r.pendencias){
+        const linha=document.createElement('div');linha.className='etapa4-pari-registro';
+        const id=document.createElement('strong');id.textContent=x.sku+' / '+x.lote;
+        const situacao=document.createElement('span');situacao.textContent=x.tipo==='ausente_paripassu'?'Não localizado no PariPassu':'Quantidade insuficiente';
+        const caixas=document.createElement('span');caixas.textContent='Embalado: '+Number(x.embalado).toLocaleString('pt-BR',{maximumFractionDigits:3})+' CX';
+        const faltam=document.createElement('strong');faltam.textContent='Faltam '+Number(x.diferenca).toLocaleString('pt-BR',{maximumFractionDigits:3})+' CX';
+        linha.append(id,situacao,caixas,faltam);painelLista.append(linha);
+      }
+      if(!r.pendencias.length){const p=document.createElement('p');p.textContent='Nenhuma pendência. Todos os lotes do Embalado estão atendidos no PariPassu.';p.style.padding='14px 0';painelLista.append(p)}
+    }
     if(ok){ok.replaceChildren();const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='OK no PariPassu ('+r.conformes+') — clique para expandir';details.appendChild(summary);const lista=document.createElement('ul');for(const x of r.conformesItens){const li=document.createElement('li');li.textContent=x.sku+' / '+x.lote+' / '+(x.postura||'sem postura')+' — Embalado '+x.saldo+' caixas / PariPassu '+x.paripassu+' caixas — OK';lista.appendChild(li)}details.appendChild(lista);ok.appendChild(details)}
 
-    if(alerta){alerta.style.display=r.pendencias.length?'block':'none';alerta.textContent=r.pendencias.length?'ATENÇÃO: '+r.pendencias.length+' pendência(s) entre Estoque Embalado e PariPassu. Confira os registros nesta aba.':'';
+    if(alerta){alerta.hidden=true;alerta.style.display='none';
       const chave='romaneio2-etapa4-alerta-'+uid,assinatura=r.pendencias.map(x=>[x.sku,x.lote,x.tipo,x.diferenca].join('|')).join(';');
       if(r.pendencias.length&&assinatura!==sessionStorage.getItem(chave)){sessionStorage.setItem(chave,assinatura);mostrarAvisoParipassu(r.pendencias.length);}
       if(!r.pendencias.length)sessionStorage.removeItem(chave);
