@@ -44,23 +44,12 @@ const vigiarAviso=new MutationObserver(()=>{
 vigiarAviso.observe(document.body,{childList:true});
 
 function renderizarDestinosExcluidos(registros=[]){
+ // A área de expedições excluídas é controlada pelo histórico operacional
+ // do computador; não substituir seu conteúdo por eventos brutos incompletos.
  window.__destinosExcluidosRemotos=registros.filter(x=>x.tipo==='exclusao'&&x.item?.destino);
- window.atualizarDestinosBaixa?.();
- const alvo=$('listaDestinosExcluidos');if(!alvo)return;alvo.replaceChildren();
- const locais=JSON.parse(localStorage.getItem('romaneio2_destinos_excluidos_v1')||'[]');
- const grupos=new Map();
- for(const x of locais){const k=x.id||x.destino+'-'+x.criadoEm;grupos.set(k,{destino:x.destino,caixas:x.caixas||0,criadoEm:x.criadoEm,dispositivo:x.dispositivoId,origem:'local'})}
- for(const x of registros){
-  const d=x.item||{};if(x.tipo!=='exclusao'||!d.destino)continue;
-  const k=x.dispositivoId+'|'+d.destino;const atual=grupos.get(k)||{destino:d.destino,caixas:0,criadoEm:x.criadoEm,dispositivo:x.dispositivoId,origem:'Firebase'};
-  atual.caixas+=Number(d.caixas||0);grupos.set(k,atual);
- }
- if(!grupos.size){alvo.textContent='Nenhuma exclusão de destino registrada.';return}
- for(const d of [...grupos.values()].sort((a,b)=>String(b.criadoEm).localeCompare(String(a.criadoEm))).slice(0,50)){
-  const p=document.createElement('p');p.textContent=String(d.destino)+' — '+Number(d.caixas).toLocaleString('pt-BR')+' CX — Excluído em dispositivo ('+d.origem+'); baixa de estoque NÃO realizada.';
-  p.style.borderBottom='1px solid #dde3e8';p.style.padding='9px 0';alvo.append(p)
- }
+ window.operadorAtualizarPainel?.();
 }
+
 function observar(uid){
  unsub.forEach(f=>f());unsub=[];
  for(const tipo of ['embalado','paripassu']){
