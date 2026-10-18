@@ -2933,6 +2933,23 @@ window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(even
  central.style.cssText='position:absolute;width:0;height:0;border:0;opacity:0;pointer-events:none';
  document.body.appendChild(central);
  let atualizando=false;
+ // Avisos internos Raiar: discretos, não bloqueantes, sem notificações do sistema operacional.
+ let avisoTimer;
+ function avisoSincronizacaoRaiar(mensagem,erro=false){
+  let aviso=document.getElementById('avisoSyncRaiar');
+  if(!aviso){
+   aviso=document.createElement('div');aviso.id='avisoSyncRaiar';aviso.setAttribute('role','status');aviso.setAttribute('aria-live','polite');
+   aviso.style.cssText='position:fixed;right:18px;bottom:20px;z-index:99998;max-width:min(420px,calc(100vw - 36px));background:#254D69;color:#fff;border-left:5px solid #5CDCF2;border-radius:12px;padding:14px 18px;box-shadow:0 10px 28px rgba(0,0,0,.25);font:600 14px Arial,sans-serif;';
+   document.body.appendChild(aviso);
+  }
+  aviso.style.borderLeftColor=erro?'#ffcf45':'#5CDCF2';
+  aviso.textContent=mensagem;aviso.hidden=false;
+  clearTimeout(avisoTimer);avisoTimer=setTimeout(()=>aviso.hidden=true,6000);
+ }
+ window.addEventListener('message',event=>{
+  if(event.origin!==location.origin||event.data?.origem!=='romaneio-sync')return;
+  if(event.data.estado==='erro')avisoSincronizacaoRaiar('Sincronização pendente: '+String(event.data.mensagem||'verifique a Central de Conexão'),true);
+ });
  window.addEventListener('storage',event=>{
   if(event.key==='romaneio2_expedicoes_excluidas_pendentes_v1'){
    if(typeof operadorAtualizarPainel==='function')operadorAtualizarPainel();
@@ -2966,6 +2983,10 @@ window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(even
    if(typeof atualizarIndicadorFilaMovimentos==='function')atualizarIndicadorFilaMovimentos();
    if(typeof operadorAtualizarPainel==='function')operadorAtualizarPainel();
    if(typeof atualizarDashboardVisual==='function')atualizarDashboardVisual();
+   const antes=(()=>{try{return JSON.parse(event.oldValue||'[]')}catch{return []}})();
+   const anteriores=new Map((Array.isArray(antes)?antes:[]).filter(x=>x.registroId).map(x=>[String(x.registroId),x]));
+   const mudaram=recebidos.filter(x=>!anteriores.has(String(x.registroId||''))||String(anteriores.get(String(x.registroId))?.caixas)!==String(x.caixas));
+   if(mudaram.length)avisoSincronizacaoRaiar('Romaneio atualizado: '+mudaram.length+' registro(s) recebido(s) do Firebase.');
   }finally{atualizando=false;}
  });
 })();
