@@ -2892,7 +2892,8 @@ document.getElementById('etapa4Exportar')?.addEventListener('click',async()=>{
  button.disabled=true;
  try{
   if(!resultadoEtapa4)throw Error('Prepare a conferência antes de exportar.');
-  const arquivo=window.__etapa4ArquivoEmbalado || (document.getElementById('etapa4Tipo')?.value==='embalado'?document.getElementById('etapa4Arquivo')?.files?.[0]:null);
+  const {recuperarModeloEmbalado}=await import('./integracao/modelo-estoque-persistente.mjs');
+  const arquivo=window.__etapa4ArquivoEmbalado || await recuperarModeloEmbalado() || (document.getElementById('etapa4Tipo')?.value==='embalado'?document.getElementById('etapa4Arquivo')?.files?.[0]:null);
   const {gerarExcelModeloEstoque}=await import('./integracao/excel-modelo-etapa4.mjs');
   const res=await gerarExcelModeloEstoque({arquivo,operacao:resultadoEtapa4.modo,estoqueOriginal:resultadoEtapa4.origem,resultado:resultadoEtapa4.resultado});
   const url=URL.createObjectURL(res.blob),a=document.createElement('a');a.href=url;
@@ -2917,7 +2918,16 @@ document.getElementById('etapa4Preparar')?.addEventListener('click',()=>{
   const ocorrencias=modo==='baixa'?[...resultado.aplicados.map(x=>({...x,situacao:'Preparada'})),...resultado.pendencias.map(x=>({...x,situacao:x.motivo}))]:resultado.alteracoes.map(x=>({...x,situacao:'Ajuste preparado',caixas:x.fisico}));
   const tab=document.createElement('table'),body=tab.createTBody();
   for(const x of ocorrencias){const tr=body.insertRow();[x.sku,x.lote,x.caixas,x.situacao].forEach(v=>{const td=tr.insertCell();td.textContent=String(v??'')})}
-  saida.appendChild(tab);resultadoEtapa4={modo,resultado,origem:e.map(x=>({...x}))};document.getElementById('etapa4Exportar').disabled=false;status.textContent='Conferência concluída: '+ocorrencias.length+' registros. Excel baseado no arquivo original disponível para geração; conferência do resultado obrigatória. Nenhum saldo compartilhado foi alterado.';
+  saida.appendChild(tab);
+  const soma=xs=>xs.reduce((a,x)=>a+Number(x.caixas||0),0);
+  const solicitadas=modo==='baixa'?soma(registros):null,efetivadas=modo==='baixa'?soma(resultado.aplicados):null;
+  const estoqueAntes=e.reduce((a,x)=>a+Number(x.saldo||0),0);
+  const estoqueDepois=resultado.itens.reduce((a,x)=>a+Number(x.saldo||0),0);
+  const resumo=document.createElement('div');resumo.className='etapa4-resumo-baixa';
+  const dados=modo==='baixa'?[['Caixas solicitadas',solicitadas],['Caixas preparadas',efetivadas],['Não baixadas',solicitadas-efetivadas],['Estoque anterior',estoqueAntes],['Estoque após baixa',estoqueDepois]]:[['Lotes ajustados',resultado.alteracoes.length],['Estoque anterior',estoqueAntes],['Estoque após ajuste',estoqueDepois]];
+  for(const [nome,valor] of dados){const card=document.createElement('div');card.className='etapa4-resumo-card';const title=document.createElement('span'),number=document.createElement('strong');title.textContent=nome;number.textContent=Number(valor).toLocaleString('pt-BR');card.append(title,number);resumo.appendChild(card)}
+  saida.prepend(resumo);
+  resultadoEtapa4={modo,resultado,origem:e.map(x=>({...x}))};document.getElementById('etapa4Exportar').disabled=false;status.textContent='Conferência concluída: '+ocorrencias.length+' registros. Excel baseado no arquivo original disponível para geração; conferência do resultado obrigatória. Nenhum saldo compartilhado foi alterado.';
  }catch(e){status.textContent='Operação não preparada: '+e.message;}
 });
 </script>
