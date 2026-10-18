@@ -24,6 +24,7 @@ async function importar(file,tipo){
  if(tipo==='embalado')return lerEmbalado(linhas);
  const {extrairParipassu}=await import('./leitor-paripassu.mjs');return extrairParipassu(linhas).itens;
 }
+function mostrarAvisoParipassu(qtd){if(document.querySelector('.eme-aviso-overlay[data-tipo="paripassu"]'))return;const overlay=document.createElement('div');overlay.className='eme-aviso-overlay';overlay.dataset.tipo='paripassu';const card=document.createElement('section');card.className='eme-aviso-card';card.setAttribute('role','alertdialog');card.setAttribute('aria-modal','true');const title=document.createElement('h2');title.className='eme-aviso-topo';title.textContent='Pendências na conferência PariPassu';const text=document.createElement('p');text.className='eme-aviso-sub';text.textContent=qtd+' pendência(s). A operação não foi bloqueada. Confira a aba CONFERÊNCIA PARIPASSU.';const btn=document.createElement('button');btn.className='eme-aviso-ok';btn.type='button';btn.textContent='ENTENDI';btn.onclick=()=>overlay.remove();card.append(title,text,btn);overlay.append(card);document.body.append(overlay)}
 function observar(uid){
  unsub.forEach(f=>f());unsub=[];
  for(const tipo of ['embalado','paripassu']){
@@ -45,7 +46,7 @@ function observar(uid){
 
     if(alerta){alerta.style.display=r.pendencias.length?'block':'none';alerta.textContent=r.pendencias.length?'ATENÇÃO: '+r.pendencias.length+' pendência(s) entre Estoque Embalado e PariPassu. Confira os registros nesta aba.':'';
       const chave='romaneio2-etapa4-alerta-'+uid,assinatura=r.pendencias.map(x=>[x.sku,x.lote,x.tipo,x.diferenca].join('|')).join(';');
-      if(r.pendencias.length&&assinatura!==sessionStorage.getItem(chave)){sessionStorage.setItem(chave,assinatura);if('Notification' in window&&Notification.permission==='granted'){try{new Notification('Romaneio 2.0 — pendências PariPassu',{body:r.pendencias.length+' divergência(s) identificada(s) na conferência automática.'})}catch{}}}
+      if(r.pendencias.length&&assinatura!==sessionStorage.getItem(chave)){sessionStorage.setItem(chave,assinatura);mostrarAvisoParipassu(r.pendencias.length);}
       if(!r.pendencias.length)sessionStorage.removeItem(chave);
     }
    }else{if($('etapa4Resumo'))$('etapa4Resumo').textContent='Aguardando importar os dois estoques.';}
@@ -55,8 +56,7 @@ function observar(uid){
  }
 }
 onAuthStateChanged(auth,u=>{unsub.forEach(f=>f());unsub=[];if(u)observar(u.uid);else mostrar('Faça login na Central de Conexão para compartilhar os estoques.')});
-$('etapa4Arquivo')?.addEventListener('change',()=>{const arquivo=$('etapa4Arquivo')?.files?.[0];if(arquivo&&$('etapa4Tipo')?.value==='embalado')window.__etapa4ArquivoEmbalado=arquivo;});
-$('etapa4AtivarNotificacoes')?.addEventListener('click',async()=>{const o=$('etapa4AvisosStatus');if(!('Notification' in window)){o.textContent='Este navegador não oferece notificações; os avisos continuam no painel.';return;}const p=await Notification.requestPermission();o.textContent=p==='granted'?'Notificações ativas enquanto o sistema estiver aberto.': 'Notificações não autorizadas; avisos continuam no painel.';});
+$('etapa4Arquivo')?.addEventListener('change',async()=>{const arquivo=$('etapa4Arquivo')?.files?.[0];if(!arquivo||$('etapa4Tipo')?.value!=='embalado')return;try{await importar(arquivo,'embalado');await guardarModeloEmbalado(arquivo);window.__etapa4ArquivoEmbalado=arquivo;mostrar('Modelo de Estoque Embalado preservado neste navegador. Publique para sincronizar os saldos no Firebase.')}catch(err){mostrar('Arquivo não preservado: '+err.message)}});
 $('etapa4Publicar')?.addEventListener('click',async()=>{
  const b=$('etapa4Publicar');b.disabled=true;
  try{
