@@ -810,7 +810,7 @@ async function cicloAutomatico(){
  }finally{cicloEmAndamento=false;}
 }
 window.addEventListener('online',()=>{void cicloAutomatico();});
-window.addEventListener('storage',e=>{if(e.key===CHAVE_OPERACIONAL||e.key==='romaneio2_solicitar_sincronizacao_v1')void cicloAutomatico();});
+window.addEventListener('storage',e=>{if(e.key===CHAVE_OPERACIONAL||e.key==='romaneio2_solicitar_sincronizacao_v1'||e.key==='romaneio2_expedicoes_excluidas_pendentes_v1')void cicloAutomatico();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void cicloAutomatico();});
 // Recebimento acionado por eventos Firestore, sem exigir mudança de tela.
 let cancelarMudancasRemotas=null,contaObservada=null,ultimaAssinaturaRemota=null;
@@ -886,6 +886,7 @@ function observarMovimentosAutomaticos(u){
  cancelarMudancasRemotas=onSnapshot(q,snap=>{
   if(snap.metadata.fromCache)return;
   registrarExclusoesRecebidas(snap);
+  void sincronizarExpedicoesCompartilhadas().catch(e=>{$('resultadoAplicarUniao').textContent='Expedições: '+(e.code||e.message||e)});
   const assinatura=snap.docs.map(d=>d.id+':'+String(d.data()?.criadoEm||'')+':'+String(d.data()?.tipo||'')).join('|');
   if(assinatura===ultimaAssinaturaRemota)return;
   ultimaAssinaturaRemota=assinatura;
