@@ -269,7 +269,7 @@ body.modo-operador .topbar .brand h1{font-size:21px!important}
  <div class="operator-hero"><h2>Operação de estoque</h2><p>Conferência de romaneios e acompanhamento do estoque</p></div>
  <div class="operator-section-tabs" role="tablist" aria-label="Áreas do operador"><button id="opTabVisao" type="button" class="active" role="tab" aria-selected="true" onclick="operadorSelecionarAba('visao')">VISÃO GERAL</button><button id="opTabEstoque" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('estoque')">ESTOQUE COMPLETO</button><button id="opTabImportacao" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('importacao')">IMPORTAR PLANILHAS</button><button id="opTabMovimentos" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('movimentos')">BAIXA E AJUSTE</button><button id="opTabParipassu" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('paripassu')">CONFERÊNCIA PARIPASSU</button><div class="operator-side-actions"><div class="operator-toolbar operator-toolbar-side"><button type="button" onclick="operadorVoltarRomaneios()">ABRIR ROMANEIOS</button><button type="button" onclick="operadorVerPendencias()">PENDÊNCIAS DE SINCRONIZAÇÃO</button><button type="button" class="operator-yellow" onclick="operadorSincronizarAgora()">SINCRONIZAR AGORA</button><button type="button" class="operator-outline" onclick="operadorAbrirEstoque()">VER ESTOQUE</button></div></div></div><div id="opVisaoGeral" role="tabpanel"><div class="operator-metrics"><div class="operator-metric"><span>Destinos com romaneios</span><strong id="opDestinos">0</strong></div><div class="operator-metric"><span>Paletes registrados</span><strong id="opPaletes">0</strong></div><div class="operator-metric"><span>Caixas registradas</span><strong id="opCaixas">0</strong></div><div class="operator-metric"><span>Movimentações pendentes</span><strong id="opPendentes">0</strong></div></div>
  <div class="operator-metrics"><div class="operator-metric"><span>Caixas no estoque</span><strong id="opEstoqueCaixas">—</strong></div><div class="operator-metric"><span>SKUs distintos no estoque</span><strong id="opEstoqueSkus">—</strong></div></div>
- <section class="operator-pending" id="historicoDestinosExcluidos" hidden aria-hidden="true" style="margin-bottom:12px"><h3>Destinos excluídos em dispositivos — baixa pendente</h3><p>Exclusão de romaneio não é baixa de estoque. Os registros anteriores permanecem para conferência.</p><div id="listaDestinosExcluidos"></div></section><div id="etapa4ResumoVisao" role="status" aria-live="polite" style="padding:10px 14px;margin:12px 0;background:#fff;border-left:4px solid #5CDCF2;border-radius:6px">Conferência PariPassu: aguardando os dois estoques.</div><div class="operator-workspace"><div class="operator-box"><h3>Paletes registrados</h3><div style="overflow-x:auto"><table class="operator-table"><thead><tr><th>Palete</th><th>Destino</th><th>Caixas</th><th>Ação</th></tr></thead><tbody id="opTabelaDestinos"></tbody></table></div><p class="operator-status">As correções serão feitas pelas funções atuais do romaneio até a etapa de edição e histórico ser concluída.</p></div><div class="operator-box"><h3>Controle de estoque</h3><p id="opResumoEstoque" class="operator-status">Consulta local disponível após importação de uma cópia do estoque.</p><div class="operator-pending"><h4>Pendências de conferência</h4><p id="opPendenciasEstoqueResumo">Consulte o estoque compartilhado para verificar as entradas.</p><button type="button" onclick="operadorSelecionarAba('estoque');document.getElementById('pendenciasConferenciaEstoque')?.scrollIntoView({behavior:'smooth',block:'start'})">VER PENDÊNCIAS</button></div><div class="operator-note">Baixa e ajuste disponíveis na aba própria. A alteração do estoque compartilhado ocorre somente após a publicação do Excel atualizado.</div><p id="opUltimaConsulta" class="operator-status"></p></div></div>
+ <section class="operator-pending" id="historicoDestinosExcluidos" style="margin-bottom:12px"><h3>Destinos excluídos no celular — baixa pendente</h3><p>Exclusão de romaneio não é baixa de estoque. Os registros anteriores permanecem para conferência.</p><div id="listaDestinosExcluidos"></div></section><div id="etapa4ResumoVisao" role="status" aria-live="polite" style="padding:10px 14px;margin:12px 0;background:#fff;border-left:4px solid #5CDCF2;border-radius:6px">Conferência PariPassu: aguardando os dois estoques.</div><div class="operator-workspace"><div class="operator-box"><h3>Paletes registrados</h3><div style="overflow-x:auto"><table class="operator-table"><thead><tr><th>Palete</th><th>Destino</th><th>Caixas</th><th>Ação</th></tr></thead><tbody id="opTabelaDestinos"></tbody></table></div><p class="operator-status">As correções serão feitas pelas funções atuais do romaneio até a etapa de edição e histórico ser concluída.</p></div><div class="operator-box"><h3>Controle de estoque</h3><p id="opResumoEstoque" class="operator-status">Consulta local disponível após importação de uma cópia do estoque.</p><div class="operator-pending"><h4>Pendências de conferência</h4><p id="opPendenciasEstoqueResumo">Consulte o estoque compartilhado para verificar as entradas.</p><button type="button" onclick="operadorSelecionarAba('estoque');document.getElementById('pendenciasConferenciaEstoque')?.scrollIntoView({behavior:'smooth',block:'start'})">VER PENDÊNCIAS</button></div><div class="operator-note">Baixa e ajuste disponíveis na aba própria. A alteração do estoque compartilhado ocorre somente após a publicação do Excel atualizado.</div><p id="opUltimaConsulta" class="operator-status"></p></div></div>
 </div><div id="opAbaImportacao" role="tabpanel" class="hidden"><section class="card" style="margin:14px 0;padding:20px"><h2>Importação de estoques</h2><p>Envie uma planilha de cada tipo. Ao publicar no Firebase, a conferência acontece automaticamente para todos os dispositivos.</p><section id="etapa4Firebase" style="padding:14px;margin:12px 0;border:1px solid #a7b8cd;border-radius:12px;background:#eef6ff">
 <h3>Estoques compartilhados — Firebase</h3>
 <p style="color:#334155">Os arquivos são publicados como consulta compartilhada. A publicação substitui somente a versão compartilhada no Firebase; nenhuma planilha é alterada automaticamente.</p>
@@ -2787,7 +2787,44 @@ async function importarEstoqueTeste(event) {
 
 <script>
 /* Etapa 1: painel somente de consulta; não altera estoque nem sincroniza com SharePoint. */
+
+const CHAVE_EXPEDICOES_PENDENTES='romaneio2_expedicoes_excluidas_pendentes_v1';
+function lerExpedicoesPendentes(){
+ try{const x=JSON.parse(localStorage.getItem(CHAVE_EXPEDICOES_PENDENTES)||'[]');return Array.isArray(x)?x:[]}catch{return []}
+}
+function exportarExpedicaoExcluida(destino){
+ const itens=lerExpedicoesPendentes().filter(x=>x.destino===destino&&x.estado!=='BAIXA_CONCLUIDA');
+ if(!itens.length)return;
+ const tab=document.createElement('table'),body=tab.createTBody();
+ for(const item of itens){const tr=body.insertRow();for(const v of [item.data,item.sku,item.destino,item.palete,item.loteCompleto,item.lote,item.postura,item.caixas,item.observacoes])tr.insertCell().textContent=String(v??'');}
+ const total=itens.reduce((n,x)=>n+Number(x.caixas||0),0);
+ gerarArquivoExcel([...body.rows],'romaneio_excluido_'+nomeSeguroArquivo(destino)+'_'+total+'-caixas.xlsx','Destino '+destino);
+}
+async function confirmarBaixaExpedicao(destino){
+ if(!await confirmarRaiar('Confirmar que a baixa do estoque do destino '+destino+' foi concluída e conferida?'))return;
+ const lista=lerExpedicoesPendentes(),agora=new Date().toISOString();
+ for(const x of lista)if(x.destino===destino&&x.estado!=='BAIXA_CONCLUIDA'){x.estado='BAIXA_CONCLUIDA';x.baixaConfirmadaEm=agora;}
+ localStorage.setItem(CHAVE_EXPEDICOES_PENDENTES,JSON.stringify(lista));operadorAtualizarPainel();
+}
+function mostrarExpedicoesExcluidasOperador(){
+ const painel=document.getElementById('historicoDestinosExcluidos'),alvo=document.getElementById('listaDestinosExcluidos');
+ if(!painel||!alvo)return;
+ const itens=lerExpedicoesPendentes().filter(x=>x.estado!=='BAIXA_CONCLUIDA');
+ painel.hidden=!itens.length;alvo.replaceChildren();
+ const grupos=new Map();
+ for(const item of itens){const g=grupos.get(item.destino)||[];g.push(item);grupos.set(item.destino,g);}
+ for(const [destino,linhas] of grupos){
+  const paletes=new Set(linhas.map(x=>String(x.palete))),caixas=linhas.reduce((n,x)=>n+Number(x.caixas||0),0);
+  const div=document.createElement('div');div.style.padding='12px';
+  const titulo=document.createElement('p');titulo.textContent=destino+' — '+paletes.size+' paletes, '+caixas+' caixas — EXCLUÍDO NO CELULAR / AGUARDANDO BAIXA';
+  const exportar=document.createElement('button');exportar.textContent='BAIXAR ROMANEIO EXCEL';exportar.onclick=()=>exportarExpedicaoExcluida(destino);
+  const preparar=document.createElement('button');preparar.textContent='PREPARAR BAIXA';preparar.onclick=()=>{operadorSelecionarAba('movimentos');atualizarDestinosBaixa();document.getElementById('etapa4DestinoBaixa').value='arquivo:'+destino;};
+  const concluir=document.createElement('button');concluir.textContent='CONFIRMAR BAIXA CONCLUÍDA';concluir.onclick=()=>confirmarBaixaExpedicao(destino);
+  div.append(titulo,exportar,preparar,concluir);alvo.append(div);
+ }
+}
 function operadorAtualizarPainel(){
+ mostrarExpedicoesExcluidasOperador();
  const destinos=typeof obterRomaneiosDestino==='function'?obterRomaneiosDestino():[];
  const linhas=[...document.querySelectorAll('#tabela tbody tr')];
  const paletes=new Map();
@@ -2960,10 +2997,19 @@ function atualizarDestinosBaixa(){
  const campo=document.getElementById('etapa4DestinoBaixa'),anterior=campo.value;
  const nomes=[...new Set([...document.querySelectorAll('#tabela tbody tr')].map(tr=>String(tr.cells[2]?.textContent||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
  campo.replaceChildren();const todos=new Option('Todos os destinos — baixa total','');campo.append(todos);
- for(const nome of nomes)campo.append(new Option(nome,nome));campo.value=nomes.includes(anterior)?anterior:'';
+ for(const nome of nomes)campo.append(new Option(nome,nome));
+ const arquivos=[...new Set(lerExpedicoesPendentes().filter(x=>x.estado!=='BAIXA_CONCLUIDA').map(x=>x.destino))];
+ for(const nome of arquivos)campo.append(new Option(nome+' — excluído no celular / baixa pendente','arquivo:'+nome));
+ campo.value=nomes.includes(anterior)||arquivos.some(n=>'arquivo:'+n===anterior)?anterior:'';
 }
 function movimentosDoRomaneio(){
- atualizarDestinosBaixa();
+ const selecionado=document.getElementById('etapa4DestinoBaixa')?.value||'';
+ if(selecionado.startsWith('arquivo:')){
+  const itens=lerExpedicoesPendentes().filter(x=>x.destino===selecionado.slice(8)&&x.estado!=='BAIXA_CONCLUIDA');
+  if(!itens.length)throw Error('Não há caixas pendentes neste destino.');
+  return itens.map((x,i)=>({id:'arquivo-'+i,sku:x.sku,lote:x.loteCompleto,caixas:Number(x.caixas)}));
+ }
+
  const destino=document.getElementById('etapa4DestinoBaixa')?.value||'';
  const linhas=[...document.querySelectorAll('#tabela tbody tr')].filter(tr=>!destino||String(tr.cells[2]?.textContent||'').trim()===destino);
  if(!linhas.length)throw Error('Não há caixas no romaneio atual para baixar.');
