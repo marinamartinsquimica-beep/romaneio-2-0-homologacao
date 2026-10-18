@@ -509,6 +509,7 @@ async function aplicarUniaoSeguraOperacional(){
        const id=String(mov.antes.registroId||mov.item.registroId||'');
        const comMesmoId=id?entradas.filter(x=>String(x.registroId||'')===id):[];
        if(comMesmoId.length===1)adicionar(mov.antes,'trajetoria-remota-reconstituida');
+       else adicionar(mov.antes,'historico-sem-inclusao'); // reconstruir somente para leitura; não importar registro órfão
       }
     }
     const anterior=retirar(mov.antes,mov.id);if(anterior)adicionar(mov.item,anterior.origem);
@@ -532,7 +533,7 @@ async function aplicarUniaoSeguraOperacional(){
       && chave(e)===chave(mov.antes));
    if(candidatos.length===1&&mov.item.registroId)edicoesComBaseLocal.add(String(mov.item.registroId));
   }
-  const extrasSemDuplicar=extras.filter(x=>(!x.item.registroId||!idsLocaisExistentes.has(String(x.item.registroId)))
+  const extrasSemDuplicar=extras.filter(x=>x.origem!=='historico-sem-inclusao'&&(!x.item.registroId||!idsLocaisExistentes.has(String(x.item.registroId)))
     && !edicoesComBaseLocal.has(String(x.item.registroId||'')));
   const novos=extrasSemDuplicar.map(x=>({...x.item,registroId:novosIds.has(x.item.registroId)?criarId():(x.item.registroId||criarId())}));
   // Reproduz edições/exclusões remotas sobre entradas locais apenas quando
@@ -570,7 +571,7 @@ async function aplicarUniaoSeguraOperacional(){
    }
    if(indices.length!==1){
     // Exclusões são avisos, não removem registros nem devem bloquear inclusões.
-    if(ultimo.tipo==='exclusao')continue;
+    if(ultimo.tipo==='exclusao'||(indices.length===0&&primeiro.tipo==='edicao'))continue;
     conflitosRecebidos.push(id+': registro remoto sem correspondente local único ('+indices.length+' encontrados); evento '+ultimo.tipo+' não aplicado');
     continue;
    }
