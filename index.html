@@ -141,6 +141,34 @@ tbody tr:hover,.operator-table tbody tr:hover{background:#EAF6FA}
 @media(max-width:900px){body{padding:10px 10px 32px}.topbar{padding:13px}.brand h1{font-size:19px}.dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}.operator-panel{padding:12px}.card{padding:13px}.operator-workspace{grid-template-columns:1fr}.operator-section-tabs{overflow-x:auto;flex-wrap:nowrap}.operator-section-tabs button{flex-shrink:0}}
 @media(max-width:580px){body{padding:8px 7px 25px}.topbar{flex-wrap:wrap}.dashboard{gap:8px}.metric{padding:10px}.brand-icon{width:42px;height:42px}.brand h1{font-size:17px}.operator-panel{padding:10px}.card{padding:12px}.operator-workspace{display:block}.operator-box{margin-bottom:12px}table{font-size:12px}}
 
+
+/* Estrutura Raiar Portal SAP: navegação lateral e painel principal, sem tocar nas cores de botões. */
+@media(min-width:901px){
+ #painelOperadorDesktop.operator-panel.active{display:grid;grid-template-columns:220px minmax(0,1fr);column-gap:18px;row-gap:0;align-items:start;background:transparent;border:0;padding:0;box-shadow:none}
+ #painelOperadorDesktop>.operator-hero{grid-column:1/-1;margin:10px 0 14px;border-top:0;border-left:4px solid #5CDCF2;padding:16px 20px;border-radius:8px}
+ #painelOperadorDesktop>.operator-section-tabs{grid-column:1;grid-row:2;position:sticky;top:12px;display:flex;flex-direction:column;align-items:stretch;gap:7px;margin:0;padding:16px 12px;background:#254D69;border:0;border-radius:8px;min-height:370px}
+ #painelOperadorDesktop>.operator-section-tabs button{text-align:left;width:100%;min-width:0;white-space:normal;padding:11px 12px;margin:0;border-radius:6px;font-size:12px}
+ #painelOperadorDesktop>[role="tabpanel"]{grid-column:2;grid-row:2;min-width:0;margin:0}
+ #painelOperadorDesktop #opVisaoGeral>.operator-metrics:first-child{margin-top:0}
+}
+#painelOperadorDesktop .operator-section-tabs button[aria-selected="true"]{outline:2px solid #5CDCF2;outline-offset:1px}
+#painelOperadorDesktop [role="tabpanel"].hidden{display:none!important}
+#painelOperadorDesktop #opAbaImportacao>.card,
+#painelOperadorDesktop #opAbaMovimentos>.card,
+#painelOperadorDesktop #opAbaParipassu>.card,
+#painelOperadorDesktop #opAbaEstoque>.card{margin:0;padding:18px 20px;border:1px solid #DDE3E8;background:#fff;border-radius:8px;box-shadow:none}
+#painelOperadorDesktop #opAbaImportacao section.card,
+#painelOperadorDesktop #opAbaMovimentos section.card,
+#painelOperadorDesktop #opAbaParipassu section.card{min-width:0}
+#painelOperadorDesktop [role="tabpanel"] h2{font-size:18px;color:#254D69;margin:0 0 12px}
+#painelOperadorDesktop [role="tabpanel"] h3{font-size:15px;color:#254D69;margin:12px 0}
+#painelOperadorDesktop #etapa4PainelLista{max-height:45vh;overflow:auto}
+#painelOperadorDesktop #etapa4Pendencias{max-height:45vh;overflow:auto}
+@media(max-width:900px){
+ #painelOperadorDesktop>.operator-section-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:7px}
+ #painelOperadorDesktop>.operator-section-tabs button{white-space:nowrap;flex:0 0 auto}
+}
+
 </style>
 </head>
 <body>
