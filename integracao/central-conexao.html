@@ -691,7 +691,7 @@ async function gravarTeste(reenvio){
  finally{testeOcupado=false;botao.textContent='GRAVAR TESTE NO FIREBASE';repetir.textContent='REENVIAR MESMO TESTE';botao.disabled=!auth.currentUser;repetir.disabled=!auth.currentUser||!testeAtual;}
 }
 
-async function lerHistoricoMovimentosCompleto(uid,{maximo=2000}={}){
+async async function lerHistoricoMovimentosCompleto(uid,{maximo=2000}={}){
  const registros=[],vistos=new Set(),ref=collection(db,'rom_v250_contas',uid,'movimentos');let ultimo=null;
  for(let pagina=0;pagina<Math.ceil(maximo/50);pagina++){
   const partes=[ref,orderBy('criadoEm','desc'),...(ultimo?[startAfter(ultimo)]:[]),limit(50)];
