@@ -29,7 +29,7 @@ export async function sincronizarMovimentos250(){
  await auth.authStateReady();
  if(!auth.currentUser)throw Error('Reconecte o Firebase pela Central de Conexão');
  const uid=auth.currentUser.uid;ambienteEnvio=null;
- try{const vinculo=await resolverAmbienteUsuario({db,uid});if(auth.currentUser?.uid!==uid)throw Error('Sessão alterada durante a verificação');ambienteEnvio={uid,ambienteId:vinculo.ambienteId};}catch(e){if(auth.currentUser?.uid!==uid)throw e;/* Conta anterior permanece no escopo legado até a migração. */}
+ try{const vinculo=await resolverAmbienteUsuario({db,uid});if(auth.currentUser?.uid!==uid)throw Error('Sessão alterada durante a verificação');ambienteEnvio={uid,ambienteId:vinculo.ambienteId};}catch(e){if(e?.code!=='romaneio/sem-vinculo')throw e;/* Somente ausência confirmada de vínculo permite usar a conta legada. */}
  return sincronizador.executar();
 }
 export function estadoSincronizacao250(){return {habilitado,autenticado:!!auth.currentUser,pendentes:ler().length,erros:erros.slice(-10)};}
