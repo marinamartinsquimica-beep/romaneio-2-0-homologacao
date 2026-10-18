@@ -752,13 +752,56 @@ async function enviarFilaAutomaticamente(){
  }catch(e){$('estadoEnvioReal').textContent='Sincronização automática adiada: '+(e.message||String(e));}
  finally{envioAutomaticoAgendado=false;status();}
 }
+// Consolidação inicial única de registros legados, sem ação diária do operador.
+// Usa a coleção de movimentos já autorizada pelo Firebase; nunca baixa estoque.
+let baseConsolidadaNestaSessao=false;
+async function consolidarBaseLegada(){
+ if(baseConsolidadaNestaSessao||!ambienteOperacional?.permissoes?.usuarios)return;
+ const locais=JSON.parse(localStorage.getItem('entradas')||'[]');
+ if(!Array.isArray(locais)||!locais.length){baseConsolidadaNestaSessao=true;return;}
+ if(lerOperacional().length)return;
+ const uid=auth.currentUser?.uid;if(!uid)return;
+ const historico=(await lerHistoricoMovimentosCompleto(uid)).docs.map(d=>({id:d.id,...d.data()}));
+ const porId=new Map();
+ for(const m of historico){
+  const id=String(m.item?.registroId||m.antes?.registroId||'');
+  if(!id)continue;const eventos=porId.get(id)||[];eventos.push(m);porId.set(id,eventos);
+ }
+ const iguais=new Set();
+ for(const m of historico){
+  if(m.tipo!=='inclusao'&&m.tipo!=='exclusao')continue;
+  const x=m.item;if(x)iguais.add([x.destino,x.palete,x.sku,x.loteCompleto,x.lote,x.postura].map(v=>String(v??'').trim().toUpperCase()).join('|'));
+ }
+ let criados=0;
+ for(const local of locais){
+  const id=String(local.registroId||'');
+  if(!/^[a-zA-Z0-9_-]{8,140}$/.test(id))continue;
+  const historicos=porId.get(id)||[];
+  if(historicos.some(m=>m.tipo==='inclusao'||m.tipo==='exclusao'))continue;
+  const chaveFisica=[local.destino,local.palete,local.sku,local.loteCompleto,local.lote,local.postura].map(v=>String(v??'').trim().toUpperCase()).join('|');
+  if(iguais.has(chaveFisica))continue;
+  const primeiros=historicos.filter(m=>m.tipo==='edicao').sort((a,b)=>String(a.criadoEm||'').localeCompare(String(b.criadoEm||'')));
+  const origem=primeiros[0]?.antes||local;
+  if(!origem?.sku||!origem?.loteCompleto)continue;
+  const chave='base_'+id;
+  const ref=doc(db,...raizOperacional(uid),'movimentos',chave);
+  const registro={id:chave,autorUid:uid,dispositivoId:'consolidacao-legado',tipo:'inclusao',item:{...origem,registroId:id},antes:null,criadoEm:'2000-01-01T00:00:00.000Z'};
+  await runTransaction(db,async tx=>{const atual=await tx.get(ref);if(!atual.exists())tx.set(ref,registro);});
+  criados++;iguais.add(chaveFisica);
+ }
+ baseConsolidadaNestaSessao=true;
+ if(criados)$('resultadoAplicarUniao').textContent='Base compartilhada: '+criados+' registros legados consolidados, sem duplicar histórico ou baixar estoque.';
+}
 let cicloEmAndamento=false;
 async function cicloAutomatico(){
  if(cicloEmAndamento||!escopoOperacionalPronto||!navigator.onLine||!auth.currentUser)return;
  cicloEmAndamento=true;
  try{
   await enviarFilaAutomaticamente();
-  if(!lerOperacional().length)await receberAutomaticamente();
+  if(!lerOperacional().length){
+   try{await consolidarBaseLegada();}catch(e){$('resultadoAplicarUniao').textContent='Consolidação inicial pendente: '+(e.message||e);}
+   await receberAutomaticamente();
+  }
  }finally{cicloEmAndamento=false;}
 }
 window.addEventListener('online',()=>{void cicloAutomatico();});
