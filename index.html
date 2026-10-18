@@ -286,6 +286,7 @@ body.modo-operador .topbar .brand h1{font-size:21px!important}
 <h3>Baixa e ajuste — prévia segura</h3>
 <p style="color:#334155">As operações abaixo preparam a conferência sem alterar o Firebase nem a planilha oficial. Confirmação de baixa ou ajuste oficial permanece indisponível até integração autenticada com o arquivo.</p>
 <label for="etapa4Modo">Operação</label><select id="etapa4Modo"><option value="baixa">Baixa de expedição</option><option value="ajuste">Ajuste por contagem física</option></select>
+<div id="etapa4DestinoBloco"><label for="etapa4DestinoBaixa">Destino da expedição</label><select id="etapa4DestinoBaixa"><option value="">Todos os destinos — baixa total</option></select><p style="font-size:12px;color:#48647a">A baixa considera somente os paletes do destino escolhido; nenhum destino é apagado.</p></div>
 <p id="etapa4Orientacao">Baixa automática das caixas existentes no romaneio. Nenhuma digitação necessária.</p><label for="etapa4Movimentos" id="etapa4MovimentosLabel" hidden>Contagem física: SKU;LOTE;CAIXAS (uma linha por registro)</label>
 <textarea id="etapa4Movimentos" rows="5" hidden style="width:100%;padding:10px;border-radius:8px" placeholder="SKU;LOTE;CAIXAS"></textarea>
 <button type="button" id="etapa4Preparar">PREPARAR CONFERÊNCIA</button><button type="button" id="etapa4Exportar" disabled>BAIXAR EXCEL DO RESULTADO</button>
@@ -2917,11 +2918,20 @@ modoEtapa4?.addEventListener('change',()=>{
  const ajuste=modoEtapa4.value==='ajuste';
  document.getElementById('etapa4Movimentos').hidden=!ajuste;
  document.getElementById('etapa4MovimentosLabel').hidden=!ajuste;
+ document.getElementById('etapa4DestinoBloco').hidden=ajuste;
  document.getElementById('etapa4Orientacao').textContent=ajuste?'Informe a contagem física de SKU, lote e caixas.':'Baixa automática das caixas existentes no romaneio. Nenhuma digitação necessária.';
  resultadoEtapa4=null;document.getElementById('etapa4Exportar').disabled=true;
 });
+function atualizarDestinosBaixa(){
+ const campo=document.getElementById('etapa4DestinoBaixa'),anterior=campo.value;
+ const nomes=[...new Set([...document.querySelectorAll('#tabela tbody tr')].map(tr=>String(tr.cells[2]?.textContent||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+ campo.replaceChildren();const todos=new Option('Todos os destinos — baixa total','');campo.append(todos);
+ for(const nome of nomes)campo.append(new Option(nome,nome));campo.value=nomes.includes(anterior)?anterior:'';
+}
 function movimentosDoRomaneio(){
- const linhas=[...document.querySelectorAll('#tabela tbody tr')];
+ atualizarDestinosBaixa();
+ const destino=document.getElementById('etapa4DestinoBaixa')?.value||'';
+ const linhas=[...document.querySelectorAll('#tabela tbody tr')].filter(tr=>!destino||String(tr.cells[2]?.textContent||'').trim()===destino);
  if(!linhas.length)throw Error('Não há caixas no romaneio atual para baixar.');
  return linhas.map((tr,i)=>{
   const c=tr.cells,sku=String(c[1]?.textContent??'').trim(),lote=String(c[4]?.textContent??'').trim(),caixas=Number(String(c[7]?.textContent??'').trim());
@@ -2954,6 +2964,7 @@ document.getElementById('etapa4Exportar')?.addEventListener('click',async()=>{
  }catch(e){status.textContent='Excel não gerado: '+e.message;}
  finally{button.disabled=false;}
 });
+document.getElementById('etapa4DestinoBaixa')?.addEventListener('focus',atualizarDestinosBaixa);
 document.getElementById('etapa4Preparar')?.addEventListener('click',()=>{
  const status=document.getElementById('etapa4OperacoesStatus'),saida=document.getElementById('etapa4OperacoesResultado');saida.replaceChildren();resultadoEtapa4=null;document.getElementById('etapa4Exportar').disabled=true;
  try{
@@ -2978,7 +2989,7 @@ document.getElementById('etapa4Preparar')?.addEventListener('click',()=>{
   const dados=modo==='baixa'?[['Caixas solicitadas',solicitadas],['Caixas preparadas',efetivadas],['Não baixadas',solicitadas-efetivadas],['Estoque anterior',estoqueAntes],['Estoque após baixa',estoqueDepois]]:[['Lotes ajustados',resultado.alteracoes.length],['Estoque anterior',estoqueAntes],['Estoque após ajuste',estoqueDepois]];
   for(const [nome,valor] of dados){const card=document.createElement('div');card.className='etapa4-resumo-card';const title=document.createElement('span'),number=document.createElement('strong');title.textContent=nome;number.textContent=Number(valor).toLocaleString('pt-BR');card.append(title,number);resumo.appendChild(card)}
   saida.prepend(resumo);
-  resultadoEtapa4={modo,resultado,origem:e.map(x=>({...x}))};document.getElementById('etapa4Exportar').disabled=false;status.textContent='Conferência concluída: '+ocorrencias.length+' registros. Excel baseado no arquivo original disponível para geração; conferência do resultado obrigatória. Nenhum saldo compartilhado foi alterado.';
+  resultadoEtapa4={modo,resultado,origem:e.map(x=>({...x})),destino:document.getElementById('etapa4DestinoBaixa')?.value||'TODOS'};document.getElementById('etapa4Exportar').disabled=false;status.textContent='Conferência concluída: '+ocorrencias.length+' registros. Excel baseado no arquivo original disponível para geração; conferência do resultado obrigatória. Nenhum saldo compartilhado foi alterado.';
  }catch(e){status.textContent='Operação não preparada: '+e.message;}
 });
 </script>
