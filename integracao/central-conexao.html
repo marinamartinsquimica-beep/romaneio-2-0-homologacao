@@ -482,7 +482,12 @@ async function aplicarUniaoSeguraOperacional(){
   for(const mov of movs){
    if(!mov.item||typeof mov.item!=='object'){falhas.push(mov.id+': item inválido');continue;}
    if(mov.tipo==='inclusao')adicionar(mov.item,mov.id);
-   else if(mov.tipo==='exclusao')retirar(mov.item,mov.id);
+   else if(mov.tipo==='exclusao'){
+    // Exclusão no celular é aviso de expedição; a cópia do computador é preservada.
+    // Uma exclusão sem inclusão histórica anterior não bloqueia outras entradas.
+    const anterior=grupos.get(chave(mov.item));
+    if(anterior?.length)retirar(mov.item,mov.id);
+   }
    else if(mov.tipo==='edicao'){
     if(!mov.antes){falhas.push(mov.id+': estado anterior ausente');continue;}
     // Uma edição pode ser o primeiro evento remoto quando o registro já existia no aparelho.
@@ -564,14 +569,14 @@ async function aplicarUniaoSeguraOperacional(){
     indices=resultado.map((item,i)=>({item,i})).filter(x=>identidade(x.item)===alvo);
    }
    if(indices.length!==1){
-    // Exclusão de item que nunca existiu neste aparelho não deve criar palete
-    // nem bloquear as demais movimentações. O evento permanece no histórico.
-    if(indices.length===0&&ultimo.tipo==='exclusao'&&primeiro.tipo==='inclusao')continue;
+    // Exclusões são avisos, não removem registros nem devem bloquear inclusões.
+    if(ultimo.tipo==='exclusao')continue;
     conflitosRecebidos.push(id+': registro remoto sem correspondente local único ('+indices.length+' encontrados); evento '+ultimo.tipo+' não aplicado');
     continue;
    }
    const atual=indices[0].item;
-   if(ultimo.tipo!=='exclusao'&&chave(atual)===chave(ultimo.item))continue;
+   if(ultimo.tipo==='exclusao')continue; // preservar dados e totais do computador
+   if(chave(atual)===chave(ultimo.item))continue;
    // Aceita qualquer estado comprovado da trajetória remota, não apenas
    // a inclusão original. Uma edição já recebida pode preceder a exclusão.
    const estadosConhecidos=[inicio];
@@ -675,7 +680,11 @@ async function aplicarUniaoSeguraOperacional(){
   backupUniaoNestaSessao=false;
   if(uniaoAutomaticaEmAndamento)localStorage.removeItem(CHAVE_BACKUP_AUTOMATICO);
   saida.textContent='UNIÃO APLICADA NESTE APARELHO: '+entradas.length+' entradas preservadas + '+novos.length+' recebidas = '+resultado.length+'. Nenhum estoque ou fila alterado. Abra o Romaneio e atualize a página para conferir.';
- }catch(e){saida.textContent='União não aplicada: '+(e.message||String(e))+'. Verifique os dados antes de tentar novamente.';}
+ }catch(e){
+  const mensagem='União não aplicada: '+(e.message||String(e))+'. Verifique os dados antes de tentar novamente.';
+  saida.textContent=mensagem;
+  if(window.parent!==window)window.parent.postMessage({origem:'romaneio-sync',estado:'erro',mensagem},location.origin);
+ }
  finally{botao.disabled=false;}
 }
 $('aplicarUniaoSegura').onclick=aplicarUniaoSeguraOperacional;
