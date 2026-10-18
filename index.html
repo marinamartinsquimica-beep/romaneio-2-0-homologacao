@@ -1740,7 +1740,7 @@ function registrarMovimentosLocais(atuais) {
 }
 function atualizarIndicadorFilaMovimentos(){
   const el=document.getElementById("indicadorFilaMovimentos");
-  if(el)el.textContent="Movimentações pendentes: "+lerFilaMovimentos().length+" · aguardando integração";
+  if(el)el.textContent="Movimentações pendentes: "+lerFilaMovimentos().length;
 }
 /* Prévia consolidada: cálculo puro; mantém o histórico original e não sincroniza. */
 function consolidarPendenciasLocais(fila){
@@ -2577,6 +2577,7 @@ async function conferirEntradasExistentesTeste() {
 }
 
 function mostrarNotificacaoDivergenciaTeste({chave,posturas,qtd,saldo}) {
+  if(window.matchMedia('(max-width:767px)').matches)return;
   const overlay=document.createElement("div");
   overlay.className="eme-aviso-overlay";
   const card=document.createElement("section");
@@ -2841,10 +2842,21 @@ function operadorVoltarRomaneios(){document.body.classList.remove('modo-operador
 function operadorAbrirEstoque(){operadorSelecionarAba('estoque');document.getElementById('opTabEstoque')?.scrollIntoView({behavior:'smooth',block:'start'});}
 function operadorVerPendencias(){if(typeof consultarFilaMovimentos==='function')consultarFilaMovimentos();operadorAtualizarPainel();}
 async function sincronizarRomaneioCelular(){
- if(!navigator.onLine){alert("Sem conexão. Os dados permanecem salvos neste aparelho. Tente novamente quando houver internet.");return;}
- const registros=JSON.parse(localStorage.getItem("entradas")||"[]");
- await filaBackupOffline;
- alert("Os "+registros.length+" registros estão preservados neste aparelho. A sincronização com o painel de estoque de outro dispositivo ainda não está habilitada. Nenhum dado foi enviado.");
+ const botao=document.querySelector('.mobile-sync-action');
+ if(botao)botao.disabled=true;
+ try {
+  if(!navigator.onLine)throw Error('Sem internet. Os registros estão preservados para o próximo envio.');
+  const {sincronizarMovimentos250}=await import('./integracao/envio-movimentos250.js');
+  await sincronizarMovimentos250();
+  const qtd=lerFilaMovimentos().length;
+  atualizarIndicadorFilaMovimentos();
+  if(qtd)throw Error(qtd+' movimentação(ões) ainda pendente(s). Nada foi descartado.');
+  if(botao)botao.textContent='SINCRONIZADO';
+  setTimeout(()=>{if(botao)botao.textContent='SINCRONIZAR';},2500);
+ }catch(e){
+  if(botao)botao.textContent='PENDENTE';
+  console.warn('Sincronização preservada:',e);
+ }finally{if(botao)botao.disabled=false;}
 }
 function operadorSincronizarAgora(){operadorSelecionarAba('importacao');document.getElementById('etapa4Arquivo')?.focus();}
 document.getElementById('tabTotal')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
@@ -2891,6 +2903,8 @@ window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(even
    if(typeof atualizarResumoReservaTeste==='function')atualizarResumoReservaTeste();
    if(typeof renderizarPendenciasConferenciaEstoque==='function')renderizarPendenciasConferenciaEstoque();
    if(typeof atualizarIndicadorFilaMovimentos==='function')atualizarIndicadorFilaMovimentos();
+   if(typeof operadorAtualizarPainel==='function')operadorAtualizarPainel();
+   if(typeof atualizarDashboardVisual==='function')atualizarDashboardVisual();
   }finally{atualizando=false;}
  });
 })();
@@ -3013,6 +3027,5 @@ document.getElementById('etapa4Preparar')?.addEventListener('click',()=>{
  }catch(e){status.textContent='Operação não preparada: '+e.message;}
 });
 </script>
-<iframe id="romaneioSyncBackground" src="integracao/central-conexao.html?modo=sincronizacao" title="Sincronização Firebase em segundo plano" aria-hidden="true" tabindex="-1" style="display:none"></iframe>
 </body>
 </html>
