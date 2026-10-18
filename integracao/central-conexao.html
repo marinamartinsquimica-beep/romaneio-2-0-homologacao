@@ -805,6 +805,7 @@ async function cicloAutomatico(){
   if(!lerOperacional().length){
    try{await consolidarBaseLegada();}catch(e){$('resultadoAplicarUniao').textContent='Consolidação inicial pendente: '+(e.message||e);}
    await receberAutomaticamente();
+   try{await sincronizarExpedicoesCompartilhadas();}catch(e){$('resultadoAplicarUniao').textContent='Arquivo de expedições: '+(e.code||e.message||e);}
   }
  }finally{cicloEmAndamento=false;}
 }
