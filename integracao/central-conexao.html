@@ -135,7 +135,7 @@ $('consultarCompartilhados').onclick=async()=>{
  const b=$('consultarCompartilhados'),out=$('resultadoCompartilhados');b.disabled=true;b.textContent='CONSULTANDO…';out.textContent='Consultando registros remotos…';
  try{
   await auth.authStateReady();const u=auth.currentUser;if(!u)throw Error('Autenticação necessária');if(!navigator.onLine)throw Error('Sem internet');
-  const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(500));
+  const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
   const snap=await getDocs(q);const docs=snap.docs.map(d=>({id:d.id,...d.data()}));
   const porTipo={inclusao:0,edicao:0,exclusao:0};for(const d of docs)if(Object.hasOwn(porTipo,d.tipo))porTipo[d.tipo]++;
   out.textContent='LEITURA CONFIRMADA: '+docs.length+' registros recentes (máximo 50). Inclusões: '+porTipo.inclusao+' | Edições: '+porTipo.edicao+' | Exclusões: '+porTipo.exclusao+'\\nÚltimos IDs: '+docs.slice(0,5).map(x=>x.id).join(', ')+'\\nNenhum dado local alterado.';
@@ -179,7 +179,7 @@ $('preverRecebimento').onclick=async()=>{
  try{
   await auth.authStateReady();
   const u=auth.currentUser;if(!u)throw Error('Autenticação necessária');
-  const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(500));
+  const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
   const snap=await getDocs(q);
   if(snap.metadata.fromCache)throw Error('Consulta apenas em cache');
   const operacionais=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
@@ -282,7 +282,7 @@ $('diagnosticarOfflineReal').onclick=async()=>{
  try{
   await auth.authStateReady();const u=auth.currentUser;if(!u)throw Error('Faça login na conta operacional');
   if(!navigator.onLine)throw Error('Sem conexão');
-  const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(500));
+  const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
   const snap=await getDocs(q);if(snap.metadata.fromCache)throw Error('Consulta veio do cache');
   const norm=x=>String(x||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   const bruto=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -306,7 +306,7 @@ $('prepararUniaoSegura').onclick=async()=>{
   const fila=JSON.parse(localStorage.getItem('romaneio2_movimentos_pendentes_v1')||'[]');
   if(!Array.isArray(entradas)||!Array.isArray(fila))throw Error('Dados locais inválidos');
   if(fila.length)throw Error('Há '+fila.length+' movimentações pendentes. A união deve aguardar');
-  const q=query(collection(db,'rom_v250_contas',auth.currentUser.uid,'movimentos'),orderBy('criadoEm','desc'),limit(500));
+  const q=query(collection(db,'rom_v250_contas',auth.currentUser.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
   const snap=await getDocs(q);
   if(snap.metadata.fromCache)throw Error('Consulta retornou somente dados em cache');
   if(snap.size===50)throw Error('Histórico pode estar incompleto: limite de 50 registros');
