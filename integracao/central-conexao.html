@@ -648,8 +648,12 @@ async function aplicarUniaoSeguraOperacional(){
    const id=String(mov.item.registroId||'');
    const equivalentes=entradas.filter(e=>id&&String(e.registroId||'')===id);
    const correspondentes=equivalentes.length?equivalentes:entradas.filter(e=>chave(e)===chave(mov.item));
-   if(correspondentes.length!==1)continue; // sem associação inequívoca, nunca atribuir destino errado
-   novosArquivados.push({...correspondentes[0],excluidoEm:mov.criadoEm||'',movimentoExclusaoId:mov.id,estado:'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'});
+   if(correspondentes.length>1)continue; // associação ambígua: manter para revisão
+   // Novo navegador não possui cópia local: o evento remoto já contém
+   // os dados da entrada excluída. Recuperar apenas para o arquivo pendente,
+   // nunca como palete ativo.
+   const origem=correspondentes.length===1?correspondentes[0]:mov.item;
+   novosArquivados.push({...origem,excluidoEm:mov.criadoEm||'',movimentoExclusaoId:mov.id,estado:'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'});
    jaArquivados.add(String(mov.id));
   }
   if(novosArquivados.length){
@@ -823,8 +827,9 @@ function registrarExclusoesRecebidas(snap){
   const id=String(item.registroId||'');
   let candidatos=id?entradas.filter(x=>String(x.registroId||'')===id):[];
   if(!candidatos.length)candidatos=entradas.filter(x=>identidade(x)===identidade(item));
-  if(candidatos.length!==1)continue;
-  arquivo.push({...candidatos[0],movimentoExclusaoId:docSnap.id,excluidoEm:mov.criadoEm||'',estado:'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'});
+  if(candidatos.length>1)continue;
+  const origem=candidatos.length===1?candidatos[0]:item;
+  arquivo.push({...origem,movimentoExclusaoId:docSnap.id,excluidoEm:mov.criadoEm||'',estado:'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'});
   ids.add(docSnap.id);mudou=true;
  }
  if(mudou)localStorage.setItem(chaveArquivo,JSON.stringify(arquivo));
