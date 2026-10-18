@@ -2,7 +2,7 @@
 // Nunca usar esta verificação para dispensar regras no servidor.
 export const PERFIS=Object.freeze({
  administrador:Object.freeze({consultar:true,romaneio:true,prepararBaixa:true,publicarExcel:true,usuarios:true}),
- operador:Object.freeze({consultar:true,romaneio:true,prepararBaixa:true,publicarExcel:false,usuarios:false})
+ operador:Object.freeze({consultar:true,romaneio:true,prepararBaixa:true,publicarExcel:true,usuarios:false})
 });
 export function permissoesDoUsuario(membro){
  if(!membro||membro.ativo!==true)return null;
