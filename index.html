@@ -2539,7 +2539,11 @@ function iniciarInterfaceVisual() {
 }
 
 
-function chaveReservaTeste(sku,lote) { return String(sku).trim()+"|"+String(lote).trim().toUpperCase(); }
+function chaveReservaTeste(sku,lote) {
+ const normSku=valor=>{let v=String(valor??'').trim();if(/^\\d+([.,]0+)?$/.test(v))v=String(parseInt(v.replace(',','.'),10));return v.toUpperCase()};
+ const normLote=valor=>String(valor??'').trim().normalize('NFKC').replace(/\\s+/g,'').toUpperCase();
+ return JSON.stringify([normSku(sku),normLote(lote)]);
+}
 function reservasAtuaisTeste(ignorarIndice) {
   const totais=new Map();
   Array.from(document.querySelectorAll("#tabela tbody tr")).forEach((linha,i)=>{
@@ -2552,7 +2556,7 @@ function reservasAtuaisTeste(ignorarIndice) {
 function validarReservaTeste(sku,lote,caixas,indiceIgnorado) {
   if (!Number.isInteger(caixas)||caixas<=0) return "Informe uma quantidade inteira e positiva de caixas.";
   const chave=chaveReservaTeste(sku,lote);
-  const item=[...window.estoqueTesteConsulta.values()].find(x=>chaveReservaTeste(x.sku,x.lote)===chave);
+  const encontrados=[...window.estoqueTesteConsulta.values()].filter(x=>chaveReservaTeste(x.sku,x.lote)===chave);const item=encontrados.length?{saldo:encontrados.reduce((s,x)=>s+Number(x.saldo||0),0)}:null;
   if (!item) return "SKU e lote não encontrados no estoque importado. Nenhuma reserva realizada.";
   const reservado=reservasAtuaisTeste(indiceIgnorado).get(chave)||0;
   if (caixas+reservado>item.saldo) return "Saldo insuficiente. Estoque: "+item.saldo+" CX; já reservado: "+reservado+" CX; disponível: "+Math.max(0,item.saldo-reservado)+" CX.";
@@ -2624,7 +2628,7 @@ function renderizarPendenciasConferenciaEstoque(){
  if(!lista)return;
  lista.replaceChildren();
  if(!window.estoqueTesteConsulta){lista.textContent="Importe uma cópia do estoque para conferir.";if(contador)contador.textContent="—";if(resumo)resumo.textContent="Aguardando consulta do estoque compartilhado.";return;}
- const saldos=new Map([...window.estoqueTesteConsulta.values()].map(x=>[chaveReservaTeste(x.sku,x.lote),x.saldo]));
+ const saldos=new Map();for(const x of window.estoqueTesteConsulta.values()){const k=chaveReservaTeste(x.sku,x.lote);saldos.set(k,(saldos.get(k)||0)+Number(x.saldo||0))}
  const grupos=new Map();
  for(const linha of document.querySelectorAll("#tabela tbody tr")){
   const sku=linha.cells[1]?.textContent.trim()||"",lote=linha.cells[4]?.textContent.trim()||"",postura=linha.cells[6]?.textContent.trim()||"",cx=Number(linha.cells[7]?.textContent)||0;
@@ -2655,7 +2659,7 @@ function atualizarResumoReservaTeste() {
     return;
   }
   const itens = [...window.estoqueTesteConsulta.values()];
-  const saldos = new Map(itens.map(x => [chaveReservaTeste(x.sku,x.lote),x.saldo]));
+  const saldos = new Map();for(const x of itens){const k=chaveReservaTeste(x.sku,x.lote);saldos.set(k,(saldos.get(k)||0)+Number(x.saldo||0))}
   const reservas = reservasAtuaisTeste();
   const total = itens.reduce((acc,x) => acc+x.saldo,0);
   const reservadas = [...reservas.values()].reduce((acc,n) => acc+n,0);
