@@ -26,6 +26,7 @@ async function importar(file,tipo){
 }
 let avisoPariAtual=null,assinaturaPariAtual='';
 function mostrarAvisoParipassu(qtd,assinatura){
+ if(window.matchMedia('(max-width:767px)').matches)return;
  const atual=document.querySelector('.eme-aviso-overlay[data-tipo="paripassu"]');
  if(atual)return;
  if(sessionStorage.getItem('romaneio2-paripassu-ack')===assinatura)return;
