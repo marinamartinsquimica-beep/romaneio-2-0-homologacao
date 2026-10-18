@@ -1,11 +1,15 @@
 // Conferência unilateral: só Embalado demanda correspondência no PariPassu.
 const norm=x=>String(x??'').trim().toUpperCase();
-const chave=x=>JSON.stringify([norm(x.sku),norm(x.lote),norm(x.postura)]);
+// O lote completo normalmente já codifica a postura (DD.MM.AA no final).
+// A exportação PariPassu pode não ter coluna Postura; não criar ausências artificiais por isso.
+function posturaLote(lote){const m=String(lote??'').match(/(\\d{2})[.\\/-](\\d{2})[.\\/-](\\d{2,4})$/);return m?m[1]+'/'+m[2]+'/'+(m[3].length===2?'20'+m[3]:m[3]):''}
+const chave=x=>JSON.stringify([norm(x.sku),norm(x.lote)]);
 function consolidar(itens){
  const mapa=new Map();
  for(const x of itens||[]){const sku=String(x?.sku??'').trim(),lote=String(x?.lote??'').trim(),postura=String(x?.postura??'').trim(),saldo=Number(x?.saldo);
  if(!sku||!lote||!Number.isFinite(saldo)||saldo<0)throw Error('Linha de estoque inválida.');
- const k=chave({sku,lote,postura}),a=mapa.get(k);if(a)a.saldo+=saldo;else mapa.set(k,{sku,lote,postura,saldo});}
+ const doLote=posturaLote(lote),posturaEfetiva=doLote||postura;
+ const k=chave({sku,lote}),a=mapa.get(k);if(a)a.saldo+=saldo;else mapa.set(k,{sku,lote,postura:posturaEfetiva,saldo});}
  return mapa;
 }
 export function conferirEstoques(embalado,paripassu){
