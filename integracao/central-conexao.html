@@ -453,7 +453,7 @@ function salvarBackupAutomatico(){
  const entradas=JSON.parse(dados.entradas||'[]');
  if(!Array.isArray(entradas))throw Error('Entradas inválidas: união automática bloqueada');
  // Uma cópia anterior só é substituída após uma união segura; não descartar backup de recuperação.
- if(localStorage.getItem(CHAVE_BACKUP_AUTOMATICO))return false;
+ if(localStorage.getItem(CHAVE_BACKUP_AUTOMATICO))return true; // preservar o primeiro backup e permitir novas tentativas seguras
  localStorage.setItem(CHAVE_BACKUP_AUTOMATICO,JSON.stringify({criadoEm:new Date().toISOString(),dados}));
  return true;
 }
@@ -750,7 +750,7 @@ function observarMovimentosAutomaticos(u){
  cancelarMudancasRemotas=onSnapshot(q,snap=>{
   if(snap.metadata.fromCache)return;
   registrarExclusoesRecebidas(snap);
-  const assinatura=snap.docs.map(d=>d.id).join('|');
+  const assinatura=snap.docs.map(d=>d.id+':'+String(d.data()?.criadoEm||'')+':'+String(d.data()?.tipo||'')).join('|');
   if(assinatura===ultimaAssinaturaRemota)return;
   ultimaAssinaturaRemota=assinatura;
   void cicloAutomatico();
