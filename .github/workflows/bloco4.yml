@@ -18,6 +18,7 @@ jobs:
           node-version: '22'
       - name: Verificar sintaxe da integração
         run: |
+          node --check integracao/excel-modelo-etapa4.mjs
           node --check integracao/operacoes-estoque.mjs
           node --check integracao/estoques-firebase-ui.mjs
           node --check integracao/publicacao-estoques.mjs
