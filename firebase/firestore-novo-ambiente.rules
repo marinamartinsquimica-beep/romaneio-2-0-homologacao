@@ -20,6 +20,109 @@ service cloud.firestore {
     // Provisionamento inicial via console/Admin SDK; novos membros via backend seguro.
     allow create, update, delete: if false;
    }
+   // Estoques estruturados (o XLSX completo permanece no OneDrive).
+   match /estoques_oficiais/{tipo} {
+    allow get: if active(env) && tipo in ['embalado','paripassu'];
+    allow list, delete: if false;
+    function valido(){
+     return publisher(env) && tipo in ['embalado','paripassu']
+       && request.resource.data.keys().hasOnly(['tipo','nome','versao','itens','importadoEm','autorUid'])
+       && request.resource.data.keys().hasAll(['tipo','nome','versao','itens','importadoEm','autorUid'])
+       && request.resource.data.tipo == tipo
+       && request.resource.data.nome is string
+       && request.resource.data.versao is string
+       && request.resource.data.versao.size() > 0
+       && request.resource.data.itens is list
+       && request.resource.data.itens.size() > 0
+       && request.resource.data.itens.size() <= 15000
+       && request.resource.data.autorUid == request.auth.uid;
+    }
+    allow create: if valido();
+    allow update: if valido() && request.resource.data.versao != resource.data.versao;
+   }
+   // Histórico append-only, mesmo formato usado pelo envio operacional legado.
+   match /movimentos/{movimentoId} {
+    function valido(){
+     let d = request.resource.data;
+     return publisher(env)
+       && movimentoId.matches('^[a-zA-Z0-9_-]{8,160}
+    allow read: if active(env) && tipo in ['embalado','paripassu'];
+    allow create: if publisher(env)
+      && tipo in ['embalado','paripassu']
+      && request.resource.data.keys().hasOnly(['tipo','vigente','anterior','alteradoEm'])
+      && request.resource.data.tipo == tipo
+      && request.resource.data.anterior == null
+      && request.resource.data.vigente.autorUid == request.auth.uid;
+    allow update: if publisher(env)
+      && tipo in ['embalado','paripassu']
+      && request.resource.data.keys().hasOnly(['tipo','vigente','anterior','alteradoEm'])
+      && request.resource.data.tipo == tipo
+      && request.resource.data.anterior == resource.data.vigente
+      && request.resource.data.vigente.versao != resource.data.vigente.versao
+      && request.resource.data.vigente.autorUid == request.auth.uid;
+    allow delete: if false;
+   }
+  }
+  // Regras existentes do legado devem ser incorporadas sem alteração na
+  // configuração ativa, por meio de revisão das regras reais do Firebase.
+ }
+}
+)
+       && d.keys().hasOnly(['id','autorUid','dispositivoId','tipo','item','antes','criadoEm'])
+       && d.keys().hasAll(['id','autorUid','dispositivoId','tipo','item','antes','criadoEm'])
+       && d.id == movimentoId && d.autorUid == request.auth.uid
+       && d.dispositivoId is string && d.dispositivoId.size() > 0 && d.dispositivoId.size() <= 160
+       && d.tipo in ['inclusao','edicao','exclusao']
+       && d.item is map
+       && d.item.keys().hasAll(['sku','loteCompleto','caixas'])
+       && d.item.sku is string && d.item.sku.size() > 0 && d.item.sku.size() <= 100
+       && d.item.loteCompleto is string && d.item.loteCompleto.size() > 0 && d.item.loteCompleto.size() <= 150
+       && ((d.item.caixas is int && d.item.caixas > 0 && d.item.caixas <= 1000000) ||
+           (d.item.caixas is string && d.item.caixas.matches('^[1-9][0-9]{0,5}
+    allow read: if active(env) && tipo in ['embalado','paripassu'];
+    allow create: if publisher(env)
+      && tipo in ['embalado','paripassu']
+      && request.resource.data.keys().hasOnly(['tipo','vigente','anterior','alteradoEm'])
+      && request.resource.data.tipo == tipo
+      && request.resource.data.anterior == null
+      && request.resource.data.vigente.autorUid == request.auth.uid;
+    allow update: if publisher(env)
+      && tipo in ['embalado','paripassu']
+      && request.resource.data.keys().hasOnly(['tipo','vigente','anterior','alteradoEm'])
+      && request.resource.data.tipo == tipo
+      && request.resource.data.anterior == resource.data.vigente
+      && request.resource.data.vigente.versao != resource.data.vigente.versao
+      && request.resource.data.vigente.autorUid == request.auth.uid;
+    allow delete: if false;
+   }
+  }
+  // Regras existentes do legado devem ser incorporadas sem alteração na
+  // configuração ativa, por meio de revisão das regras reais do Firebase.
+ }
+}
+)))
+       && ((d.tipo == 'edicao' && d.antes is map) || (d.tipo != 'edicao' && d.antes == null))
+       && d.criadoEm is string && d.criadoEm.size() > 0 && d.criadoEm.size() <= 40;
+    }
+    allow get: if active(env);
+    allow list: if active(env) && request.query.limit != null && request.query.limit <= 50;
+    allow create: if valido();
+    allow update, delete: if false;
+   }
+   // Histórico de expedição: estado versionado, sem remoção destrutiva.
+   match /expedicoes/{expedicaoId} {
+    allow get, list: if active(env) && request.query.limit <= 50;
+    allow create: if publisher(env)
+      && request.resource.data.keys().hasAll(['destino','estado','criadoEm','autorUid'])
+      && request.resource.data.autorUid == request.auth.uid
+      && request.resource.data.estado == 'PENDENTE_BAIXA';
+    allow update: if publisher(env)
+      && resource.data.estado == 'PENDENTE_BAIXA'
+      && request.resource.data.estado == 'BAIXA_CONCLUIDA'
+      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado','baixaConfirmadaEm','confirmadoPor'])
+      && request.resource.data.confirmadoPor == request.auth.uid;
+    allow delete: if false;
+   }
    match /excel_oficiais/{tipo} {
     allow read: if active(env) && tipo in ['embalado','paripassu'];
     allow create: if publisher(env)
