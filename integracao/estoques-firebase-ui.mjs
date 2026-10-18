@@ -1,3 +1,4 @@
+import {guardarModeloEmbalado} from './modelo-estoque-persistente.mjs';
 import {initializeApp,getApp,getApps} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
 import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
 import {getFirestore,doc,onSnapshot,runTransaction} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
@@ -67,6 +68,7 @@ $('etapa4Publicar')?.addEventListener('click',async()=>{
   if(!confirm('Publicar '+itens.length+' lotes de '+tipo+' para os aparelhos autenticados? A planilha oficial não será modificada.'))return;
   const versao=crypto.randomUUID();
   const r=await publicarEstoqueOficial({db,uid:u.uid,tipo,dados:{tipo,nome:file.name,versao,itens},versaoEsperada:versoes[tipo],doc,runTransaction,autorizado:true});
+  if(tipo==='embalado'){try{await guardarModeloEmbalado(file)}catch(err){mostrar('Publicado no Firebase, mas a cópia local do Excel não foi preservada: '+err.message);return;}}
   mostrar('Publicado no Firebase: '+r.quantidadeLotes+' lotes, versão '+r.versao);
  }catch(e){mostrar('Publicação não concluída: '+e.message)}finally{b.disabled=false}
 });
