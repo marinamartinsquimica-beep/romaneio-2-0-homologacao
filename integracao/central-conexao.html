@@ -683,6 +683,26 @@ window.addEventListener('storage',e=>{if(e.key===CHAVE_OPERACIONAL)void cicloAut
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void cicloAutomatico();});
 // Recebimento acionado por eventos Firestore, sem exigir mudança de tela.
 let cancelarMudancasRemotas=null,contaObservada=null,ultimaAssinaturaRemota=null;
+function registrarExclusoesRecebidas(snap){
+ const chaveArquivo='romaneio2_expedicoes_excluidas_pendentes_v1';
+ const arquivo=JSON.parse(localStorage.getItem(chaveArquivo)||'[]');
+ const entradas=JSON.parse(localStorage.getItem('entradas')||'[]');
+ if(!Array.isArray(arquivo)||!Array.isArray(entradas))return;
+ const ids=new Set(arquivo.map(x=>String(x.movimentoExclusaoId||'')));
+ let mudou=false;
+ const identidade=x=>[x?.destino,x?.palete,x?.sku,x?.loteCompleto].map(v=>String(v??'').trim().toUpperCase()).join('|');
+ for(const docSnap of snap.docs){
+  const mov=docSnap.data(),item=mov?.item;
+  if(mov?.tipo!=='exclusao'||!item?.destino||ids.has(docSnap.id))continue;
+  const id=String(item.registroId||'');
+  let candidatos=id?entradas.filter(x=>String(x.registroId||'')===id):[];
+  if(!candidatos.length)candidatos=entradas.filter(x=>identidade(x)===identidade(item));
+  if(candidatos.length!==1)continue;
+  arquivo.push({...candidatos[0],movimentoExclusaoId:docSnap.id,excluidoEm:mov.criadoEm||'',estado:'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'});
+  ids.add(docSnap.id);mudou=true;
+ }
+ if(mudou)localStorage.setItem(chaveArquivo,JSON.stringify(arquivo));
+}
 function observarMovimentosAutomaticos(u){
  if(contaObservada===u?.uid)return;
  if(cancelarMudancasRemotas){cancelarMudancasRemotas();cancelarMudancasRemotas=null;}
@@ -691,6 +711,7 @@ function observarMovimentosAutomaticos(u){
  const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
  cancelarMudancasRemotas=onSnapshot(q,snap=>{
   if(snap.metadata.fromCache)return;
+  registrarExclusoesRecebidas(snap);
   const assinatura=snap.docs.map(d=>d.id).join('|');
   if(assinatura===ultimaAssinaturaRemota)return;
   ultimaAssinaturaRemota=assinatura;
