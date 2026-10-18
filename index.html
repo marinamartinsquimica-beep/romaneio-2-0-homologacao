@@ -2637,6 +2637,11 @@ function renderizarPendenciasConferenciaEstoque(){
   const grupo=grupos.get(chave);grupo.caixas+=cx;if(postura)grupo.posturas.add(postura);grupo.linhas.push(linha);
  }
  const pendencias=[...grupos.values()].filter(g=>!saldos.has(g.chave)||g.caixas>saldos.get(g.chave));
+ const chavesPendentes=new Set(pendencias.map(x=>x.chave));
+ for(const linha of document.querySelectorAll("#tabela tbody tr.raiar-linha-pendente")) {
+  const chave=chaveReservaTeste(linha.cells[1]?.textContent||"",linha.cells[4]?.textContent||"");
+  if(!chavesPendentes.has(chave)){linha.classList.remove("raiar-linha-pendente");linha.removeAttribute("aria-current")}
+ }
  if(contador)contador.textContent=String(pendencias.length);
  if(resumo)resumo.textContent=pendencias.length?pendencias.length+" divergência(s) em aberto neste dispositivo. Confira na aba ESTOQUE COMPLETO.":"Nenhuma divergência identificada nas entradas deste dispositivo.";
  if(!pendencias.length){lista.textContent="Nenhuma pendência identificada com a planilha importada.";return;}
