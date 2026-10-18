@@ -214,6 +214,18 @@ body.modo-operador .topbar .brand h1{font-size:21px!important}
 #opAbaImportacao #etapa4Tipo{grid-column:1;grid-row:4}
 #opAbaImportacao #etapa4Arquivo{grid-column:2;grid-row:4}
 @media(max-width:760px){#opAbaImportacao #etapa4Firebase{display:flex;flex-direction:column;align-items:stretch}}
+
+.etapa4-resumo-baixa{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0}
+.etapa4-resumo-card{padding:12px;border:1px solid #dde3e8;background:#fff;border-radius:7px;display:flex;flex-direction:column;gap:5px}
+.etapa4-resumo-card span{font-size:12px;color:#4a5560}.etapa4-resumo-card strong{font-size:21px;color:#254d69}
+@media(min-width:901px){
+ #painelOperadorDesktop.operator-panel.active{grid-template-rows:auto minmax(680px,auto);align-items:stretch}
+ #painelOperadorDesktop>.operator-section-tabs{height:100%;min-height:680px;position:relative;top:auto;align-self:stretch}
+ #painelOperadorDesktop>[role="tabpanel"]:not(.hidden){align-self:stretch;min-height:680px}
+ #painelOperadorDesktop #opVisaoGeral:not(.hidden){display:flex;flex-direction:column}
+ #painelOperadorDesktop #opVisaoGeral>.operator-workspace{flex:1;align-items:stretch}
+ #painelOperadorDesktop #opVisaoGeral .operator-box{height:100%}
+}
 </style>
 </head>
 <body>
@@ -239,7 +251,7 @@ body.modo-operador .topbar .brand h1{font-size:21px!important}
 
 </section>
 <button id="etapa4AtivarNotificacoes" type="button">ATIVAR AVISOS NO NAVEGADOR</button><p id="etapa4AvisosStatus" role="status">Avisos visuais sempre ativos; notificações do navegador são opcionais.</p></section></div><div id="opAbaParipassu" role="tabpanel" class="hidden"><section class="card" style="padding:18px;margin:14px 0"><h2>Conferência Embalado × PariPassu</h2><section id="etapa4PainelPendencias" class="operator-pending" style="margin:12px 0" aria-live="polite"><h3>CONFERÊNCIA EMBALADO × PARIPASSU — <span id="etapa4PainelContador">Aguardando</span></h3><p id="etapa4PainelMensagem">Publique os dois estoques na aba IMPORTAR PLANILHAS para conferir automaticamente.</p><div id="etapa4PainelLista"></div></section><p id="etapa4Resumo">Aguardando os dois estoques compartilhados.</p>
-<ul id="etapa4Pendencias" style="max-height:220px;overflow:auto;color:#334155"></ul><div id="etapa4Conformes" role="status" aria-live="polite"></div><div id="etapa4Aviso" role="alert" aria-live="assertive" style="display:none;border:2px solid #c2410c;background:#fff2e8;padding:12px;margin:12px 0"></div></section></div><div id="opAbaMovimentos" role="tabpanel" class="hidden"><section class="card" style="padding:18px;margin:14px 0"><h2>Baixa e ajuste</h2><section id="etapa4Operacoes" style="margin:12px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc">
+<ul id="etapa4Pendencias" hidden aria-hidden="true"></ul><div id="etapa4Conformes" role="status" aria-live="polite"></div><div id="etapa4Aviso" role="alert" aria-live="assertive" style="display:none;border:2px solid #c2410c;background:#fff2e8;padding:12px;margin:12px 0"></div></section></div><div id="opAbaMovimentos" role="tabpanel" class="hidden"><section class="card" style="padding:18px;margin:14px 0"><h2>Baixa e ajuste</h2><section id="etapa4Operacoes" style="margin:12px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc">
 <h3>Baixa e ajuste — prévia segura</h3>
 <p style="color:#334155">As operações abaixo preparam a conferência sem alterar o Firebase nem a planilha oficial. Confirmação de baixa ou ajuste oficial permanece indisponível até integração autenticada com o arquivo.</p>
 <label for="etapa4Modo">Operação</label><select id="etapa4Modo"><option value="baixa">Baixa de expedição</option><option value="ajuste">Ajuste por contagem física</option></select>
