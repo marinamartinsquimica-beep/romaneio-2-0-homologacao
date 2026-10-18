@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {conferirEstoques} from './conferencia-estoques.mjs';
 const a=[{sku:'A',lote:'1',saldo:10},{sku:'B',lote:'2',saldo:5}];
 test('conformidade completa',()=>{const x=conferirEstoques(a,a);assert.equal(x.conformes,2);assert.equal(x.pendencias.length,0);});
-test('saldo diferente',()=>{const x=conferirEstoques(a,[{sku:'A',lote:'1',saldo:9},{sku:'B',lote:'2',saldo:5}]);assert.equal(x.pendencias[0].tipo,'divergencia_saldo');assert.equal(x.pendencias[0].diferenca,1);});
+test('saldo diferente',()=>{const x=conferirEstoques(a,[{sku:'A',lote:'1',saldo:9},{sku:'B',lote:'2',saldo:5}]);assert.equal(x.pendencias[0].tipo,'saldo_insuficiente_paripassu');assert.equal(x.pendencias[0].diferenca,1);});
 test('conferencia unilateral: ignora itens exclusivos no PariPassu',()=>{const x=conferirEstoques(a,[{sku:'C',lote:'3',saldo:2}]);assert.equal(x.pendencias.length,2);assert.equal(x.conferidos,2);assert.equal(x.pendencias.every(p=>p.tipo==='ausente_paripassu'),true);});
 test('linhas duplicadas consolidadas sem perder caixas',()=>{const x=conferirEstoques([{sku:'A',lote:'1',saldo:3},{sku:'A',lote:'1',saldo:7}],[{sku:'A',lote:'1',saldo:10}]);assert.equal(x.conformes,1);});
 test('nao altera originais',()=>{const x=JSON.stringify(a);conferirEstoques(a,[]);assert.equal(JSON.stringify(a),x);});
