@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - desenvolvimento/etapa-4-estoques-paripassu
+      - main
   pull_request:
     paths:
       - 'integracao/**'
