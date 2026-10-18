@@ -483,6 +483,7 @@ async function aplicarUniaoSeguraOperacional(){
   // o estado anterior é idêntico. Nunca remove registros locais divergentes.
   const resultado=[...localComIds,...novos];
   let edicoesRecebidas=0,exclusoesRecebidas=0;
+  const exclusoesArquivadas=[];
   const conflitosRecebidos=[];
   const idRegistro=x=>String(x?.registroId||'');
   const localizarAnterior=(antes)=>{
@@ -521,6 +522,7 @@ async function aplicarUniaoSeguraOperacional(){
     continue;
    }
    if(ultimo.tipo==='exclusao'){
+    exclusoesArquivadas.push({...atual,excluidoEm:ultimo.criadoEm||new Date().toISOString(),movimentoExclusaoId:ultimo.id,estado:'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'});
     resultado.splice(indices[0].i,1);
     exclusoesRecebidas++;
    }else if(ultimo.tipo==='edicao'){
@@ -570,6 +572,14 @@ async function aplicarUniaoSeguraOperacional(){
   try{
    localStorage.setItem('entradas',JSON.stringify(resultado));
    localStorage.setItem(baseChave,JSON.stringify(resultado));
+   if(exclusoesArquivadas.length){
+    const chaveArquivo='romaneio2_expedicoes_excluidas_pendentes_v1';
+    const existente=JSON.parse(localStorage.getItem(chaveArquivo)||'[]');
+    if(!Array.isArray(existente))throw Error('Histórico de expedição inválido; união abortada.');
+    const chaves=new Set(existente.map(x=>x.movimentoExclusaoId));
+    for(const item of exclusoesArquivadas)if(!chaves.has(item.movimentoExclusaoId))existente.push(item);
+    localStorage.setItem(chaveArquivo,JSON.stringify(existente));
+   }
   }catch(erro){
    if(entradasBrutas===null)localStorage.removeItem('entradas');else localStorage.setItem('entradas',entradasBrutas);
    if(baseBruta===null)localStorage.removeItem(baseChave);else localStorage.setItem(baseChave,baseBruta);
