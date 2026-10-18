@@ -492,6 +492,13 @@ async function aplicarUniaoSeguraOperacional(){
       const candidatos=entradas.filter(x=>chave(x)===chave(mov.antes)
         && (!mov.antes.registroId || String(x.registroId||'')===String(mov.antes.registroId)));
       if(candidatos.length===1)adicionar(mov.antes,'estado-local-confirmado');
+      else {
+       // O aparelho já pode ter aplicado esta edição em uma união anterior.
+       // Reconhecer o estado posterior único, permitindo avançar para as próximas edições.
+       const aplicados=entradas.filter(x=>chave(x)===chave(mov.item)
+         && (!mov.item.registroId || String(x.registroId||'')===String(mov.item.registroId)));
+       if(aplicados.length===1){adicionar(mov.item,'historico-ja-aplicado');continue;}
+      }
     }
     const anterior=retirar(mov.antes,mov.id);if(anterior)adicionar(mov.item,anterior.origem);
    }else falhas.push(mov.id+': tipo desconhecido');
