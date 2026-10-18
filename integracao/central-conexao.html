@@ -710,6 +710,7 @@ $('exportarBackupUniao').onclick=()=>{
   document.body.appendChild(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),30000);
   backupUniaoNestaSessao=true;
+  backupConflitoNaSessao=localStorage.getItem('entradas');
   saida.textContent='Cópia preparada para download: '+copia.dados.entradas.length+' entradas locais. Nenhum dado foi alterado. Guarde o arquivo em local seguro.';
  }catch(e){saida.textContent='Backup não concluído: '+(e.message||String(e))+'. Dados locais intactos.';}
 };
@@ -815,6 +816,7 @@ $('verificar').onclick=async()=>{
  }catch(e){saida.textContent='FALHA NA VERIFICAÇÃO: '+(e.code||e.message||String(e))+'.\nVerifique a rede ou reconecte a conta.';}
  finally{botao.disabled=false;botao.textContent='TESTAR CONEXÃO FIREBASE';status();}
 };
+let backupConflitoNaSessao=null;
 const identidadeFisica=x=>[x?.destino,x?.palete,x?.sku,x?.loteCompleto,x?.lote,x?.postura].map(v=>String(v??'').trim().toUpperCase()).join('|');
 $('consultarConflitosCaixas').onclick=async()=>{
  const lista=$('listaConflitosCaixas'),saida=$('saidaConflitosCaixas');lista.replaceChildren();
@@ -840,8 +842,11 @@ $('consultarConflitosCaixas').onclick=async()=>{
    const descricao=document.createElement('p');descricao.textContent='Destino '+local.destino+' | Palete '+local.palete+' | SKU '+local.sku+' | Lote '+local.loteCompleto+' — computador: '+local.caixas+' caixa(s) | Firebase: '+mov.item.caixas+' caixa(s).';
    const botao=document.createElement('button');botao.textContent='CONFIRMAR QUANTIDADE DO FIREBASE';botao.type='button';
    botao.onclick=async()=>{
+    saida.textContent='Verificando backup, registro local e última edição do Firebase…';
+    botao.disabled=true;
     try{
-     if(!backupUniaoNestaSessao)throw Error('Baixe e guarde a cópia de segurança local nesta sessão antes de conciliar.');
+     if(backupConflitoNaSessao===null)throw Error('Baixe a cópia de segurança local usando o botão desta Central de Conexão, sem fechar a página.');
+     if(localStorage.getItem('entradas')!==backupConflitoNaSessao)throw Error('Os registros mudaram após o backup. Baixe uma nova cópia antes de conciliar.');
      if(lerOperacional().length)throw Error('Movimentações locais pendentes.');
      const original=localStorage.getItem('entradas'),base=localStorage.getItem('romaneio2_ultimo_estado_movimentos_v1');
      const atuais=JSON.parse(original||'[]');const pos=atuais.findIndex(x=>String(x.registroId||'')===String(local.registroId||'')&&identidadeFisica(x)===identidadeFisica(local)&&String(x.caixas)===String(local.caixas));
@@ -853,8 +858,9 @@ $('consultarConflitosCaixas').onclick=async()=>{
      if(localStorage.getItem('entradas')!==original)throw Error('Dados locais mudaram; operação cancelada.');
      try{localStorage.setItem('entradas',JSON.stringify(atuais));localStorage.setItem('romaneio2_ultimo_estado_movimentos_v1',JSON.stringify(atuais));}
      catch(e){if(original===null)localStorage.removeItem('entradas');else localStorage.setItem('entradas',original);if(base===null)localStorage.removeItem('romaneio2_ultimo_estado_movimentos_v1');else localStorage.setItem('romaneio2_ultimo_estado_movimentos_v1',base);throw e;}
-     backupUniaoNestaSessao=false;saida.textContent='Conciliação confirmada: '+local.destino+' / '+local.palete+' — '+mov.item.caixas+' caixas. Nenhuma baixa realizada.';lista.replaceChildren();
+     backupConflitoNaSessao=null;backupUniaoNestaSessao=false;saida.textContent='Conciliação confirmada: '+local.destino+' / '+local.palete+' — '+mov.item.caixas+' caixas. Nenhuma baixa realizada.';lista.replaceChildren();
     }catch(e){saida.textContent='Conciliação não aplicada: '+(e.message||e);}
+    finally{botao.disabled=false;}
    };
    linha.append(descricao,botao);lista.append(linha);
   }
