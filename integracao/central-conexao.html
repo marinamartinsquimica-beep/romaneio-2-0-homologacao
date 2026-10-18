@@ -558,6 +558,28 @@ async function aplicarUniaoSeguraOperacional(){
    }
   }
 
+  // Identificar exclusões remotas mesmo quando a entrada foi preservada no computador.
+  // O histórico de expedição é independente da tabela ativa e não efetua baixa.
+  const chaveArquivo='romaneio2_expedicoes_excluidas_pendentes_v1';
+  const arquivoOriginal=localStorage.getItem(chaveArquivo);
+  const arquivadas=JSON.parse(arquivoOriginal||'[]');
+  if(!Array.isArray(arquivadas))throw Error('Histórico de expedições inválido; recebimento pausado.');
+  const jaArquivados=new Set(arquivadas.map(x=>String(x.movimentoExclusaoId||'')));
+  const novosArquivados=[];
+  for(const mov of movs){
+   if(mov.tipo!=='exclusao'||!mov.item?.destino||jaArquivados.has(String(mov.id)))continue;
+   const id=String(mov.item.registroId||'');
+   const equivalentes=entradas.filter(e=>id&&String(e.registroId||'')===id);
+   const correspondentes=equivalentes.length?equivalentes:entradas.filter(e=>chave(e)===chave(mov.item));
+   if(correspondentes.length!==1)continue; // sem associação inequívoca, nunca atribuir destino errado
+   novosArquivados.push({...correspondentes[0],excluidoEm:mov.criadoEm||'',movimentoExclusaoId:mov.id,estado:'EXCLUIDO_NO_CELULAR_AGUARDANDO_BAIXA'});
+   jaArquivados.add(String(mov.id));
+  }
+  if(novosArquivados.length){
+   if(localStorage.getItem('entradas')!==entradasBrutas)throw Error('Entradas alteradas durante a conferência; repetir.');
+   localStorage.setItem(chaveArquivo,JSON.stringify([...arquivadas,...novosArquivados]));
+  }
+
   // Não regravar entradas idênticas: evita atualizações repetidas entre tela principal e agente.
   if(JSON.stringify(resultado)===JSON.stringify(entradas)){
    if(uniaoAutomaticaEmAndamento)localStorage.removeItem(CHAVE_BACKUP_AUTOMATICO);
