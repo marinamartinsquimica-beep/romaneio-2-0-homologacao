@@ -330,7 +330,12 @@ $('prepararUniaoSegura').onclick=async()=>{
    else if(mov.tipo==='edicao'||mov.tipo==='exclusao'){
     const anterior=mov.tipo==='edicao'?mov.antes:mov.item;
     const k=chave(anterior),n=contagem.get(k)||0;
-    if(!n){problemas.push(mov.id+': estado anterior não encontrado');continue;}
+    if(!n){
+     const candidatos=entradas.filter(e=>chave(e)===k
+       && (!anterior?.registroId||String(e.registroId||'')===String(anterior.registroId)));
+     if(candidatos.length!==1){problemas.push(mov.id+': estado anterior não encontrado de forma inequívoca');continue;}
+     contagem.set(k,1);
+    }
     if(n===1)contagem.delete(k);else contagem.set(k,n-1);
     if(mov.tipo==='edicao'){const novo=chave(mov.item);contagem.set(novo,(contagem.get(novo)||0)+1);}
    }else problemas.push(mov.id+': tipo desconhecido');
