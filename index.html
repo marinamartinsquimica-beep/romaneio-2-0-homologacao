@@ -201,6 +201,19 @@ body.modo-operador #painelOperadorDesktop>.operator-hero p{font-size:12px!import
 body.modo-operador .topbar{padding:12px 18px!important;margin-bottom:10px!important;box-shadow:none}
 body.modo-operador .topbar .brand h1{font-size:21px!important}
 @media(max-width:900px){body.modo-operador .raiar-main-tabs{display:flex!important}}
+
+/* Importação compacta: uma única escolha de arquivo, campos alinhados horizontalmente. */
+#opAbaImportacao #etapa4Firebase{display:grid;grid-template-columns:minmax(180px,1fr) minmax(280px,1.6fr);gap:10px 16px;align-items:end}
+#opAbaImportacao #etapa4Firebase>h3,#opAbaImportacao #etapa4Firebase>p{grid-column:1/-1;margin:0}
+#opAbaImportacao #etapa4Firebase>label{margin:0!important}
+#opAbaImportacao #etapa4Firebase>select,#opAbaImportacao #etapa4Firebase>input[type=file]{width:100%;max-width:none;min-height:44px;margin:0}
+#opAbaImportacao #etapa4Firebase>button,#opAbaImportacao #etapa4Firebase>#etapa4FirebaseStatus{grid-column:1/-1}
+#opAbaImportacao #etapa4Firebase>button{max-width:460px}
+#opAbaImportacao #etapa4Firebase>label[for=etapa4Tipo]{grid-column:1;grid-row:3}
+#opAbaImportacao #etapa4Firebase>label[for=etapa4Arquivo]{grid-column:2;grid-row:3}
+#opAbaImportacao #etapa4Tipo{grid-column:1;grid-row:4}
+#opAbaImportacao #etapa4Arquivo{grid-column:2;grid-row:4}
+@media(max-width:760px){#opAbaImportacao #etapa4Firebase{display:flex;flex-direction:column;align-items:stretch}}
 </style>
 </head>
 <body>
@@ -212,13 +225,11 @@ body.modo-operador .topbar .brand h1{font-size:21px!important}
 <nav class="tabs raiar-main-tabs" aria-label="Áreas do romaneio"><button id="tabTotal" class="tab-button active" type="button" onclick="abrirAba('total')">ROMANEIO TOTAL</button><button id="tabCaminhao" class="tab-button" type="button" onclick="abrirAba('caminhao')">ROMANEIO POR CAMINHÃO</button><button type="button" class="tab-button desktop-operator-only" id="abrirPainelOperador" onclick="abrirPainelOperador()" aria-pressed="false">PAINEL DO OPERADOR</button></nav>
 
 <section id="painelOperadorDesktop" class="operator-panel" aria-label="Painel do operador de estoque">
- <div class="operator-hero"><h2>Operação de estoque</h2><p>Conferência de romaneios e acompanhamento do estoque • ambiente local de testes</p></div>
- <div class="operator-section-tabs" role="tablist" aria-label="Áreas do operador"><button id="opTabVisao" type="button" class="active" role="tab" aria-selected="true" onclick="operadorSelecionarAba('visao')">VISÃO GERAL</button><button id="opTabEstoque" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('estoque')">ESTOQUE COMPLETO</button><button id="opTabImportacao" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('importacao')">IMPORTAR PLANILHAS</button><button id="opTabMovimentos" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('movimentos')">BAIXA E AJUSTE</button><button id="opTabParipassu" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('paripassu')">CONFERÊNCIA PARIPASSU</button><div class="operator-side-actions"><div class="operator-toolbar operator-toolbar-side"><button type="button" onclick="operadorVoltarRomaneios()">ABRIR ROMANEIOS</button><button type="button" onclick="operadorVerPendencias()">PENDÊNCIAS DE SINCRONIZAÇÃO</button><button type="button" class="operator-yellow" onclick="operadorSincronizarAgora()">SINCRONIZAR AGORA</button><button type="button" class="operator-outline" onclick="operadorAbrirEstoque()">VER ESTOQUE DE TESTES</button></div></div></div><div id="opVisaoGeral" role="tabpanel"><div class="operator-metrics"><div class="operator-metric"><span>Destinos com romaneios</span><strong id="opDestinos">0</strong></div><div class="operator-metric"><span>Paletes registrados</span><strong id="opPaletes">0</strong></div><div class="operator-metric"><span>Caixas registradas</span><strong id="opCaixas">0</strong></div><div class="operator-metric"><span>Movimentações pendentes</span><strong id="opPendentes">0</strong></div></div>
+ <div class="operator-hero"><h2>Operação de estoque</h2><p>Conferência de romaneios e acompanhamento do estoque</p></div>
+ <div class="operator-section-tabs" role="tablist" aria-label="Áreas do operador"><button id="opTabVisao" type="button" class="active" role="tab" aria-selected="true" onclick="operadorSelecionarAba('visao')">VISÃO GERAL</button><button id="opTabEstoque" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('estoque')">ESTOQUE COMPLETO</button><button id="opTabImportacao" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('importacao')">IMPORTAR PLANILHAS</button><button id="opTabMovimentos" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('movimentos')">BAIXA E AJUSTE</button><button id="opTabParipassu" type="button" role="tab" aria-selected="false" onclick="operadorSelecionarAba('paripassu')">CONFERÊNCIA PARIPASSU</button><div class="operator-side-actions"><div class="operator-toolbar operator-toolbar-side"><button type="button" onclick="operadorVoltarRomaneios()">ABRIR ROMANEIOS</button><button type="button" onclick="operadorVerPendencias()">PENDÊNCIAS DE SINCRONIZAÇÃO</button><button type="button" class="operator-yellow" onclick="operadorSincronizarAgora()">SINCRONIZAR AGORA</button><button type="button" class="operator-outline" onclick="operadorAbrirEstoque()">VER ESTOQUE</button></div></div></div><div id="opVisaoGeral" role="tabpanel"><div class="operator-metrics"><div class="operator-metric"><span>Destinos com romaneios</span><strong id="opDestinos">0</strong></div><div class="operator-metric"><span>Paletes registrados</span><strong id="opPaletes">0</strong></div><div class="operator-metric"><span>Caixas registradas</span><strong id="opCaixas">0</strong></div><div class="operator-metric"><span>Movimentações pendentes</span><strong id="opPendentes">0</strong></div></div>
  <div class="operator-metrics"><div class="operator-metric"><span>Caixas no estoque</span><strong id="opEstoqueCaixas">—</strong></div><div class="operator-metric"><span>SKUs distintos no estoque</span><strong id="opEstoqueSkus">—</strong></div></div>
  <div id="etapa4ResumoVisao" role="status" aria-live="polite" style="padding:10px 14px;margin:12px 0;background:#fff;border-left:4px solid #5CDCF2;border-radius:6px">Conferência PariPassu: aguardando os dois estoques.</div><div class="operator-workspace"><div class="operator-box"><h3>Paletes registrados</h3><div style="overflow-x:auto"><table class="operator-table"><thead><tr><th>Palete</th><th>Destino</th><th>Caixas</th><th>Ação</th></tr></thead><tbody id="opTabelaDestinos"></tbody></table></div><p class="operator-status">As correções serão feitas pelas funções atuais do romaneio até a etapa de edição e histórico ser concluída.</p></div><div class="operator-box"><h3>Controle de estoque</h3><p id="opResumoEstoque" class="operator-status">Consulta local disponível após importação de uma cópia do estoque.</p><div class="operator-pending"><h4>Pendências de conferência</h4><p id="opPendenciasEstoqueResumo">Importe o estoque de testes para verificar as entradas.</p><button type="button" onclick="operadorSelecionarAba('estoque');document.getElementById('pendenciasConferenciaEstoque')?.scrollIntoView({behavior:'smooth',block:'start'})">VER PENDÊNCIAS</button></div><div class="operator-note">Baixa e ajuste físico integrados serão habilitados somente após testes das regras existentes. Nenhuma substituição de inventário ocorre nesta etapa.</div><p id="opUltimaConsulta" class="operator-status"></p></div></div>
-</div><div id="opAbaImportacao" role="tabpanel" class="hidden"><section class="card" style="margin:14px 0;padding:20px"><h2>Importação de estoques</h2><p>Envie uma planilha de cada tipo. Ao publicar no Firebase, a conferência acontece automaticamente para todos os dispositivos.</p>  <label for="arquivoEstoqueTeste" style="display:block;margin:10px 0">Selecionar planilha de estoque (.xlsx)</label>
-  <input id="arquivoEstoqueTeste" type="file" accept=".xlsx,.xls" onchange="importarEstoqueTeste(event)" style="max-width:100%;margin-bottom:10px">
-  <section id="etapa4Firebase" style="padding:14px;margin:12px 0;border:1px solid #a7b8cd;border-radius:12px;background:#eef6ff">
+</div><div id="opAbaImportacao" role="tabpanel" class="hidden"><section class="card" style="margin:14px 0;padding:20px"><h2>Importação de estoques</h2><p>Envie uma planilha de cada tipo. Ao publicar no Firebase, a conferência acontece automaticamente para todos os dispositivos.</p><section id="etapa4Firebase" style="padding:14px;margin:12px 0;border:1px solid #a7b8cd;border-radius:12px;background:#eef6ff">
 <h3>Estoques compartilhados — Firebase</h3>
 <p style="color:#334155">Os arquivos são publicados como consulta compartilhada. A publicação substitui somente a versão compartilhada no Firebase; nenhuma planilha é alterada automaticamente.</p>
 <label for="etapa4Tipo">Estoque</label><select id="etapa4Tipo"><option value="embalado">Estoque Embalado</option><option value="paripassu">Estoque PariPassu</option></select>
@@ -237,14 +248,14 @@ body.modo-operador .topbar .brand h1{font-size:21px!important}
 <button type="button" id="etapa4Preparar">PREPARAR CONFERÊNCIA</button><button type="button" id="etapa4Exportar" disabled>BAIXAR EXCEL DO RESULTADO</button>
 <p id="etapa4OperacoesStatus" role="status"></p><div id="etapa4OperacoesResultado" style="max-height:250px;overflow:auto"></div>
 </section></section></div><div id="opAbaEstoque" role="tabpanel" class="hidden"><section class="card" id="painelEstoqueTeste" style="margin:14px 0;padding:20px">
-  <div class="card-header"><h2>Estoque para testes <small style="font-size:13px;color:#64748b">v2.0.50</small></h2><span class="badge">Reserva local de teste</span></div>
-  <p style="margin:8px 0;color:#475569">Importe uma cópia atualizada do estoque para conferir as pendências. Correções do estoque são feitas diretamente no SharePoint. Esta importação é somente leitura e não altera o arquivo.</p>
+  <div class="card-header"><h2>Estoque completo <small style="font-size:13px;color:#64748b">v2.0.50</small></h2><span class="badge">Consulta de estoque</span></div>
+  <p style="margin:8px 0;color:#475569">Consulte os saldos compartilhados pelo Firebase e confira as pendências do romaneio.</p>
 
-<button type="button" onclick="conferirEntradasExistentesTeste()" style="padding:9px 12px;margin:8px 0;cursor:pointer">Conferir entradas anteriores (teste)</button>
-  <section id="pendenciasConferenciaEstoque" class="operator-pending" aria-label="Pendências de conferência do estoque"><h3>PENDÊNCIAS DE CONFERÊNCIA <span id="contadorPendenciasEstoque">0</span></h3><p>Registros do romaneio que precisam de conferência. O aviso não elimina a pendência. Confira o romaneio ou corrija o estoque diretamente na planilha do SharePoint e atualize a consulta.</p><div id="listaPendenciasEstoque" aria-live="polite">Importe uma cópia do estoque para conferir.</div></section>
+<button type="button" onclick="conferirEntradasExistentesTeste()" style="padding:9px 12px;margin:8px 0;cursor:pointer">Conferir entradas do romaneio</button>
+  <section id="pendenciasConferenciaEstoque" class="operator-pending" aria-label="Pendências de conferência do estoque"><h3>PENDÊNCIAS DE CONFERÊNCIA <span id="contadorPendenciasEstoque">0</span></h3><p>Registros do romaneio que precisam de conferência. O aviso não elimina a pendência. Confira o romaneio ou atualize a planilha e publique a nova versão no Firebase.</p><div id="listaPendenciasEstoque" aria-live="polite">Importe uma cópia do estoque para conferir.</div></section>
 <div id="divergenciasEstoqueTeste" role="alert" aria-live="assertive" style="display:none;margin:12px 0;padding:14px 16px;border:2px solid #c2410c;border-radius:10px;background:#fff1e6;color:#7c2d12;font-weight:600"></div>
   <p id="resumoReservaTeste" role="status">Reservas: aguardando importação do estoque.</p>
-  <p id="resultadoEstoqueTeste" role="status" aria-live="polite">Nenhuma planilha importada nesta sessão.</p>
+  <p id="resultadoEstoqueTeste" role="status" aria-live="polite">Aguardando estoque compartilhado.</p>
   <div id="resumoPorSkuOperador" class="hidden" style="margin:18px 0;padding:16px;border:1px solid #dce7eb;border-radius:14px;background:#fff"><h3 style="color:#254D69;margin:0 0 8px">RESUMO POR SKU</h3><p style="color:#48647a;font-size:13px">Consolidado de todos os lotes. Reservas deste dispositivo; nenhuma baixa é realizada.</p><div style="overflow:auto;max-height:46vh"><table class="operator-table" style="min-width:900px"><thead><tr><th>SKU</th><th>Produto</th><th>Tamanho</th><th>Caixas</th><th>Ovos</th><th>Reservado (CX)</th><th>Disponível (CX)</th></tr></thead><tbody id="linhasResumoSkuOperador"></tbody></table></div></div>
   <div id="resumoEstoqueTeste" class="hidden" style="overflow:auto;max-height:60vh"><table style="width:100%;border-collapse:collapse"><thead><tr><th>SKU</th><th>Lote completo</th><th>Saldo (CX)</th><th>Reservado (CX)</th><th>Disponível (CX)</th><th>Situação</th></tr></thead><tbody id="linhasEstoqueTeste"></tbody></table></div>
 </section>
@@ -2670,7 +2681,7 @@ async function importarEstoqueTeste(event) {
   const aviso = document.getElementById("resultadoEstoqueTeste");
   const resumo = document.getElementById("resumoEstoqueTeste");
   resumo.classList.add("hidden");
-  aviso.textContent = "Lendo planilha de teste...";
+  aviso.textContent = "Lendo planilha...";
   try {
     if (typeof XLSX === "undefined") throw new Error("Biblioteca de leitura Excel indisponível. Verifique sua conexão.");
     const dados = await arquivo.arrayBuffer();
@@ -2772,13 +2783,7 @@ async function sincronizarRomaneioCelular(){
  await filaBackupOffline;
  alert("Os "+registros.length+" registros estão preservados neste aparelho. A sincronização com o painel de estoque de outro dispositivo ainda não está habilitada. Nenhum dado foi enviado.");
 }
-function operadorSincronizarAgora(){
- operadorAtualizarPainel();
- document.getElementById('operadorAvisoSync').textContent='Sem conexão automática com SharePoint: selecione uma cópia ATUALIZADA do estoque para revalidar. Nenhuma sincronização remota foi realizada.';
- const arquivo=document.getElementById('arquivoEstoqueTeste');
- operadorSelecionarAba('estoque');
- if(arquivo){arquivo.value='';arquivo.scrollIntoView({behavior:'smooth',block:'center'});arquivo.click();}
-}
+function operadorSincronizarAgora(){operadorSelecionarAba('importacao');document.getElementById('etapa4Arquivo')?.focus();}
 document.getElementById('tabTotal')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
 document.getElementById('tabCaminhao')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
 window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(event.matches&&document.getElementById('painelOperadorDesktop').classList.contains('active'))abrirAba('total');});
@@ -2887,8 +2892,7 @@ document.getElementById('etapa4Exportar')?.addEventListener('click',async()=>{
  button.disabled=true;
  try{
   if(!resultadoEtapa4)throw Error('Prepare a conferência antes de exportar.');
-  const arquivo=document.getElementById('arquivoEstoqueTeste')?.files?.[0] ||
-   (document.getElementById('etapa4Tipo')?.value==='embalado'?document.getElementById('etapa4Arquivo')?.files?.[0]:null);
+  const arquivo=window.__etapa4ArquivoEmbalado || (document.getElementById('etapa4Tipo')?.value==='embalado'?document.getElementById('etapa4Arquivo')?.files?.[0]:null);
   const {gerarExcelModeloEstoque}=await import('./integracao/excel-modelo-etapa4.mjs');
   const res=await gerarExcelModeloEstoque({arquivo,operacao:resultadoEtapa4.modo,estoqueOriginal:resultadoEtapa4.origem,resultado:resultadoEtapa4.resultado});
   const url=URL.createObjectURL(res.blob),a=document.createElement('a');a.href=url;
