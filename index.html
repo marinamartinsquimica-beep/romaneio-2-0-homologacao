@@ -2392,6 +2392,12 @@ let pendingServiceWorker = null;
 
 function showUpdateBanner(worker) {
     pendingServiceWorker = worker || pendingServiceWorker;
+    // Evitar avisos repetidos durante atualizações sucessivas do cache PWA.
+    const chaveAviso = "romaneio_update_banner_ultima_exibicao";
+    const agora = Date.now();
+    const ultima = Number(sessionStorage.getItem(chaveAviso) || 0);
+    if (ultima && agora - ultima < 5 * 60 * 1000) return;
+    sessionStorage.setItem(chaveAviso, String(agora));
     const banner = document.getElementById("updateBanner");
     if (banner) banner.classList.add("show");
 }
