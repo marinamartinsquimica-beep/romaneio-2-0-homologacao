@@ -12,5 +12,5 @@ export async function resolverAmbienteUsuario({db,uid}){
  const membro=membroSnap.exists()?membroSnap.data():null;
  const permissoes=permissoesDoUsuario(membro);
  if(!permissoes)throw Error('Usuário inativo ou sem perfil válido.');
- return {ambienteId,uid,perfil:permissoes.perfil,permissoes};
+ return {ambienteId,uid,perfil:permissoes.perfil,permissoes,ativo:true};
 }
