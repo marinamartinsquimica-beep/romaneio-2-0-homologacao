@@ -8,3 +8,7 @@ test('conferencia unilateral: ignora itens exclusivos no PariPassu',()=>{const x
 test('linhas duplicadas consolidadas sem perder caixas',()=>{const x=conferirEstoques([{sku:'A',lote:'1',saldo:3},{sku:'A',lote:'1',saldo:7}],[{sku:'A',lote:'1',saldo:10}]);assert.equal(x.conformes,1);});
 test('nao altera originais',()=>{const x=JSON.stringify(a);conferirEstoques(a,[]);assert.equal(JSON.stringify(a),x);});
 test('rejeita saldos invalidos',()=>assert.throws(()=>conferirEstoques([{sku:'A',lote:'1',saldo:-1}],[])));
+
+test('PariPassu maior que Embalado é OK, sem aviso',()=>{const x=conferirEstoques([{sku:'A',lote:'1',postura:'01/10/2026',saldo:5}],[{sku:'A',lote:'1',postura:'01/10/2026',saldo:8}]);assert.equal(x.pendencias.length,0);assert.equal(x.conformes,1);});
+test('PariPassu menor que Embalado gera pendência',()=>{const x=conferirEstoques([{sku:'A',lote:'1',postura:'01/10/2026',saldo:8}],[{sku:'A',lote:'1',postura:'01/10/2026',saldo:5}]);assert.equal(x.pendencias.length,1);assert.equal(x.pendencias[0].diferenca,3);});
+test('postura diferente equivale a SKU/lote ausente',()=>{const x=conferirEstoques([{sku:'A',lote:'1',postura:'01/10/2026',saldo:4}],[{sku:'A',lote:'1',postura:'02/10/2026',saldo:9}]);assert.equal(x.pendencias[0].tipo,'ausente_paripassu');});
