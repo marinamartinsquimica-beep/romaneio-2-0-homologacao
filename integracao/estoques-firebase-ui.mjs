@@ -26,6 +26,8 @@ async function importar(file,tipo){
 }
 function mostrarAvisoParipassu(qtd){if(document.querySelector('.eme-aviso-overlay[data-tipo="paripassu"]'))return;const overlay=document.createElement('div');overlay.className='eme-aviso-overlay';overlay.dataset.tipo='paripassu';const card=document.createElement('section');card.className='eme-aviso-card';card.setAttribute('role','alertdialog');card.setAttribute('aria-modal','true');const title=document.createElement('h2');title.className='eme-aviso-topo';title.textContent='Pendências na conferência PariPassu';const text=document.createElement('p');text.className='eme-aviso-sub';text.textContent=qtd+' pendência(s). A operação não foi bloqueada. Confira a aba CONFERÊNCIA PARIPASSU.';const btn=document.createElement('button');btn.className='eme-aviso-ok';btn.type='button';btn.textContent='ENTENDI';btn.onclick=()=>overlay.remove();card.append(title,text,btn);overlay.append(card);document.body.append(overlay)}
 function renderizarDestinosExcluidos(registros=[]){
+ window.__destinosExcluidosRemotos=registros.filter(x=>x.tipo==='exclusao'&&x.item?.destino);
+ window.atualizarDestinosBaixa?.();
  const alvo=$('listaDestinosExcluidos');if(!alvo)return;alvo.replaceChildren();
  const locais=JSON.parse(localStorage.getItem('romaneio2_destinos_excluidos_v1')||'[]');
  const grupos=new Map();
