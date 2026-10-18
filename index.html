@@ -2875,6 +2875,10 @@ function operadorAtualizarCardsEstoque(){
  document.getElementById('opEstoqueSkus').textContent=itens?new Set(itens.map(i=>String(i.sku).trim().toLocaleUpperCase('pt-BR'))).size.toLocaleString('pt-BR'):'—';
 }
 function abrirPainelOperador(){document.body.classList.add('modo-operador');if(window.matchMedia('(max-width:767px)').matches)return;document.getElementById('abaTotal').classList.add('hidden');document.getElementById('abaCaminhao').classList.add('hidden');document.getElementById('painelOperadorDesktop').classList.add('active');document.getElementById('tabTotal').classList.remove('active');document.getElementById('tabCaminhao').classList.remove('active');document.getElementById('abrirPainelOperador').classList.add('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','true');operadorSelecionarAba('visao');operadorAtualizarPainel();}
+// Desktop inicia no Painel do Operador; no celular preserva a entrada do Romaneio.
+window.addEventListener('DOMContentLoaded',()=>{
+ if(window.matchMedia('(min-width:768px)').matches)abrirPainelOperador();
+});
 function operadorVoltarRomaneios(){document.body.classList.remove('modo-operador');document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false');abrirAba('total');document.querySelector('#tabela')?.scrollIntoView({behavior:'smooth',block:'start'});}
 function operadorAbrirEstoque(){operadorSelecionarAba('estoque');document.getElementById('opTabEstoque')?.scrollIntoView({behavior:'smooth',block:'start'});}
 function operadorVerPendencias(){if(typeof consultarFilaMovimentos==='function')consultarFilaMovimentos();operadorAtualizarPainel();}
