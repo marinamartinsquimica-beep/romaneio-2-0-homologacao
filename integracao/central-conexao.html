@@ -556,6 +556,13 @@ async function aplicarUniaoSeguraOperacional(){
    }
   }
 
+  // Não regravar entradas idênticas: evita atualizações repetidas entre tela principal e agente.
+  if(JSON.stringify(resultado)===JSON.stringify(entradas)){
+   if(uniaoAutomaticaEmAndamento)localStorage.removeItem(CHAVE_BACKUP_AUTOMATICO);
+   backupUniaoNestaSessao=false;
+   saida.textContent='SINCRONIZAÇÃO EM DIA: '+entradas.length+' entradas conferidas. Nenhuma alteração necessária.';
+   return;
+  }
   if(localStorage.getItem('entradas')!==entradasBrutas||localStorage.getItem('romaneio2_movimentos_pendentes_v1')!==filaBruta||localStorage.getItem(baseChave)!==baseBruta)throw Error('Dados locais mudaram durante a conferência. Recomece.');
   const mensagem='Aplicar união controlada neste aparelho?\\n\\nEntradas preservadas: '+entradas.length+'\\nEntradas remotas adicionadas: '+novos.length+'\\nTotal: '+resultado.length+'\\n\\nNenhuma baixa de estoque será realizada. A página do Romaneio deverá ser recarregada.';
   if(!uniaoAutomaticaEmAndamento&&!window.confirm(mensagem)){saida.textContent='Operação cancelada. Nenhum dado alterado.';return;}
