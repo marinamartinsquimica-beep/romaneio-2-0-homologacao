@@ -179,9 +179,7 @@ $('preverRecebimento').onclick=async()=>{
  try{
   await auth.authStateReady();
   const u=auth.currentUser;if(!u)throw Error('Autenticação necessária');
-  const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
-  const snap=await getDocs(q);
-  if(snap.metadata.fromCache)throw Error('Consulta apenas em cache');
+  const snap=await lerHistoricoMovimentosCompleto(u.uid);
   const operacionais=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
   const entradas=JSON.parse(localStorage.getItem('entradas')||'[]');
   const pendentes=JSON.parse(localStorage.getItem('romaneio2_movimentos_pendentes_v1')||'[]');
@@ -238,10 +236,10 @@ $('preverRecebimento').onclick=async()=>{
   const chavesLocais=new Set(entradas.map(e=>String(e.palete)+'|'+String(e.destino)));
   const paletesCompartilhados=new Set(entradas.map(e=>String(e.palete)));
   const sobreposicoes=faltantesRemotos.filter(({item})=>paletesCompartilhados.has(String(item.palete))&&!chavesLocais.has(String(item.palete)+'|'+String(item.destino)));
-  const podePreparar=snap.size<50&&!falhas.length&&!pendentes.length;
+  const podePreparar=!falhas.length&&!pendentes.length;
   const linhas=[
    'RECONCILIAÇÃO HISTÓRICA — SOMENTE LEITURA',
-   'Operações consultadas: '+ordenados.length+' (janela: '+snap.size+'/50)',
+   'Operações consultadas: '+ordenados.length+' (histórico paginado: '+snap.size+' registros)',
    'Conta conectada (UID final): '+u.uid.slice(-8),
    'Registros brutos consultados: '+snap.size+' | filtrados: '+(snap.size-operacionais.length),
    'TESTE-SYNC-01 nos registros brutos: '+snap.docs.filter(d=>String(d.data()?.item?.sku||'')==='TESTE-SYNC-01').length,
@@ -268,7 +266,7 @@ $('preverRecebimento').onclick=async()=>{
    'Inconsistências de sequência: '+falhas.length,
    'Operações ainda na fila local: '+ordenados.filter(d=>pendentes.some(p=>p.id===d.id)).length,
    ...(falhas.length?['Exemplos: '+falhas.slice(0,3).join('; ')]:[]),
-   snap.size===50?'ATENÇÃO: histórico pode estar incompleto (limite de 50).':'ATENÇÃO: histórico anterior ou identidade individual ainda não garantidos.',
+   'Histórico paginado recuperado; inconsistências de sequência e identidades ainda exigem revisão.',
    'NENHUM PALETE, ESTOQUE OU FILA FOI ALTERADO.'
   ];
   saida.textContent=linhas.join(String.fromCharCode(10));
