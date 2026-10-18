@@ -24,5 +24,6 @@ jobs:
           node --check integracao/operacoes-estoque.mjs
           node --check integracao/estoques-firebase-ui.mjs
           node --check integracao/publicacao-estoques.mjs
+          node testes/verificar-sintaxe-html.mjs
       - name: Executar testes de estoque
         run: node --test integracao/*.test.mjs
