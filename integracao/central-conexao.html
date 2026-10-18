@@ -498,6 +498,12 @@ async function aplicarUniaoSeguraOperacional(){
        const aplicados=entradas.filter(x=>chave(x)===chave(mov.item)
          && (!mov.item.registroId || String(x.registroId||'')===String(mov.item.registroId)));
        if(aplicados.length===1){adicionar(mov.item,'historico-ja-aplicado');continue;}
+       // Histórico remoto pode começar antes do último estado já aplicado localmente.
+       // Reconstituir a trajetória somente com identidade local única; o confronto
+       // posterior rejeita qualquer estado local fora da trajetória documentada.
+       const id=String(mov.antes.registroId||mov.item.registroId||'');
+       const comMesmoId=id?entradas.filter(x=>String(x.registroId||'')===id):[];
+       if(comMesmoId.length===1)adicionar(mov.antes,'trajetoria-remota-reconstituida');
       }
     }
     const anterior=retirar(mov.antes,mov.id);if(anterior)adicionar(mov.item,anterior.origem);
