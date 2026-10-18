@@ -54,12 +54,14 @@ function observar(uid){
  }
 }
 onAuthStateChanged(auth,u=>{unsub.forEach(f=>f());unsub=[];if(u)observar(u.uid);else mostrar('Faça login na Central de Conexão para compartilhar os estoques.')});
+$('etapa4Arquivo')?.addEventListener('change',()=>{const arquivo=$('etapa4Arquivo')?.files?.[0];if(arquivo&&$('etapa4Tipo')?.value==='embalado')window.__etapa4ArquivoEmbalado=arquivo;});
 $('etapa4AtivarNotificacoes')?.addEventListener('click',async()=>{const o=$('etapa4AvisosStatus');if(!('Notification' in window)){o.textContent='Este navegador não oferece notificações; os avisos continuam no painel.';return;}const p=await Notification.requestPermission();o.textContent=p==='granted'?'Notificações ativas enquanto o sistema estiver aberto.': 'Notificações não autorizadas; avisos continuam no painel.';});
 $('etapa4Publicar')?.addEventListener('click',async()=>{
  const b=$('etapa4Publicar');b.disabled=true;
  try{
   await auth.authStateReady();const u=auth.currentUser;if(!u)throw Error('Autenticação necessária na Central de Conexão.');
   const tipo=$('etapa4Tipo').value,file=$('etapa4Arquivo').files?.[0],itens=await importar(file,tipo);
+  if(tipo==='embalado')window.__etapa4ArquivoEmbalado=file;
   if(!navigator.onLine)throw Error('Sem conexão. Arquivo não publicado.');
   if(new TextEncoder().encode(JSON.stringify(itens)).length>750000)throw Error('Estoque excede tamanho seguro para um documento Firebase; publicação cancelada sem perda de dados.');
   if(!confirm('Publicar '+itens.length+' lotes de '+tipo+' para os aparelhos autenticados? A planilha oficial não será modificada.'))return;
