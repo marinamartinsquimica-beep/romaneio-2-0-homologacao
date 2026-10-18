@@ -1,27 +1,21 @@
-# Persistência centralizada — Bloco de migração
+# Romaneio 2.0 — implantação única, sem Firebase Storage
 
-## Status: preparação em branch, NÃO publicada na produção
+## Decisão de arquitetura
+- **OneDrive compartilhado:** guarda os arquivos XLSX oficiais completos e a versão anterior para recuperação. A substituição do Excel continua sendo feita na pasta corporativa autorizada.
+- **Firestore:** guarda dados estruturados e histórico compartilhado (romaneios, movimentações, exclusões, pendências e status de baixas, estoques publicados). Os arquivos XLSX não serão enviados ao Firestore nem ao Firebase Storage.
+- **IndexedDB:** mantém a cópia local do Excel já importado para permitir a exportação offline. Em um computador novo, abrir o arquivo vigente no OneDrive e importar quando precisar gerar uma baixa.
+- **Firebase Authentication:** cada usuário tem seu login; dois perfis, administrador e operador. Ambos importam e publicam planilhas, somente administrador gerencia acessos.
+- **Ambiente comum:** a operação pertence ao ambiente, não ao UID individual. A conta anterior é migrada sem apagar a coleção legada.
 
-A versão operacional 2.0.57 continua na branch main. Este bloco prepara:
-- Administrador e Operador como membros de um AMBIENTE único, independente do UID de quem fez login.
-- Documento `romaneio_ambientes/{ambienteId}/membros/{uid}` com `perfil` e `ativo`.
-- Excel completo no Storage em arquivo imutável por versão. Administrador e Operador podem publicar/substituir as planilhas oficiais após validação; apenas Administrador gerencia usuários.
-- Documento `romaneio_ambientes/{ambienteId}/excel_oficiais/{tipo}` com `vigente` e `anterior`.
-- Sem sobrescrever dados locais, estoque oficial legado ou movimentos no Firestore durante a migração.
+## Sequência de liberação em um único bloco
+1. Fazer cópia segura dos dados atuais e exportar os históricos do ambiente legado.
+2. Configurar regras Firestore com preservação integral das regras existentes do Romaneio; ativar membros e índices de usuários. O primeiro administrador deve ser provisionado via console ou backend privilegiado.
+3. Migrar dados legados, com IDs estáveis, versão e auditoria, conferindo contagens de eventos, registros ativos e pendências; NÃO fazer baixa nem excluir a base legada.
+4. Ativar leitura/gravação no ambiente compartilhado, isolamento por perfil e sincronização offline com reconciliação sem substituição destrutiva.
+5. Fazer a publicação de Estoque Embalado e PariPassu por operador e administrador; manter a versão anterior **dos dados estruturados** no Firestore, enquanto o XLSX anterior é guardado no OneDrive.
+6. Validar a recuperação em dois computadores e dois logins diferentes, uma exclusão no celular, preparação de baixa e Excel completo acessado pelo OneDrive.
+7. Somente após a validação operacional publicar na main e atualizar versão/cache PWA.
 
-## Antes de habilitar na interface
-
-1. Criar/configurar Firebase Storage no projeto e confirmar custos do plano aplicável.
-2. Publicar e validar `firebase/storage.rules` e novas regras Firestore para os membros e ponteiros dos arquivos.
-3. Criar o ambiente e registrar o administrador inicial por operação privilegiada no console/ambiente seguro. **Nunca permitir que o navegador se autoatribua perfil de administrador.**
-4. Migrar ou referenciar o histórico antigo em `rom_v250_contas/{uid}` sem apagar os dados antigos.
-5. Criar procedimento administrativo de convite de usuário já autenticado ou integração confiável para provisionar novos usuários; não expor credenciais ou privilégios no browser.
-6. Integrar botão PUBLICAR para fazer validação, upload do Excel, publicação do estoque e movimentação segura do ponteiro. Se alguma parte falhar, não alterar a versão oficial vigente.
-7. Implementar restauração da última versão Excel em um computador novo e testar ambos os perfis em navegadores independentes.
-8. Implementar recuperação de destinos excluídos e histórico de baixas entre usuários, mantendo operação offline, idempotência e reconciliação. Só depois dessa homologação liberar produção.
-
-## Retenção
-A interface exibe um arquivo vigente e a cópia anterior. Arquivos imutáveis mais antigos podem permanecer como órfãos até uma rotina administrativa os eliminar com segurança; não apagar os arquivos antes de assegurar que nenhum ponteiro ou recuperação os utiliza.
-
-## Atenção à baixa
-A preparação não substitui o arquivo do estoque, e o botão de confirmação removido não volta. A efetivação continua sob controle do operador.
+## Restrições
+Não há acesso direto nesta execução às regras Firebase efetivamente implantadas nem autorização para modificar a pasta OneDrive compartilhada. As regras preparadas no repositório NÃO devem substituir sozinhas as regras atuais do Firebase; o arquivo de regras precisa ser mesclado e revisado. Não ativar modo compartilhado antes da criação dos membros e da migração.
+Não chamar leitura de Excel local de "arquivo recuperável da nuvem": sem um conector OneDrive autenticado ou seleção manual, o navegador não recupera o XLSX original automaticamente.
