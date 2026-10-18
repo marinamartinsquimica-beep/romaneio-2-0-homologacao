@@ -1,8 +1,13 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Romaneio 2.0 — Central de Conexão</title><style>
-:root{color-scheme:dark;font-family:system-ui,sans-serif}body{background:#101923;color:#eef3f8;margin:0;padding:24px}main{max-width:700px;margin:auto}section{background:#1d2b39;padding:20px;border-radius:12px;margin:16px 0}input,button{font:inherit;padding:12px;border-radius:7px;margin:6px 0}input{box-sizing:border-box;width:100%;background:#fff;color:#111}button{cursor:pointer;background:#c5e8f8;color:#132333;border:0}button:disabled{opacity:.5;cursor:wait}button:active{transform:translateY(1px);filter:brightness(.88)}button:focus-visible{outline:3px solid #ffd043;outline-offset:3px}.resultado-verificacao{margin-top:12px;padding:12px;border-radius:8px;background:#101923;border-left:4px solid #c5e8f8;min-height:44px}small{color:#c6d5df}output{display:block;white-space:pre-wrap}a{color:#c5e8f8}</style></head><body><main><h1>Central de Conexão</h1><p>Área operacional do computador. Sem acesso às regras ou ao código do Firebase.</p><section><h2>Estado da conexão</h2><output id="estado">Verificando…</output><p id="detalhe"></p><button id="verificar" type="button">TESTAR CONEXÃO FIREBASE</button><output id="verificacaoFirebase" class="resultado-verificacao" role="status" aria-live="polite">Clique para testar a autenticação com o servidor Firebase.</output></section><section><h2>Autenticação operacional</h2><p id="sessao">Verificando sessão…</p><form id="login"><label>E-mail operacional<input id="email" type="email" autocomplete="username" required></label><label>Senha<input id="senha" type="password" autocomplete="current-password" required></label><button type="submit">Reconectar</button></form><button id="sair" hidden>Encerrar sessão neste aparelho</button><small>A senha não é salva pelo aplicativo. A sessão autenticada pode persistir neste navegador.</small></section><section><h2>Movimentações locais</h2><output id="fila">Consultando…</output><p><button type="button" id="inspecionarPendentes">VERIFICAR FILA OPERACIONAL</button></p><output id="relatorioPendentes" class="resultado-verificacao" aria-live="polite">Verificação somente leitura; nenhum envio será realizado.</output><p><button type="button" id="prepararEnvioReal">PREPARAR SINCRONIZAÇÃO CONTROLADA</button> <button type="button" id="confirmarEnvioReal" disabled>CONFIRMAR ENVIO DA FILA</button></p><output id="estadoEnvioReal" class="resultado-verificacao" aria-live="polite">Nenhuma movimentação operacional será enviada sem confirmação.</output><p><small>O envio requer confirmação explícita. Somente IDs confirmados pelo Firestore saem da fila.</small></p><p><button type="button" id="resolverTestePendente">RESOLVER PENDÊNCIA FICTÍCIA</button></p><output id="resultadoResolverTeste" class="resultado-verificacao" aria-live="polite">Requer backup e confirmação de exclusão remota.</output></section><section><h2>Leitura compartilhada — computador e celular</h2><p>Consulta somente leitura dos últimos registros desta conta no Firestore. Não altera paletes, estoque ou fila.</p><button type="button" id="consultarCompartilhados">CONSULTAR MOVIMENTAÇÕES NO FIREBASE</button><output id="resultadoCompartilhados" class="resultado-verificacao" aria-live="polite">Aguardando consulta. A listagem requer permissão específica nas regras do Firebase.</output></section><section><h2>Atualização automática — somente leitura</h2><p>Acompanhe novas movimentações desta conta em tempo real. Nenhum palete ou estoque local será alterado.</p><button type="button" id="iniciarTempoReal">INICIAR ACOMPANHAMENTO</button> <button type="button" id="pararTempoReal" disabled>PARAR ACOMPANHAMENTO</button><output id="resultadoTempoReal" class="resultado-verificacao" aria-live="polite">Acompanhamento desligado.</output></section><section><h2>Prévia de recebimento — sem alterar paletes</h2><p>Compara as movimentações remotas com os dados deste dispositivo. Os testes fictícios são excluídos da análise.</p><button type="button" id="preverRecebimento">ANALISAR MOVIMENTAÇÕES RECEBIDAS</button><output id="resultadoAnaliseImediata" class="resultado-verificacao" aria-live="polite">Aguardando análise.</output><p><button type="button" id="diagnosticarOfflineReal">DIAGNOSTICAR SINCRONIZAÇÃO OFFLINE — SOMENTE LEITURA</button></p><output id="resultadoDiagnosticoOffline" class="resultado-verificacao" aria-live="polite">Nenhum dado será alterado.</output><p><button type="button" id="prepararUniaoSegura">PREPARAR UNIÃO CONTROLADA</button></p><output id="resultadoPrepararUniao" class="resultado-verificacao" aria-live="polite">Preparação somente leitura. Não aplica a união.</output><p><button type="button" id="exportarBackupUniao">BAIXAR CÓPIA DE SEGURANÇA LOCAL</button></p><output id="resultadoBackupUniao" class="resultado-verificacao" aria-live="polite">O arquivo de segurança será gerado neste dispositivo, sem alterar os dados.</output><p><button type="button" id="aplicarUniaoSegura">CONFIRMAR E APLICAR UNIÃO</button></p><output id="resultadoAplicarUniao" class="resultado-verificacao" aria-live="polite">Disponível após baixar o backup. A união exige confirmação explícita e nova consulta ao Firebase.</output><p><button type="button" id="prepararPublicacaoLocal">PREPARAR PUBLICAÇÃO DAS ENTRADAS LOCAIS</button></p><output id="resultadoPublicacaoLocal" class="resultado-verificacao" aria-live="polite">Compara as entradas locais com o Firebase e prepara apenas inclusões ausentes para a fila, mediante confirmação. Não altera estoque.</output><output id="resultadoPrevia" class="resultado-verificacao" aria-live="polite">Nenhuma análise realizada. Os dados locais permanecem intactos.</output></section><section><h2>Validação Firebase — dados fictícios</h2><p>Teste isolado: SKU TESTE-G, lote TESTE-001, 13 caixas. Não usa a fila operacional nem altera estoque.</p><button id="testeGravar" disabled>GRAVAR TESTE NO FIREBASE</button> <button id="testeReenviar" disabled>REENVIAR MESMO TESTE</button><output id="testeResultado" aria-live="polite">Aguardando autenticação.</output><small>O teste cria um documento imutável por identificação. Repetir não cria outro registro.</small></section><section><h2>Fila offline — validação</h2><p>Teste fictício isolado da fila operacional.</p><button type="button" id="prepararOffline">PREPARAR TESTE OFFLINE</button> <button type="button" id="enviarOffline">SINCRONIZAR TESTE</button><output id="saidaOffline" class="resultado-verificacao" aria-live="polite">Aguardando preparação.</output></section><a href="../index.html">Voltar ao Romaneio</a></main><script type="module">
+:root{color-scheme:dark;font-family:system-ui,sans-serif}body{background:#101923;color:#eef3f8;margin:0;padding:24px}main{max-width:700px;margin:auto}section{background:#1d2b39;padding:20px;border-radius:12px;margin:16px 0}input,button{font:inherit;padding:12px;border-radius:7px;margin:6px 0}input{box-sizing:border-box;width:100%;background:#fff;color:#111}button{cursor:pointer;background:#c5e8f8;color:#132333;border:0}button:disabled{opacity:.5;cursor:wait}button:active{transform:translateY(1px);filter:brightness(.88)}button:focus-visible{outline:3px solid #ffd043;outline-offset:3px}.resultado-verificacao{margin-top:12px;padding:12px;border-radius:8px;background:#101923;border-left:4px solid #c5e8f8;min-height:44px}small{color:#c6d5df}output{display:block;white-space:pre-wrap}a{color:#c5e8f8}
+/* Modo operacional: diagnóstico e botões históricos permanecem no código mas não poluem a rotina. */
+main>section:nth-of-type(n+7){display:none!important}
+#resolverTestePendente,#resultadoResolverTeste{display:none!important}
+main{max-width:800px}main>section{border:1px solid #405a6a}
+</style></head><body><main><h1>Conexão Firebase</h1><p>Área operacional do computador. Sem acesso às regras ou ao código do Firebase.</p><section><h2>Estado da conexão</h2><output id="estado">Verificando…</output><p id="detalhe"></p><button id="verificar" type="button">TESTAR CONEXÃO FIREBASE</button><output id="verificacaoFirebase" class="resultado-verificacao" role="status" aria-live="polite">Clique para testar a autenticação com o servidor Firebase.</output></section><section><h2>Autenticação operacional</h2><p id="sessao">Verificando sessão…</p><form id="login"><label>E-mail operacional<input id="email" type="email" autocomplete="username" required></label><label>Senha<input id="senha" type="password" autocomplete="current-password" required></label><button type="submit">Reconectar</button></form><button id="sair" hidden>Encerrar sessão neste aparelho</button><small>A senha não é salva pelo aplicativo. A sessão autenticada pode persistir neste navegador.</small></section><section><h2>Movimentações locais</h2><output id="fila">Consultando…</output><p><button type="button" id="inspecionarPendentes">VERIFICAR FILA OPERACIONAL</button></p><output id="relatorioPendentes" class="resultado-verificacao" aria-live="polite">Verificação somente leitura; nenhum envio será realizado.</output><p><button type="button" id="prepararEnvioReal">PREPARAR SINCRONIZAÇÃO CONTROLADA</button> <button type="button" id="confirmarEnvioReal" disabled>CONFIRMAR ENVIO DA FILA</button></p><output id="estadoEnvioReal" class="resultado-verificacao" aria-live="polite">Nenhuma movimentação operacional será enviada sem confirmação.</output><p><small>O envio requer confirmação explícita. Somente IDs confirmados pelo Firestore saem da fila.</small></p><p><button type="button" id="resolverTestePendente">RESOLVER PENDÊNCIA FICTÍCIA</button></p><output id="resultadoResolverTeste" class="resultado-verificacao" aria-live="polite">Requer backup e confirmação de exclusão remota.</output></section><section><h2>Leitura compartilhada — computador e celular</h2><p>Consulta somente leitura dos últimos registros desta conta no Firestore. Não altera paletes, estoque ou fila.</p><button type="button" id="consultarCompartilhados">CONSULTAR MOVIMENTAÇÕES NO FIREBASE</button><output id="resultadoCompartilhados" class="resultado-verificacao" aria-live="polite">Aguardando consulta. A listagem requer permissão específica nas regras do Firebase.</output></section><section><h2>Atualização automática — somente leitura</h2><p>Acompanhe novas movimentações desta conta em tempo real. Nenhum palete ou estoque local será alterado.</p><button type="button" id="iniciarTempoReal">INICIAR ACOMPANHAMENTO</button> <button type="button" id="pararTempoReal" disabled>PARAR ACOMPANHAMENTO</button><output id="resultadoTempoReal" class="resultado-verificacao" aria-live="polite">Acompanhamento desligado.</output></section><section><h2>Receber e conciliar movimentações entre aparelhos</h2><p>Compara as movimentações remotas com os dados deste dispositivo. Os testes fictícios são excluídos da análise.</p><button type="button" id="preverRecebimento">ANALISAR MOVIMENTAÇÕES RECEBIDAS</button><output id="resultadoAnaliseImediata" class="resultado-verificacao" aria-live="polite">Aguardando análise.</output><p><button type="button" id="diagnosticarOfflineReal">DIAGNOSTICAR SINCRONIZAÇÃO OFFLINE — SOMENTE LEITURA</button></p><output id="resultadoDiagnosticoOffline" class="resultado-verificacao" aria-live="polite">Nenhum dado será alterado.</output><p><button type="button" id="prepararUniaoSegura">PREPARAR UNIÃO CONTROLADA</button></p><output id="resultadoPrepararUniao" class="resultado-verificacao" aria-live="polite">Preparação somente leitura. Não aplica a união.</output><p><button type="button" id="exportarBackupUniao">BAIXAR CÓPIA DE SEGURANÇA LOCAL</button></p><output id="resultadoBackupUniao" class="resultado-verificacao" aria-live="polite">O arquivo de segurança será gerado neste dispositivo, sem alterar os dados.</output><p><button type="button" id="aplicarUniaoSegura">CONFIRMAR E APLICAR UNIÃO</button></p><output id="resultadoAplicarUniao" class="resultado-verificacao" aria-live="polite">Disponível após baixar o backup. A união exige confirmação explícita e nova consulta ao Firebase.</output><p><button type="button" id="prepararPublicacaoLocal">PREPARAR PUBLICAÇÃO DAS ENTRADAS LOCAIS</button></p><output id="resultadoPublicacaoLocal" class="resultado-verificacao" aria-live="polite">Compara as entradas locais com o Firebase e prepara apenas inclusões ausentes para a fila, mediante confirmação. Não altera estoque.</output><output id="resultadoPrevia" class="resultado-verificacao" aria-live="polite">Nenhuma análise realizada. Os dados locais permanecem intactos.</output></section><section><h2>Validação Firebase — dados fictícios</h2><p>Teste isolado: SKU TESTE-G, lote TESTE-001, 13 caixas. Não usa a fila operacional nem altera estoque.</p><button id="testeGravar" disabled>GRAVAR TESTE NO FIREBASE</button> <button id="testeReenviar" disabled>REENVIAR MESMO TESTE</button><output id="testeResultado" aria-live="polite">Aguardando autenticação.</output><small>O teste cria um documento imutável por identificação. Repetir não cria outro registro.</small></section><section><h2>Fila offline — validação</h2><p>Teste fictício isolado da fila operacional.</p><button type="button" id="prepararOffline">PREPARAR TESTE OFFLINE</button> <button type="button" id="enviarOffline">SINCRONIZAR TESTE</button><output id="saidaOffline" class="resultado-verificacao" aria-live="polite">Aguardando preparação.</output></section><a href="../index.html">Voltar ao Romaneio</a></main><script type="module">
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,setPersistence,browserLocalPersistence} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
-import {getFirestore,doc,runTransaction,collection,query,orderBy,limit,getDocs,onSnapshot} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import {getFirestore,doc,runTransaction,collection,query,orderBy,limit,startAfter,getDocs,onSnapshot} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 const config={apiKey:'AIzaSyAtlG-oys01gqgCdiANbzuzx9Mh9SiMRQo',authDomain:'romaneio-2-0-laboratorio.firebaseapp.com',projectId:'romaneio-2-0-laboratorio',storageBucket:'romaneio-2-0-laboratorio.firebasestorage.app',messagingSenderId:'343680211941',appId:'1:343680211941:web:8ad689db2c09447c2ded0c'};
 const app=getApps().length?getApp():initializeApp(config),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 let testeAtual=null;
@@ -51,8 +56,7 @@ $('resolverTestePendente').onclick=async()=>{
   const normalizar=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(op.tipo!=='inclusao'||normalizar(it.sku)!=='TESTESYNC01'||normalizar(it.destino)!=='TESTESYNC'||String(it.palete)!=='99'||Number(it.caixas)!==1)throw Error('Não é a inclusão fictícia autorizada.');
   const id=String(it.registroId||'');if(!id)throw Error('Registro sem identificador estável.');
-  const q=query(collection(db,'rom_v250_contas',auth.currentUser.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
-  const snap=await getDocs(q);if(snap.metadata.fromCache||snap.size>=50)throw Error('Histórico remoto não confiável ou incompleto.');
+  const snap=await lerHistoricoMovimentosCompleto(auth.currentUser.uid);
   const identidade=x=>[normalizar(x?.sku),normalizar(x?.destino),String(x?.palete??''),Number(x?.caixas),normalizar(x?.loteCompleto)].join('|');
   const mesmaIdentidade=x=>identidade(x)===identidade(it);
   const remotos=snap.docs.map(d=>d.data());
@@ -175,9 +179,7 @@ $('preverRecebimento').onclick=async()=>{
  try{
   await auth.authStateReady();
   const u=auth.currentUser;if(!u)throw Error('Autenticação necessária');
-  const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
-  const snap=await getDocs(q);
-  if(snap.metadata.fromCache)throw Error('Consulta apenas em cache');
+  const snap=await lerHistoricoMovimentosCompleto(u.uid);
   const operacionais=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
   const entradas=JSON.parse(localStorage.getItem('entradas')||'[]');
   const pendentes=JSON.parse(localStorage.getItem('romaneio2_movimentos_pendentes_v1')||'[]');
@@ -234,10 +236,10 @@ $('preverRecebimento').onclick=async()=>{
   const chavesLocais=new Set(entradas.map(e=>String(e.palete)+'|'+String(e.destino)));
   const paletesCompartilhados=new Set(entradas.map(e=>String(e.palete)));
   const sobreposicoes=faltantesRemotos.filter(({item})=>paletesCompartilhados.has(String(item.palete))&&!chavesLocais.has(String(item.palete)+'|'+String(item.destino)));
-  const podePreparar=snap.size<50&&!falhas.length&&!pendentes.length;
+  const podePreparar=!falhas.length&&!pendentes.length;
   const linhas=[
    'RECONCILIAÇÃO HISTÓRICA — SOMENTE LEITURA',
-   'Operações consultadas: '+ordenados.length+' (janela: '+snap.size+'/50)',
+   'Operações consultadas: '+ordenados.length+' (histórico paginado: '+snap.size+' registros)',
    'Conta conectada (UID final): '+u.uid.slice(-8),
    'Registros brutos consultados: '+snap.size+' | filtrados: '+(snap.size-operacionais.length),
    'TESTE-SYNC-01 nos registros brutos: '+snap.docs.filter(d=>String(d.data()?.item?.sku||'')==='TESTE-SYNC-01').length,
@@ -264,7 +266,7 @@ $('preverRecebimento').onclick=async()=>{
    'Inconsistências de sequência: '+falhas.length,
    'Operações ainda na fila local: '+ordenados.filter(d=>pendentes.some(p=>p.id===d.id)).length,
    ...(falhas.length?['Exemplos: '+falhas.slice(0,3).join('; ')]:[]),
-   snap.size===50?'ATENÇÃO: histórico pode estar incompleto (limite de 50).':'ATENÇÃO: histórico anterior ou identidade individual ainda não garantidos.',
+   'Histórico paginado recuperado; inconsistências de sequência e identidades ainda exigem revisão.',
    'NENHUM PALETE, ESTOQUE OU FILA FOI ALTERADO.'
   ];
   saida.textContent=linhas.join(String.fromCharCode(10));
@@ -302,10 +304,7 @@ $('prepararUniaoSegura').onclick=async()=>{
   const fila=JSON.parse(localStorage.getItem('romaneio2_movimentos_pendentes_v1')||'[]');
   if(!Array.isArray(entradas)||!Array.isArray(fila))throw Error('Dados locais inválidos');
   if(fila.length)throw Error('Há '+fila.length+' movimentações pendentes. A união deve aguardar');
-  const q=query(collection(db,'rom_v250_contas',auth.currentUser.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
-  const snap=await getDocs(q);
-  if(snap.metadata.fromCache)throw Error('Consulta retornou somente dados em cache');
-  if(snap.size===50)throw Error('Histórico pode estar incompleto: limite de 50 registros');
+  const snap=await lerHistoricoMovimentosCompleto(auth.currentUser.uid);
   const movimentos=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
   const chave=x=>JSON.stringify([x?.data,x?.sku,x?.destino,x?.palete,x?.loteCompleto,x?.lote,x?.postura,x?.caixas,x?.observacoes]);
   const contagem=new Map(),problemas=[];
@@ -381,9 +380,7 @@ $('prepararPublicacaoLocal').onclick=async()=>{
   const entradas=JSON.parse(origem||'[]'),fila=JSON.parse(filaOrigem||'[]');
   if(!Array.isArray(entradas)||!Array.isArray(fila))throw Error('Dados locais inválidos');
   if(fila.length)throw Error('Já há operações pendentes; envie ou resolva antes de preparar novas');
-  const q=query(collection(db,'rom_v250_contas',u.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
-  const snap=await getDocs(q);
-  if(snap.metadata.fromCache||snap.size>=50)throw Error('Histórico incompleto ou somente em cache');
+  const snap=await lerHistoricoMovimentosCompleto(u.uid);
   const movs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
   movs.sort((a,b)=>String(a.criadoEm||'').localeCompare(String(b.criadoEm||''))||String(a.id).localeCompare(String(b.id)));
   const chave=x=>JSON.stringify([x?.data,x?.sku,x?.destino,x?.palete,x?.loteCompleto,x?.lote,x?.postura,x?.caixas,x?.observacoes]);
@@ -455,9 +452,7 @@ async function aplicarUniaoSeguraOperacional(){
   if(!Array.isArray(entradas)||!Array.isArray(fila))throw Error('Armazenamento local inválido.');
   if(fila.length)throw Error('Há movimentações locais pendentes; envie ou resolva antes da união.');
   if(baseBruta!==null&&!Array.isArray(JSON.parse(baseBruta)))throw Error('Estado-base inválido.');
-  const q=query(collection(db,'rom_v250_contas',auth.currentUser.uid,'movimentos'),orderBy('criadoEm','desc'),limit(50));
-  const snap=await getDocs(q);
-  if(snap.metadata.fromCache||snap.size>=50)throw Error('Histórico remoto não confiável ou incompleto; união bloqueada.');
+  const snap=await lerHistoricoMovimentosCompleto(auth.currentUser.uid);
   const movs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>!String(d.id).startsWith('teste_')&&!String(d.id).startsWith('offline_')&&!String(d.id).startsWith('lab_')&&(!String(d.item?.sku||'').startsWith('TESTE-')||['TESTE-SYNC-01','TESTE-OFFLINE-01'].includes(String(d.item?.sku||'').toUpperCase().replace(/\s+/g,''))));
   movs.sort((a,b)=>String(a.criadoEm||'').localeCompare(String(b.criadoEm||''))||String(a.id).localeCompare(String(b.id)));
   const chave=x=>JSON.stringify([x?.data,x?.sku,x?.destino,x?.palete,x?.loteCompleto,x?.lote,x?.postura,x?.caixas,x?.observacoes]);
@@ -561,6 +556,13 @@ async function aplicarUniaoSeguraOperacional(){
    }
   }
 
+  // Não regravar entradas idênticas: evita atualizações repetidas entre tela principal e agente.
+  if(JSON.stringify(resultado)===JSON.stringify(entradas)){
+   if(uniaoAutomaticaEmAndamento)localStorage.removeItem(CHAVE_BACKUP_AUTOMATICO);
+   backupUniaoNestaSessao=false;
+   saida.textContent='SINCRONIZAÇÃO EM DIA: '+entradas.length+' entradas conferidas. Nenhuma alteração necessária.';
+   return;
+  }
   if(localStorage.getItem('entradas')!==entradasBrutas||localStorage.getItem('romaneio2_movimentos_pendentes_v1')!==filaBruta||localStorage.getItem(baseChave)!==baseBruta)throw Error('Dados locais mudaram durante a conferência. Recomece.');
   const mensagem='Aplicar união controlada neste aparelho?\\n\\nEntradas preservadas: '+entradas.length+'\\nEntradas remotas adicionadas: '+novos.length+'\\nTotal: '+resultado.length+'\\n\\nNenhuma baixa de estoque será realizada. A página do Romaneio deverá ser recarregada.';
   if(!uniaoAutomaticaEmAndamento&&!window.confirm(mensagem)){saida.textContent='Operação cancelada. Nenhum dado alterado.';return;}
@@ -691,6 +693,18 @@ async function gravarTeste(reenvio){
  finally{testeOcupado=false;botao.textContent='GRAVAR TESTE NO FIREBASE';repetir.textContent='REENVIAR MESMO TESTE';botao.disabled=!auth.currentUser;repetir.disabled=!auth.currentUser||!testeAtual;}
 }
 
+async function lerHistoricoMovimentosCompleto(uid,{maximo=2000}={}){
+ const registros=[],vistos=new Set(),ref=collection(db,'rom_v250_contas',uid,'movimentos');let ultimo=null;
+ for(let pagina=0;pagina<Math.ceil(maximo/50);pagina++){
+  const partes=[ref,orderBy('criadoEm','desc'),...(ultimo?[startAfter(ultimo)]:[]),limit(50)];
+  const snap=await getDocs(query(...partes));
+  if(snap.metadata.fromCache)throw Error('Histórico remoto somente em cache; dados locais preservados.');
+  for(const docSnap of snap.docs){if(vistos.has(docSnap.id))throw Error('Identificador duplicado no histórico remoto');vistos.add(docSnap.id);registros.push(docSnap);}
+  if(snap.size<50)return {docs:registros,size:registros.length,metadata:{fromCache:false}};
+  ultimo=snap.docs[snap.docs.length-1];
+ }
+ throw Error('Histórico remoto excede '+maximo+' operações; conciliação bloqueada, sem alterações.');
+}
 const FILA_TESTE_250='romaneio250_fila_offline_ficticia';
 const lerTesteOffline=()=>{const v=JSON.parse(localStorage.getItem(FILA_TESTE_250)||'[]');if(!Array.isArray(v))throw Error('Fila fictícia inválida');return v;};
 const escreverTesteOffline=f=>localStorage.setItem(FILA_TESTE_250,JSON.stringify(f));
