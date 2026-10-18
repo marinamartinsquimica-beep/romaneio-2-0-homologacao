@@ -12,7 +12,7 @@ const config={apiKey:'AIzaSyAtlG-oys01gqgCdiANbzuzx9Mh9SiMRQo',authDomain:'roman
 const app=getApps().length?getApp():initializeApp(config),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
 let ambienteOperacional=null;
 const raizOperacional=(uid)=>ambienteOperacional?.uid===uid?['romaneio_ambientes',ambienteOperacional.ambienteId]:['rom_v250_contas',uid];
-async function atualizarAmbienteOperacional(usuario){ambienteOperacional=null;if(!usuario)return;try{const {resolverAmbienteUsuario}=await import('./ambiente-compartilhado.mjs');const v=await resolverAmbienteUsuario({db,uid:usuario.uid});if(auth.currentUser?.uid===usuario.uid)ambienteOperacional={...v,uid:usuario.uid};}catch(e){/* Base legada permanece disponível até provisionamento e migração. */}}
+async function atualizarAmbienteOperacional(usuario){ambienteOperacional=null;if(!usuario)return;try{const {resolverAmbienteUsuario}=await import('./ambiente-compartilhado.mjs');const v=await resolverAmbienteUsuario({db,uid:usuario.uid});if(auth.currentUser?.uid===usuario.uid)ambienteOperacional={...v,uid:usuario.uid};}catch(e){if(e?.code!=='romaneio/sem-vinculo')throw e;}}
 
 let testeAtual=null;
 let testeOcupado=false;
