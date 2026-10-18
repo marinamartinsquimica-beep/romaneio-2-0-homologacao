@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function logged(){return request.auth != null;}
+  function memberDoc(env){return /databases/$(database)/documents/romaneio_ambientes/$(env)/membros/$(request.auth.uid);}
+  function active(env){return logged() && exists(memberDoc(env)) && get(memberDoc(env)).data.ativo == true;}
+  function admin(env){return active(env) && get(memberDoc(env)).data.perfil == 'administrador';}
+  function publisher(env){return active(env) && get(memberDoc(env)).data.perfil in ['administrador','operador'];}
+  // Índice do próprio usuário: deve ser criado por processo administrativo seguro.
+  match /romaneio_usuarios/{uid} {
+   allow get: if logged() && request.auth.uid == uid;
+   allow list, create, update, delete: if false;
+  }
+  match /romaneio_ambientes/{env} {
+   allow get: if active(env);
+   allow list, create, update, delete: if false;
+   match /membros/{uid} {
+    allow get: if active(env) && (request.auth.uid == uid || admin(env));
+    allow list: if admin(env);
+    // Provisionamento inicial via console/Admin SDK; novos membros via backend seguro.
+    allow create, update, delete: if false;
+   }
+   match /excel_oficiais/{tipo} {
+    allow read: if active(env) && tipo in ['embalado','paripassu'];
+    allow create: if publisher(env)
+      && tipo in ['embalado','paripassu']
+      && request.resource.data.keys().hasOnly(['tipo','vigente','anterior','alteradoEm'])
+      && request.resource.data.tipo == tipo
+      && request.resource.data.anterior == null
+      && request.resource.data.vigente.autorUid == request.auth.uid;
+    allow update: if publisher(env)
+      && tipo in ['embalado','paripassu']
+      && request.resource.data.keys().hasOnly(['tipo','vigente','anterior','alteradoEm'])
+      && request.resource.data.tipo == tipo
+      && request.resource.data.anterior == resource.data.vigente
+      && request.resource.data.vigente.versao != resource.data.vigente.versao
+      && request.resource.data.vigente.autorUid == request.auth.uid;
+    allow delete: if false;
+   }
+  }
+  // Regras existentes do legado devem ser incorporadas sem alteração na
+  // configuração ativa, por meio de revisão das regras reais do Firebase.
+ }
+}
