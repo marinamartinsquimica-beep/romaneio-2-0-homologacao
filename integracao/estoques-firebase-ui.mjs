@@ -31,7 +31,18 @@ function observar(uid){
    if(tipo==='embalado'&&d?.itens?.length){window.estoqueTesteConsulta=new Map(d.itens.map(x=>[String(x.sku).trim()+'\u0000'+String(x.lote).trim().toUpperCase(),x]));window.reservaTesteAtiva=true;for(const fn of ['atualizarResumoReservaTeste','renderizarEstoqueCompletoTeste','operadorAtualizarCardsEstoque','renderizarPendenciasConferenciaEstoque'])try{window[fn]?.()}catch{}}
    window.__etapa4=window.__etapa4||{};window.__etapa4[tipo]=d?.itens||null;
    const e=window.__etapa4.embalado,p=window.__etapa4.paripassu;
-   if(e&&p){const r=conferirEstoques(e,p);const el=$('etapa4Resumo');if(el)el.textContent=r.conferidos+' lotes | '+r.conformes+' conformes | '+r.pendencias.length+' pendências. Dados sincronizados no Firebase.';const out=$('etapa4Pendencias');if(out){out.replaceChildren();for(const x of r.pendencias){const li=document.createElement('li');li.textContent=x.sku+' / '+x.lote+' — '+x.tipo+' ('+x.diferenca+' caixas)';out.appendChild(li)}}}
+   if(e&&p){
+    const r=conferirEstoques(e,p),el=$('etapa4Resumo'),out=$('etapa4Pendencias'),ok=$('etapa4Conformes'),alerta=$('etapa4Aviso');
+    if(el)el.textContent=r.conferidos+' lotes do Embalado | '+r.conformes+' OK no PariPassu | '+r.pendencias.length+' pendências. Conferência automática.';
+    if(out){out.replaceChildren();for(const x of r.pendencias){const li=document.createElement('li');li.textContent=x.sku+' / '+x.lote+' — '+(x.tipo==='ausente_paripassu'?'NÃO LOCALIZADO NO PARIPASSU':'DIVERGÊNCIA DE CAIXAS')+' | Embalado '+x.embalado+' | PariPassu '+x.paripassu;out.appendChild(li)}}
+    if(ok){ok.replaceChildren();const title=document.createElement('h3');title.textContent='Conferidos — OK no PariPassu ('+r.conformes+')';ok.appendChild(title);const pendentes=new Set(r.pendencias.map(x=>JSON.stringify([N(x.sku),N(x.lote)])));const lista=document.createElement('ul');for(const x of e){if(pendentes.has(JSON.stringify([N(x.sku),N(x.lote)])))continue;const li=document.createElement('li');li.textContent=x.sku+' / '+x.lote+' — '+x.saldo+' caixas — OK';lista.appendChild(li)}ok.appendChild(lista)}
+    if(alerta){alerta.style.display=r.pendencias.length?'block':'none';alerta.textContent=r.pendencias.length?'ATENÇÃO: '+r.pendencias.length+' pendência(s) entre Estoque Embalado e PariPassu. Verifique a lista abaixo.':'';
+      const chave='romaneio2-etapa4-alerta-'+uid,assinatura=r.pendencias.map(x=>[x.sku,x.lote,x.tipo,x.diferenca].join('|')).join(';');
+      if(r.pendencias.length&&assinatura!==sessionStorage.getItem(chave)){sessionStorage.setItem(chave,assinatura);if('Notification' in window&&Notification.permission==='granted'){try{new Notification('Romaneio 2.0 — pendências PariPassu',{body:r.pendencias.length+' divergência(s) identificada(s) na conferência automática.'})}catch{}}}
+      if(!r.pendencias.length)sessionStorage.removeItem(chave);
+    }
+   }else{if($('etapa4Resumo'))$('etapa4Resumo').textContent='Aguardando importar os dois estoques.';}
+
    mostrar('Firebase conectado — '+tipo+': '+(d?.itens?.length??0)+' lotes; versão '+(versoes[tipo]||'não importada'));
   },e=>mostrar('Firebase: '+e.message)));
  }
