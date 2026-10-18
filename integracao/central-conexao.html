@@ -817,6 +817,24 @@ $('verificar').onclick=async()=>{
  finally{botao.disabled=false;botao.textContent='TESTAR CONEXÃO FIREBASE';status();}
 };
 let backupConflitoNaSessao=null;
+$('consultarAuditoria').onclick=async()=>{
+ const out=$('saidaAuditoria');out.textContent='Consultando histórico remoto…';
+ try{
+  await auth.authStateReady();
+  if(!auth.currentUser||!navigator.onLine)throw Error('Autenticação e internet necessárias');
+  const snap=await lerHistoricoMovimentosCompleto(auth.currentUser.uid);
+  const docs=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const qtd={inclusao:0,edicao:0,exclusao:0},alertas=[];
+  for(const m of docs){
+   if(Object.hasOwn(qtd,m.tipo))qtd[m.tipo]++;
+   else alertas.push(m.id+': tipo inválido');
+   if(!m.autorUid||!m.dispositivoId||!m.criadoEm)alertas.push(m.id+': autoria ou data ausente');
+   if(m.tipo==='edicao'&&!m.antes)alertas.push(m.id+': estado anterior ausente');
+  }
+  const ultimos=docs.sort((a,b)=>String(b.criadoEm||'').localeCompare(String(a.criadoEm||''))).slice(0,20);
+  out.textContent=['EVENTOS: '+docs.length,'Inclusões: '+qtd.inclusao+' | Edições: '+qtd.edicao+' | Exclusões: '+qtd.exclusao,'Alertas de rastreabilidade: '+alertas.length,...alertas.slice(0,5),'ÚLTIMOS 20 EVENTOS:',...ultimos.map(m=>[m.criadoEm,m.tipo,m.item?.destino,m.item?.palete,m.item?.sku,m.item?.caixas,'UID '+m.autorUid,'Dispositivo '+m.dispositivoId,'ID '+m.id].join(' | ')),'NENHUM DADO ALTERADO.'].join('\n');
+ }catch(e){out.textContent='Consulta não concluída: '+(e.message||e);}
+};
 const identidadeFisica=x=>[x?.destino,x?.palete,x?.sku,x?.loteCompleto,x?.lote,x?.postura].map(v=>String(v??'').trim().toUpperCase()).join('|');
 $('consultarConflitosCaixas').onclick=async()=>{
  const lista=$('listaConflitosCaixas'),saida=$('saidaConflitosCaixas');lista.replaceChildren();
