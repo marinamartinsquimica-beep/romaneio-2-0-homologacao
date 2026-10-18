@@ -2890,17 +2890,20 @@ async function sincronizarRomaneioCelular(){
   atualizarIndicadorFilaMovimentos();
   if(qtd)throw Error(qtd+' movimentação(ões) ainda pendente(s). Nada foi descartado.');
   if(botao)botao.textContent='SINCRONIZADO';
+  return true;
   setTimeout(()=>{if(botao)botao.textContent='SINCRONIZAR';},2500);
  }catch(e){
   if(botao)botao.textContent='PENDENTE';
   console.warn('Sincronização preservada:',e);
+  return false;
  }finally{if(botao)botao.disabled=false;}
 }
 async function operadorSincronizarAgora(){
  const botao=document.querySelector('[onclick="operadorSincronizarAgora()"]');
  if(botao){botao.disabled=true;botao.textContent='SINCRONIZANDO...';}
  try{
-  await sincronizarRomaneioCelular();
+  const enviado=await sincronizarRomaneioCelular();
+  if(!enviado)throw Error('Envio não confirmado; fila preservada.');
   localStorage.setItem('romaneio2_solicitar_sincronizacao_v1',String(Date.now()));
   if(botao)botao.textContent='CONSULTANDO FIREBASE...';
   await new Promise(resolve=>setTimeout(resolve,1800));
