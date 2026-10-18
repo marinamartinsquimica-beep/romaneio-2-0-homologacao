@@ -68,13 +68,13 @@ service cloud.firestore {
             && d.criadoEm is string && d.criadoEm.size() > 0 && d.criadoEm.size() <= 40;
         }
         allow get: if membroAtivo(ambiente);
-        allow list: if membroAtivo(ambiente) && request.query.limit != null && request.query.limit <= 50;
+        allow list: if membroAtivo(ambiente) && request.query.limit != null;
         allow create: if valido(request.resource.data);
         allow update, delete: if false;
       }
       match /expedicoes/{id} {
         allow get: if membroAtivo(ambiente);
-        allow list: if membroAtivo(ambiente) && request.query.limit != null && request.query.limit <= 50;
+        allow list: if membroAtivo(ambiente) && request.query.limit != null;
         allow create: if operadorAutorizado(ambiente)
           && request.resource.data.keys().hasAll(['destino','estado','criadoEm','autorUid'])
           && request.resource.data.autorUid == request.auth.uid
