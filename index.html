@@ -2896,7 +2896,19 @@ async function sincronizarRomaneioCelular(){
   console.warn('Sincronização preservada:',e);
  }finally{if(botao)botao.disabled=false;}
 }
-async function operadorSincronizarAgora(){await sincronizarRomaneioCelular();localStorage.setItem('romaneio2_solicitar_sincronizacao_v1',String(Date.now()));}
+async function operadorSincronizarAgora(){
+ const botao=document.querySelector('[onclick="operadorSincronizarAgora()"]');
+ if(botao){botao.disabled=true;botao.textContent='SINCRONIZANDO...';}
+ try{
+  await sincronizarRomaneioCelular();
+  localStorage.setItem('romaneio2_solicitar_sincronizacao_v1',String(Date.now()));
+  if(botao)botao.textContent='CONSULTANDO FIREBASE...';
+  await new Promise(resolve=>setTimeout(resolve,1800));
+  if(typeof operadorAtualizarPainel==='function')operadorAtualizarPainel();
+  if(botao)botao.textContent='SINCRONIZAÇÃO SOLICITADA';
+ }catch(e){if(botao)botao.textContent='VERIFICAR CONEXÃO';console.warn('Sincronização manual:',e);}
+ finally{setTimeout(()=>{if(botao){botao.disabled=false;botao.textContent='SINCRONIZAR AGORA';}},2500);}
+}
 document.getElementById('tabTotal')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
 document.getElementById('tabCaminhao')?.addEventListener('click',()=>{document.getElementById('painelOperadorDesktop').classList.remove('active');document.getElementById('abrirPainelOperador').setAttribute('aria-pressed','false')});
 window.matchMedia('(max-width:767px)').addEventListener('change',event=>{if(event.matches&&document.getElementById('painelOperadorDesktop').classList.contains('active'))abrirAba('total');});
