@@ -111,7 +111,8 @@ service cloud.firestore {
    }
    // Histórico de expedição: estado versionado, sem remoção destrutiva.
    match /expedicoes/{expedicaoId} {
-    allow get, list: if active(env) && request.query.limit <= 50;
+    allow get: if active(env);
+    allow list: if active(env) && request.query.limit != null && request.query.limit <= 50;
     allow create: if publisher(env)
       && request.resource.data.keys().hasAll(['destino','estado','criadoEm','autorUid'])
       && request.resource.data.autorUid == request.auth.uid
