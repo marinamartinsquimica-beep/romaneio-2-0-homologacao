@@ -6,6 +6,7 @@
 <p>Exporta movimentos e estoques da conta autenticada em JSON. Não altera dados no Firebase e não substitui o Excel original guardado no OneDrive.</p>
 <p id="sessao">Verificando sessão…</p><button id="exportar" disabled>EXPORTAR BACKUP JSON</button><output id="status" role="status"></output>
 <script type="module">
+import {conferirBackupPreMigracao} from './conferir-backup.mjs';
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
 import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
 import {getFirestore,doc,getDoc,collection,query,orderBy,limit,startAfter,getDocs} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
@@ -67,6 +68,8 @@ $('exportar').onclick=async()=>{
   if(auth.currentUser?.uid!==uid)throw Error('Usuário alterado durante a exportação.');
   const dadosLocais=lerLocal(),excelLocal=await lerExcelLocal();
   const pacote={formato:'romaneio2-backup-v2',origemUid:uid,geradoEm:new Date().toISOString(),totalMovimentos:movimentos.length,movimentos,estoques,dadosLocais,excelLocal};
+  const validacao=conferirBackupPreMigracao(pacote);
+  if(!validacao.valido)throw Error('Backup inconsistente: '+validacao.erros.join('; '));
   const blob=new Blob([JSON.stringify(pacote,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='romaneio2_backup_'+new Date().toISOString().slice(0,10)+'.json';document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);
