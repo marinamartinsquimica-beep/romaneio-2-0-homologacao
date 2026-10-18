@@ -52,6 +52,7 @@ function observar(uid){
  }
 }
 onAuthStateChanged(auth,u=>{unsub.forEach(f=>f());unsub=[];if(u)observar(u.uid);else mostrar('Faça login na Central de Conexão para compartilhar os estoques.')});
+$('etapa4AtivarNotificacoes')?.addEventListener('click',async()=>{const o=$('etapa4AvisosStatus');if(!('Notification' in window)){o.textContent='Este navegador não oferece notificações; os avisos continuam no painel.';return;}const p=await Notification.requestPermission();o.textContent=p==='granted'?'Notificações ativas enquanto o sistema estiver aberto.': 'Notificações não autorizadas; avisos continuam no painel.';});
 $('etapa4Publicar')?.addEventListener('click',async()=>{
  const b=$('etapa4Publicar');b.disabled=true;
  try{
