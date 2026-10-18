@@ -246,6 +246,15 @@ body.modo-operador .topbar .brand h1{font-size:21px!important}
 #opAbaParipassu #etapa4Conformes ul{list-style:none;margin:0;padding:4px 18px;max-height:38vh;overflow:auto}
 #opAbaParipassu #etapa4Conformes li{padding:10px 0}
 @media(max-width:750px){#opAbaParipassu .etapa4-pari-registro{grid-template-columns:1fr 1fr}#opAbaParipassu .etapa4-pari-cabecalho{padding:12px}}
+
+/* Padrão do Estoque Completo para a tabela única de conferência PariPassu. */
+#opAbaParipassu .etapa4-pari-lista{max-height:65vh;overflow:auto;padding:0 12px}
+#opAbaParipassu .etapa4-pari-tabela{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+#opAbaParipassu .etapa4-pari-tabela thead th{position:sticky;top:0;z-index:2;background:#254d69;color:#fff;padding:13px 12px;text-align:left}
+#opAbaParipassu .etapa4-pari-tabela tbody td{padding:12px;border-bottom:1px solid #dde3e8}
+#opAbaParipassu .etapa4-pari-tabela tbody tr:nth-child(even){background:#f7f9fa}
+#opAbaParipassu .etapa4-pari-tabela tbody tr:hover{background:#eaf6fa}
+#opAbaParipassu .etapa4-pari-tabela td:last-child{font-weight:700}
 </style>
 </head>
 <body>
@@ -285,7 +294,7 @@ body.modo-operador .topbar .brand h1{font-size:21px!important}
   <div class="card-header"><h2>Estoque completo <small style="font-size:13px;color:#64748b">v2.0.50</small></h2><span class="badge">Consulta de estoque</span></div>
   <p style="margin:8px 0;color:#475569">Consulte os saldos compartilhados pelo Firebase e confira as pendências do romaneio.</p>
 
-<button type="button" onclick="conferirEntradasExistentesTeste()" style="padding:9px 12px;margin:8px 0;cursor:pointer">Conferir entradas do romaneio</button>
+
   <section id="pendenciasConferenciaEstoque" class="operator-pending" aria-label="Pendências de conferência do estoque"><h3>PENDÊNCIAS DE CONFERÊNCIA <span id="contadorPendenciasEstoque">0</span></h3><p>Registros do romaneio que precisam de conferência. O aviso não elimina a pendência. Confira o romaneio ou atualize a planilha e publique a nova versão no Firebase.</p><div id="listaPendenciasEstoque" aria-live="polite">Importe uma cópia do estoque para conferir.</div></section>
 <div id="divergenciasEstoqueTeste" role="alert" aria-live="assertive" style="display:none;margin:12px 0;padding:14px 16px;border:2px solid #c2410c;border-radius:10px;background:#fff1e6;color:#7c2d12;font-weight:600"></div>
   <p id="resumoReservaTeste" role="status">Reservas: aguardando importação do estoque.</p>
@@ -2044,7 +2053,7 @@ function salvarEntrada() {
     if (!novoRegistro) {
         exibirPaginaInicial();
         document.getElementById("formEntrada")?.classList.add("hidden");
-        document.querySelectorAll(".eme-aviso-overlay").forEach(aviso => aviso.remove());
+        document.querySelectorAll(".eme-aviso-overlay:not([data-tipo=paripassu])").forEach(aviso => aviso.remove());
     } else {
         limparCampos();
     }
@@ -2090,7 +2099,7 @@ function salvarComposicao(finalizarPalete) {
         exibirPaginaInicial();
         // A edição concluída não deve deixar o formulário ou avisos antigos sobre a tabela.
         document.getElementById("formEntrada")?.classList.add("hidden");
-        document.querySelectorAll(".eme-aviso-overlay").forEach(aviso => aviso.remove());
+        document.querySelectorAll(".eme-aviso-overlay:not([data-tipo=paripassu])").forEach(aviso => aviso.remove());
         document.querySelector("#tabela")?.scrollIntoView({behavior:"smooth",block:"start"});
         return true;
     }
@@ -2651,7 +2660,7 @@ function atualizarResumoReservaTeste() {
   if (!window.divergenciasAvisadasTeste) window.divergenciasAvisadasTeste = new Set();
   const ativas = new Set(divergencias.map(([chave]) => chave));
   // Descartar avisos transitórios ao resolver todas as divergências.
-  if (!ativas.size) document.querySelectorAll(".eme-aviso-overlay").forEach(aviso => aviso.remove());
+  if (!ativas.size) document.querySelectorAll(".eme-aviso-overlay:not([data-tipo=paripassu])").forEach(aviso => aviso.remove());
   for (const chave of [...window.divergenciasAvisadasTeste]) {
     if (!ativas.has(chave)) window.divergenciasAvisadasTeste.delete(chave);
   }
