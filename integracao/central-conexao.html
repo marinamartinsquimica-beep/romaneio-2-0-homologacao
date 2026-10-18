@@ -805,6 +805,7 @@ async function cicloAutomatico(){
   if(!lerOperacional().length){
    try{await consolidarBaseLegada();}catch(e){$('resultadoAplicarUniao').textContent='Consolidação inicial pendente: '+(e.message||e);}
    await receberAutomaticamente();
+   if(typeof sincronizarExpedicoesCompartilhadas==='function')await sincronizarExpedicoesCompartilhadas();
   }
  }finally{cicloEmAndamento=false;}
 }
