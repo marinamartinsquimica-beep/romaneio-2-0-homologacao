@@ -684,6 +684,7 @@ async function aplicarUniaoSeguraOperacional(){
   }
   backupUniaoNestaSessao=false;
   if(uniaoAutomaticaEmAndamento)localStorage.removeItem(CHAVE_BACKUP_AUTOMATICO);
+  if(conflitosRecebidos.length&&window.parent!==window)window.parent.postMessage({origem:'romaneio-sync',estado:'erro',mensagem:conflitosRecebidos.slice(0,2).join('; ')},location.origin);
   saida.textContent='UNIÃO APLICADA NESTE APARELHO: '+resultado.length+' entradas, sem baixa de estoque. '+(conflitosRecebidos.length?'ATENÇÃO: '+conflitosRecebidos.length+' conflito(s) isolados, sem sobrescrever: '+conflitosRecebidos.slice(0,2).join('; '):'Nenhum conflito pendente.');
  }catch(e){
   const mensagem='União não aplicada: '+(e.message||String(e))+'. Verifique os dados antes de tentar novamente.';
