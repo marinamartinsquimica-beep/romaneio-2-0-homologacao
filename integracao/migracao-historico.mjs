@@ -26,9 +26,10 @@ export async function migrarHistorico({
     copiados++;
    }
   }
-  if(pagina.proximoCursor===cursor)throw Error('Cursor de leitura repetido.');
-  cursor=pagina.proximoCursor||null;
-  if(!cursor)break;
+  const proximo=pagina.proximoCursor||null;
+  if(!proximo)break;
+  if(proximo===cursor)throw Error('Cursor de leitura repetido.');
+  cursor=proximo;
  }while(true);
  const resumo={origemUid,ambienteId,examinados,copiados,existentes,finalizada:true};
  await registrarResumo(resumo);
